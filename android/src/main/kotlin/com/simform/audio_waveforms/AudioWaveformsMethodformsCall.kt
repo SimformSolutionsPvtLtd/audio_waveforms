@@ -33,14 +33,14 @@ class AudioWaveformsMethodCall : PluginRegistry.RequestPermissionsResultListener
         path: String,
         result: MethodChannel.Result,
         recorder: MediaRecorder?,
-        enCoder: Int,
+        encoder: Int,
         outputFormat: Int,
         sampleRate: Int
     ) {
         recorder?.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(getOutputFormat(outputFormat))
-            setAudioEncoder(getEncoder(enCoder))
+            setAudioEncoder(getEncoder(encoder))
             setAudioSamplingRate(sampleRate)
             setOutputFile(path)
             try {
@@ -125,16 +125,24 @@ class AudioWaveformsMethodCall : PluginRegistry.RequestPermissionsResultListener
         }
     }
 
-    private fun getEncoder(enCoder: Int): Int {
-        when (enCoder) {
-
-            1 -> return MediaRecorder.AudioEncoder.AAC_ELD
-            2 -> return MediaRecorder.AudioEncoder.HE_AAC
-            3 -> return MediaRecorder.AudioEncoder.AMR_NB
-            4 -> return MediaRecorder.AudioEncoder.AMR_WB
-            5 -> {
+    private fun getEncoder(encoder: Int): Int {
+        when (encoder) {
+            Constants.acc -> return MediaRecorder.AudioEncoder.AAC
+            Constants.aac_eld -> return MediaRecorder.AudioEncoder.AAC_ELD
+            Constants.he_aac -> return MediaRecorder.AudioEncoder.HE_AAC
+            Constants.amr_nb -> return MediaRecorder.AudioEncoder.AMR_NB
+            Constants.amr_wb -> return MediaRecorder.AudioEncoder.AMR_WB
+            Constants.opus -> {
                 return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     MediaRecorder.AudioEncoder.OPUS
+                } else {
+                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
+                    MediaRecorder.AudioEncoder.AAC
+                }
+            }
+            Constants.vorbis -> {
+                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    MediaRecorder.AudioEncoder.VORBIS
                 } else {
                     Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
                     MediaRecorder.AudioEncoder.AAC
@@ -145,9 +153,38 @@ class AudioWaveformsMethodCall : PluginRegistry.RequestPermissionsResultListener
     }
 
     private fun getOutputFormat(format: Int): Int {
-        if (format == 3 || format == 4) {
-            return MediaRecorder.OutputFormat.THREE_GPP
+        when (format) {
+            Constants.mpeg4 -> return MediaRecorder.OutputFormat.MPEG_4
+            Constants.three_gpp -> return MediaRecorder.OutputFormat.THREE_GPP
+            Constants.ogg -> {
+                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    MediaRecorder.OutputFormat.OGG
+                } else {
+                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
+                    MediaRecorder.OutputFormat.MPEG_4
+                }
+            }
+
+            Constants.amr_wb -> return MediaRecorder.OutputFormat.AMR_WB
+            Constants.amr_nb -> return MediaRecorder.OutputFormat.AMR_NB
+            Constants.webm -> {
+                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    MediaRecorder.OutputFormat.WEBM
+                } else {
+                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
+                    MediaRecorder.OutputFormat.MPEG_4
+                }
+            }
+            Constants.mpeg_2_ts -> {
+                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    MediaRecorder.OutputFormat.MPEG_2_TS
+                } else {
+                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
+                    MediaRecorder.OutputFormat.MPEG_4
+                }
+            }
+            Constants.aac_adts -> return MediaRecorder.OutputFormat.AAC_ADTS
+            else -> return MediaRecorder.OutputFormat.MPEG_4
         }
-        return MediaRecorder.OutputFormat.MPEG_4
     }
 }

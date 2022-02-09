@@ -11,6 +11,7 @@ class Constants {
   static const String getDecibel = 'getDecibel';
   static const String checkPermission = 'checkPermission';
   static const String path = 'path';
-  static const String codec = 'codec';
+  static const String encoder = 'encoder';
+  static const String audioFormat = 'audioFormat';
   static const String sampleRate = 'sampleRate';
 }

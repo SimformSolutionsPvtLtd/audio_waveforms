@@ -11,7 +11,11 @@ class WaveController extends ChangeNotifier {
   ///At which rate waveform needs to be updated
   late Duration updateFrequency = const Duration(milliseconds: 100);
 
-  late Encoder encoder = Encoder.aac;
+  late AndroidEncoder androidEncoder = AndroidEncoder.aac;
+
+  late AndroidOutputFormat androidOutputFormat = AndroidOutputFormat.mpeg4;
+
+  late IosEncoder iosEncoder = IosEncoder.kAudioFormatMPEG4AAC;
 
   late int sampleRate = 16000;
 
@@ -78,8 +82,10 @@ class WaveController extends ChangeNotifier {
         }
 
         if (_recorderState == RecorderState.initialized) {
-          _isRecording = await AudioWaveInterface.instance
-              .record(encoder.index, sampleRate, path);
+          _isRecording = await AudioWaveInterface.instance.record(
+              Platform.isIOS ? iosEncoder.index : androidEncoder.index,
+              sampleRate,
+              path);
           if (_isRecording) {
             _recorderState = RecorderState.recording;
             _startTimer();
@@ -97,8 +103,8 @@ class WaveController extends ChangeNotifier {
 
   ///This method is only required for Android platform
   Future<void> _initRecorder(String? path) async {
-    final initialized = await AudioWaveInterface.instance
-        .initRecorder(path, encoder.index, sampleRate);
+    final initialized = await AudioWaveInterface.instance.initRecorder(
+        path, androidEncoder.index, androidOutputFormat.index, sampleRate);
     if (initialized) {
       _recorderState = RecorderState.initialized;
     } else {

@@ -83,16 +83,30 @@ public class AudioWaveformsMethodCall: NSObject, AVAudioRecorderDelegate{
     }
     public func getEncoder(_ enCoder: Int) -> Int {
         switch(enCoder) {
-        case 1:
+        case Constants.kAudioFormatMPEG4AAC:
+            return Int(kAudioFormatMPEG4AAC)
+        case Constants.kAudioFormatMPEGLayer1:
+            return Int(kAudioFormatMPEGLayer1)
+        case Constants.kAudioFormatMPEGLayer2:
+            return Int(kAudioFormatMPEGLayer2)
+        case Constants.kAudioFormatMPEGLayer3:
+            return Int(kAudioFormatMPEGLayer3)
+        case Constants.kAudioFormatMPEG4AAC_ELD:
             return Int(kAudioFormatMPEG4AAC_ELD)
-        case 2:
+        case Constants.kAudioFormatMPEG4AAC_HE:
             return Int(kAudioFormatMPEG4AAC_HE)
-        case 3:
+        case Constants.kAudioFormatOpus:
             return Int(kAudioFormatOpus)
-        case 4:
+        case Constants.kAudioFormatAMR:
             return Int(kAudioFormatAMR)
-        case 5:
+        case Constants.kAudioFormatAMR_WB:
             return Int(kAudioFormatAMR_WB)
+        case Constants.kAudioFormatLinearPCM:
+            return Int(kAudioFormatLinearPCM)
+        case Constants.kAudioFormatAppleLossless:
+            return Int(kAudioFormatAppleLossless)
+        case Constants.kAudioFormatMPEG4AAC_HE_V2:
+            return Int(kAudioFormatMPEG4AAC_HE_V2)
         default:
             return Int(kAudioFormatMPEG4AAC)
         }

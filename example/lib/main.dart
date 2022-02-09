@@ -31,7 +31,9 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     waveController = WaveController()
-      ..encoder = Encoder.aac
+      ..androidEncoder = AndroidEncoder.aac
+      ..androidOutputFormat = AndroidOutputFormat.mpeg4
+      ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
       ..sampleRate = 16000;
   }
 
