@@ -33,14 +33,14 @@ class AudioWaveformsMethodCall : PluginRegistry.RequestPermissionsResultListener
         path: String,
         result: MethodChannel.Result,
         recorder: MediaRecorder?,
-        enCoder: Int,
+        encoder: Int,
         outputFormat: Int,
         sampleRate: Int
     ) {
         recorder?.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(getOutputFormat(outputFormat))
-            setAudioEncoder(getEncoder(enCoder))
+            setAudioEncoder(getEncoder(encoder))
             setAudioSamplingRate(sampleRate)
             setOutputFile(path)
             try {
@@ -127,14 +127,22 @@ class AudioWaveformsMethodCall : PluginRegistry.RequestPermissionsResultListener
 
     private fun getEncoder(enCoder: Int): Int {
         when (enCoder) {
-
-            1 -> return MediaRecorder.AudioEncoder.AAC_ELD
-            2 -> return MediaRecorder.AudioEncoder.HE_AAC
-            3 -> return MediaRecorder.AudioEncoder.AMR_NB
-            4 -> return MediaRecorder.AudioEncoder.AMR_WB
-            5 -> {
+            1 -> return MediaRecorder.AudioEncoder.AAC
+            2 -> return MediaRecorder.AudioEncoder.AAC_ELD
+            3 -> return MediaRecorder.AudioEncoder.HE_AAC
+            4 -> return MediaRecorder.AudioEncoder.AMR_NB
+            5 -> return MediaRecorder.AudioEncoder.AMR_WB
+            6 -> {
                 return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     MediaRecorder.AudioEncoder.OPUS
+                } else {
+                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
+                    MediaRecorder.AudioEncoder.AAC
+                }
+            }
+            7 -> {
+                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    MediaRecorder.AudioEncoder.VORBIS
                 } else {
                     Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
                     MediaRecorder.AudioEncoder.AAC
@@ -145,9 +153,37 @@ class AudioWaveformsMethodCall : PluginRegistry.RequestPermissionsResultListener
     }
 
     private fun getOutputFormat(format: Int): Int {
-        if (format == 3 || format == 4) {
-            return MediaRecorder.OutputFormat.THREE_GPP
+        when (format) {
+            1 -> return MediaRecorder.OutputFormat.MPEG_4
+            2 -> return MediaRecorder.OutputFormat.THREE_GPP
+            3 -> {
+                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    MediaRecorder.OutputFormat.OGG
+                } else {
+                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
+                    MediaRecorder.OutputFormat.MPEG_4
+                }
+            }
+            4 -> {
+                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    MediaRecorder.OutputFormat.WEBM
+                } else {
+                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
+                    MediaRecorder.OutputFormat.MPEG_4
+                }
+            }
+            5 -> {
+                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    MediaRecorder.OutputFormat.MPEG_2_TS
+                } else {
+                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
+                    MediaRecorder.OutputFormat.MPEG_4
+                }
+            }
+            6 -> return MediaRecorder.OutputFormat.AAC_ADTS
+            7 -> return MediaRecorder.OutputFormat.AMR_WB
+            8 -> return MediaRecorder.OutputFormat.AMR_NB
+            else -> return MediaRecorder.OutputFormat.MPEG_4
         }
-        return MediaRecorder.OutputFormat.MPEG_4
     }
 }

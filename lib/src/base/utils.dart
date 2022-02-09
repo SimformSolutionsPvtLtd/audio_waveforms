@@ -12,37 +12,68 @@ extension IntExtension on int {
 ///state of recorer
 enum RecorderState { initialized, recording, paused, stopped }
 
-///Audio codec
-enum Encoder {
+///Android encoders.
+///
+///Android and IOS are have been separated for better support
+///encoder and output formats
+enum AndroidEncoder {
   ///Default
   aac,
-  aac_ld,
-  aac_he,
+  aac_eld,
+  her_aac,
   amr_nb,
   amr_wb,
 
-  ///requires android Q or ios 11.
-  ///For android < 11 Encoder.aac will be used
-  opus
+  ///This encoder requires android Q.
+  ///For android < Q, aac will be used
+  opus,
+
+  ///requires android Lollipop or ios 11.
+  ///For android < Lollipop, aac will be used
+  vorbis
 }
 
-///Not using
+///Android output format.
 ///
-///TODO:check how to do it on ios same as android
-enum AudioOutputFormat {
+///Android and IOS are have been separated for better support
+///encoder and output formats
+enum AndroidOutputFormat {
   ///Default
   mpeg4,
-  aac_adts,
-  amr_nb,
-  amr_wb,
-
-  ///if android version is not greater or equal to [O], mpeg4 will be set
-  mpeg_2_ts,
-
-  ///if android version is not greater or equal to [Q], mpeg4 will be set
-  ogg,
   three_gpp,
 
-  ///if android version is not greater or equal to [Q], mpeg4 will be set
-  webm
+  ///This Output format requires android Q.
+  ///For android < Q, mpeg4 will be used
+  ogg,
+
+  ///This Output format requires android Q.
+  ///For android < Q, mpeg4 will be used
+  webm,
+
+  ///This Output format requires android O.
+  ///For android < O, mpeg4 will be used
+  mpeg_2_ts,
+  aac_adts,
+  amr_wb,
+  amr_nb,
+}
+
+///IOS encoders.
+///
+///Android and IOS are have been separated for better support
+///encoder and output formats
+enum IosEncoder {
+  ///Default
+  kAudioFormatMPEG4AAC,
+  kAudioFormatMPEGLayer1,
+  kAudioFormatMPEGLayer2,
+  kAudioFormatMPEGLayer3,
+  kAudioFormatMPEG4AAC_ELD,
+  kAudioFormatMPEG4AAC_HE,
+  kAudioFormatOpus,
+  kAudioFormatAMR,
+  kAudioFormatAMR_WB,
+  kAudioFormatLinearPCM,
+  kAudioFormatAppleLossless,
+  kAudioFormatMPEG4AAC_HE_V2
 }
