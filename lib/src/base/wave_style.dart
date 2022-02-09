@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class WaveStyle {
-
   ///Color of the [Wave]
   final Color waveColor;
 
@@ -39,21 +38,29 @@ class WaveStyle {
   ///Extend the wave to the end of size.width, default is size.width/2
   final bool extendWaveform;
 
-  ///Has no effect
-  ///[Reseaon] -> laying out text is expensive task so for now not included
+  ///Show duration labels. Default is true
   final bool showDurationLine;
 
-  ///Has no effect
+  ///Show duration label in HH:MM:SS format. Default is MM:SS
   final bool showHourInDuration;
 
-  ///Has no effect
+  ///Text style for duration labels
   final TextStyle durationStyle;
 
-  ///Has no effect
+  ///Color of duration lines
   final Color durationLinesColor;
 
-  ///Has no effect
-  ///value > 0 will be padded right and value < 0 will be padded left
+  ///Height of duration lines
+  final double durationLinesHeight;
+
+  ///Space between duration labels and waveform square
+  final double labelSpacing;
+
+  ///It might happen that label text gets cut or have extra clipping.
+  ///So use this to add or remove clipping
+  final double? extraClipperHeight;
+
+  ///Value > 0 will be padded right and value < 0 will be padded left
   final double durationTextPadding;
 
   const WaveStyle({
@@ -71,10 +78,13 @@ class WaveStyle {
     this.extendWaveform = false,
     this.backgroundColor = Colors.black,
     this.showHourInDuration = false,
+    this.durationLinesHeight = 16.0,
     this.durationStyle = const TextStyle(
       color: Colors.red,
       fontSize: 16.0,
     ),
+    this.extraClipperHeight,
+    this.labelSpacing = 16.0,
     this.durationTextPadding = 20.0,
     this.durationLinesColor = Colors.blueAccent,
   }) : assert(waveThickness < spacing,

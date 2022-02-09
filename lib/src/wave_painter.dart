@@ -1,7 +1,14 @@
+import 'package:audio_wave/src/base/label.dart';
 import 'package:flutter/material.dart';
 
 import 'base/utils.dart';
 
+///This will paint the waveform
+///Addtion Information
+///this gives location of first wave from right to left
+///-totalBackDistance.dx + dragOffset.dx + (spacing * i)
+///this gives location of first wave from left to right
+///-totalBackDistance.dx + dragOffset.dx
 class WavePainter extends CustomPainter {
   final List<double> waveData;
   final Color waveColor;
@@ -29,6 +36,8 @@ class WavePainter extends CustomPainter {
   final TextStyle durationStyle;
   final Color durationLinesColor;
   final double durationTextPadding;
+  final double durationLinesHeight;
+  final double labelSpacing;
 
   WavePainter({
     required this.waveData,
@@ -54,6 +63,8 @@ class WavePainter extends CustomPainter {
     required this.durationStyle,
     required this.durationLinesColor,
     required this.durationTextPadding,
+    required this.durationLinesHeight,
+    required this.labelSpacing,
   })  : _wavePaint = Paint()
           ..color = waveColor
           ..strokeWidth = waveThickness
@@ -64,7 +75,9 @@ class WavePainter extends CustomPainter {
         _durationLinePaint = Paint()
           ..strokeWidth = 2
           ..color = durationLinesColor;
-  var labelPadding = 0.0;
+  var _labelPadding = 0.0;
+
+  final List<Label> _labels = [];
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -81,26 +94,66 @@ class WavePainter extends CustomPainter {
       ///lower wave
       if (showBottom) _drawLowerWave(canvas, size, i);
 
-      //TODO: check solution for painting text
       ///duration labels
-      if (false) {
-        // //for now adding extra 5 seconds
-        // for (var i = 0; i < waveData.length + 5; i++) {
-        //
-        // }
-        _drawDurationLine(canvas, size, i);
+      if (showDurationLine) {
+        _addLabel(canvas, i, size);
+        _drawTextInRange(canvas, i, size);
       }
     }
 
     ///middle line
-    if (showMiddleLine) {
-      _drawMiddleLine(canvas, size);
-    }
+    if (showMiddleLine) _drawMiddleLine(canvas, size);
   }
 
   @override
   bool shouldRepaint(WavePainter oldDelegate) {
     return true;
+  }
+
+  void _drawTextInRange(Canvas canvas, int i, Size size) {
+    if (_labels.isNotEmpty) {
+      final textSpan = TextSpan(
+        text: _labels[i].content,
+        style: durationStyle,
+      );
+
+      if (_labels[i].offset.dx > -size.width / 2 &&
+          _labels[i].offset.dx < size.width + size.width / 2) {
+        final textPainter = TextPainter(
+          text: textSpan,
+          textDirection: TextDirection.ltr,
+        );
+
+        textPainter.layout(minWidth: 0, maxWidth: size.width);
+        textPainter.paint(
+          canvas,
+          _labels[i].offset,
+        );
+      }
+    }
+  }
+
+  void _addLabel(Canvas canvas, int i, Size size) {
+    canvas.drawLine(
+        Offset(
+            _labelPadding + dragOffset.dx - totalBackDistance.dx, size.height),
+        Offset(_labelPadding + dragOffset.dx - totalBackDistance.dx,
+            size.height + durationLinesHeight),
+        _durationLinePaint);
+    _labels.add(
+      Label(
+        content: showHourInDuration
+            ? Duration(seconds: i).toHHMMSS()
+            : Duration(seconds: i).inSeconds.toMMSS(),
+        offset: Offset(
+            _labelPadding +
+                dragOffset.dx -
+                totalBackDistance.dx -
+                durationTextPadding,
+            size.height + labelSpacing),
+      ),
+    );
+    _labelPadding += spacing * updateFrequecy;
   }
 
   void _drawMiddleLine(Canvas canvas, Size size) {
@@ -144,59 +197,4 @@ class WavePainter extends CustomPainter {
             waveData[i] + size.height - bottomPadding),
         _wavePaint);
   }
-
-  void _drawDurationLine(Canvas canvas, Size size, int i) {
-    final textSpan = TextSpan(
-      text: showHourInDuration
-          ? Duration(seconds: i).toHHMMSS()
-          : Duration(seconds: i).inSeconds.toMMSS(),
-      style: durationStyle,
-    );
-    final textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-    );
-    canvas.drawLine(
-        Offset(
-            labelPadding + dragOffset.dx - totalBackDistance.dx, size.height),
-        Offset(labelPadding + dragOffset.dx - totalBackDistance.dx,
-            size.height + 16),
-        _durationLinePaint);
-    textPainter.layout(minWidth: 0, maxWidth: size.width);
-    textPainter.paint(
-      canvas,
-      Offset(
-        labelPadding +
-            dragOffset.dx -
-            totalBackDistance.dx -
-            durationTextPadding,
-        size.height + 16,
-      ),
-    );
-    labelPadding += spacing * updateFrequecy;
-  }
-
-  void _layoutText(TextPainter textPainter, Size size) {
-    textPainter.layout(minWidth: 0, maxWidth: size.width);
-  }
-
-  void _paintText(Canvas canvas, TextPainter textPainter, Size size) {
-    textPainter.paint(
-      canvas,
-      Offset(
-        labelPadding +
-            dragOffset.dx -
-            totalBackDistance.dx -
-            durationTextPadding,
-        size.height + 16,
-      ),
-    );
-    labelPadding += spacing * updateFrequecy;
-  }
 }
-
-///Addtion Information to get first and last wave location
-///-totalBackDistance.dx + dragOffset.dx + (spacing * i)
-///this gives location of first wave from right to left
-///-totalBackDistance.dx + dragOffset.dx
-///this gives location of first wave from left to right

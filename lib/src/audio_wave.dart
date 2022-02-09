@@ -3,12 +3,17 @@ import 'package:audio_wave/src/base/wave_style.dart';
 import 'package:audio_wave/src/wave_painter.dart';
 import 'package:flutter/material.dart';
 import './base/wave_controller.dart';
+import 'base/wave_clipper.dart';
 
 class AudioWave extends StatefulWidget {
   final Size size;
   final Duration updateFrequency;
   final WaveController waveController;
   final WaveStyle waveStyle;
+  final EdgeInsets? padding;
+  final EdgeInsets? margin;
+  final BoxDecoration? decoration;
+  final Color? backgroundColor;
 
   const AudioWave({
     Key? key,
@@ -16,6 +21,10 @@ class AudioWave extends StatefulWidget {
     required this.updateFrequency,
     required this.waveController,
     this.waveStyle = const WaveStyle(),
+    this.padding,
+    this.margin,
+    this.decoration,
+    this.backgroundColor,
   }) : super(key: key);
 
   @override
@@ -47,42 +56,53 @@ class _AudioWaveState extends State<AudioWave> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onHorizontalDragUpdate: _handleHorizontalDragUpdate,
-      onHorizontalDragStart: _handleHorizontalDragStart,
-      child: ColoredBox(
-        color: widget.waveStyle.backgroundColor,
-        child: RepaintBoundary(
-          child: CustomPaint(
-            size: widget.size,
-            isComplex: false,
-            willChange: true,
-            painter: WavePainter(
-              waveThickness: widget.waveStyle.waveThickness,
-              middleLineThickness: widget.waveStyle.middleLineThickness,
-              middleLineColor: widget.waveStyle.middleLineColor,
-              waveData: widget.waveController.waveData,
-              callPushback: widget.waveController.shouldRefresh,
-              bottomPadding:
-                  widget.waveStyle.bottomPadding ?? widget.size.height / 2,
-              spacing: widget.waveStyle.spacing,
-              waveCap: widget.waveStyle.waveCap,
-              showBottom: widget.waveStyle.showBottom,
-              showTop: widget.waveStyle.showTop,
-              waveColor: widget.waveStyle.waveColor,
-              showMiddleLine: widget.waveStyle.showMiddleLine,
-              totalBackDistance: _totalBackDistance,
-              dragOffset: _dragOffset,
-              pushBack: _pushBackWave,
-              initialPosition: _initialPosition,
-              extendWaveform: widget.waveStyle.extendWaveform,
-              showHourInDuration: widget.waveStyle.showHourInDuration,
-              showDurationLine: widget.waveStyle.showDurationLine,
-              durationLinesColor: widget.waveStyle.durationLinesColor,
-              durationStyle: widget.waveStyle.durationStyle,
-              updateFrequecy: const Duration(seconds: 1).inMilliseconds /
-                  widget.waveController.updateFrequency.inMilliseconds,
-              durationTextPadding: widget.waveStyle.durationTextPadding,
+    return Container(
+      padding: widget.padding,
+      margin: widget.margin,
+      color: widget.backgroundColor,
+      decoration: widget.decoration,
+      child: GestureDetector(
+        onHorizontalDragUpdate: _handleHorizontalDragUpdate,
+        onHorizontalDragStart: _handleHorizontalDragStart,
+        child: ClipPath(
+          clipper: WaveClipper(!widget.waveStyle.showDurationLine
+              ? 0.0
+              : widget.waveStyle.extraClipperHeight ??
+                  (widget.waveStyle.durationLinesHeight +
+                      (widget.waveStyle.durationStyle.fontSize ??
+                          widget.waveStyle.durationLinesHeight))),
+          child: RepaintBoundary(
+            child: CustomPaint(
+              size: widget.size,
+              painter: WavePainter(
+                waveThickness: widget.waveStyle.waveThickness,
+                middleLineThickness: widget.waveStyle.middleLineThickness,
+                middleLineColor: widget.waveStyle.middleLineColor,
+                waveData: widget.waveController.waveData,
+                callPushback: widget.waveController.shouldRefresh,
+                bottomPadding:
+                    widget.waveStyle.bottomPadding ?? widget.size.height / 2,
+                spacing: widget.waveStyle.spacing,
+                waveCap: widget.waveStyle.waveCap,
+                showBottom: widget.waveStyle.showBottom,
+                showTop: widget.waveStyle.showTop,
+                waveColor: widget.waveStyle.waveColor,
+                showMiddleLine: widget.waveStyle.showMiddleLine,
+                totalBackDistance: _totalBackDistance,
+                dragOffset: _dragOffset,
+                pushBack: _pushBackWave,
+                initialPosition: _initialPosition,
+                extendWaveform: widget.waveStyle.extendWaveform,
+                showHourInDuration: widget.waveStyle.showHourInDuration,
+                showDurationLine: widget.waveStyle.showDurationLine,
+                durationLinesColor: widget.waveStyle.durationLinesColor,
+                durationStyle: widget.waveStyle.durationStyle,
+                updateFrequecy: const Duration(seconds: 1).inMilliseconds /
+                    widget.waveController.updateFrequency.inMilliseconds,
+                durationTextPadding: widget.waveStyle.durationTextPadding,
+                durationLinesHeight: widget.waveStyle.durationLinesHeight,
+                labelSpacing: widget.waveStyle.labelSpacing,
+              ),
             ),
           ),
         ),

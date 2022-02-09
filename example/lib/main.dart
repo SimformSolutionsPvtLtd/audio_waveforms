@@ -53,6 +53,9 @@ class _HomeState extends State<Home> {
             size: Size(MediaQuery.of(context).size.width, 200.0),
             updateFrequency: updateFrequency,
             waveController: waveController,
+            margin: const EdgeInsets.all(10.0),
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14.0), color: Colors.black),
           ),
           const SizedBox(height: 40),
           Row(
