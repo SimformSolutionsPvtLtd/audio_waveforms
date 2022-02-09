@@ -1,0 +1,47 @@
+PODS:
+  - audio_wave (0.0.1):
+    - Flutter
+  - Flutter (1.0.0)
+  - flutter_sound (9.1.2):
+    - Flutter
+    - flutter_sound_core (= 9.1.2)
+  - flutter_sound_core (9.1.2)
+  - path_provider_ios (0.0.1):
+    - Flutter
+  - "permission_handler (5.1.0+2)":
+    - Flutter
+
+DEPENDENCIES:
+  - audio_wave (from `.symlinks/plugins/audio_wave/ios`)
+  - Flutter (from `Flutter`)
+  - flutter_sound (from `.symlinks/plugins/flutter_sound/ios`)
+  - path_provider_ios (from `.symlinks/plugins/path_provider_ios/ios`)
+  - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
+
+SPEC REPOS:
+  trunk:
+    - flutter_sound_core
+
+EXTERNAL SOURCES:
+  audio_wave:
+    :path: ".symlinks/plugins/audio_wave/ios"
+  Flutter:
+    :path: Flutter
+  flutter_sound:
+    :path: ".symlinks/plugins/flutter_sound/ios"
+  path_provider_ios:
+    :path: ".symlinks/plugins/path_provider_ios/ios"
+  permission_handler:
+    :path: ".symlinks/plugins/permission_handler/ios"
+
+SPEC CHECKSUMS:
+  audio_wave: 61054f18c1b0e616a987b6dfd4c3a24d603b034a
+  Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
+  flutter_sound: a76214c89a5debb0307bb653c364c5ec2fed8cba
+  flutter_sound_core: b31694f619cd74a09744a7e392f5a50e7004c6ef
+  path_provider_ios: 7d7ce634493af4477d156294792024ec3485acd5
+  permission_handler: ccb20a9fad0ee9b1314a52b70b76b473c5f8dab0
+
+PODFILE CHECKSUM: 6ec68859c5bc4d4f536d300b7437749f10576607
+
+COCOAPODS: 1.10.1
