@@ -75,33 +75,33 @@ class _AudioWaveState extends State<AudioWave> {
             child: CustomPaint(
               size: widget.size,
               painter: WavePainter(
-                waveThickness: widget.waveStyle.waveThickness,
-                middleLineThickness: widget.waveStyle.middleLineThickness,
-                middleLineColor: widget.waveStyle.middleLineColor,
-                waveData: widget.waveController.waveData,
-                callPushback: widget.waveController.shouldRefresh,
-                bottomPadding:
-                    widget.waveStyle.bottomPadding ?? widget.size.height / 2,
-                spacing: widget.waveStyle.spacing,
-                waveCap: widget.waveStyle.waveCap,
-                showBottom: widget.waveStyle.showBottom,
-                showTop: widget.waveStyle.showTop,
-                waveColor: widget.waveStyle.waveColor,
-                showMiddleLine: widget.waveStyle.showMiddleLine,
-                totalBackDistance: _totalBackDistance,
-                dragOffset: _dragOffset,
-                pushBack: _pushBackWave,
-                initialPosition: _initialPosition,
-                extendWaveform: widget.waveStyle.extendWaveform,
-                showHourInDuration: widget.waveStyle.showHourInDuration,
-                showDurationLine: widget.waveStyle.showDurationLine,
-                durationLinesColor: widget.waveStyle.durationLinesColor,
-                durationStyle: widget.waveStyle.durationStyle,
-                updateFrequecy: const Duration(seconds: 1).inMilliseconds /
-                    widget.waveController.updateFrequency.inMilliseconds,
-                durationTextPadding: widget.waveStyle.durationTextPadding,
-                durationLinesHeight: widget.waveStyle.durationLinesHeight,
+              waveThickness: widget.waveStyle.waveThickness,
+              middleLineThickness: widget.waveStyle.middleLineThickness,
+              middleLineColor: widget.waveStyle.middleLineColor,
+              waveData: widget.waveController.waveData,
+              callPushback: widget.waveController.shouldRefresh,
+              bottomPadding:
+                  widget.waveStyle.bottomPadding ?? widget.size.height / 2,
+              spacing: widget.waveStyle.spacing,
+              waveCap: widget.waveStyle.waveCap,
+              showBottom: widget.waveStyle.showBottom,
+              showTop: widget.waveStyle.showTop,
+              waveColor: widget.waveStyle.waveColor,
+              showMiddleLine: widget.waveStyle.showMiddleLine,
+              totalBackDistance: _totalBackDistance,
+              dragOffset: _dragOffset,
+              pushBack: _pushBackWave,
+              initialPosition: _initialPosition,
+              extendWaveform: widget.waveStyle.extendWaveform,
+              showHourInDuration: widget.waveStyle.showHourInDuration,
+              showDurationLine: widget.waveStyle.showDurationLine,
+              durationLinesColor: widget.waveStyle.durationLinesColor,
+              durationStyle: widget.waveStyle.durationStyle,
+              updateFrequecy: const Duration(seconds: 1).inMilliseconds /
+                  widget.waveController.updateFrequency.inMilliseconds,
+              durationTextPadding: widget.waveStyle.durationTextPadding,durationLinesHeight: widget.waveStyle.durationLinesHeight,
                 labelSpacing: widget.waveStyle.labelSpacing,
+                gradient: widget.waveStyle.gradient,
               ),
             ),
           ),
@@ -145,7 +145,8 @@ class _AudioWaveState extends State<AudioWave> {
   }
 
   ///This will handle pushing back the wave when it reaches to middle/end of the
-  ///given size.width
+  ///given size.width.
+  ///
   ///This will also handle refreshing the wave after scrolled
   void _pushBackWave() {
     if (_isScrolled) {

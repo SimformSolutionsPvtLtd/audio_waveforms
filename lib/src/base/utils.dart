@@ -11,3 +11,4 @@ extension IntExtension on int {
 
 ///state of recorer
 enum RecorderState { initialized, recording, paused, stopped }
+

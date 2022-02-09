@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:audio_wave/audio_wave.dart';
+import 'dart:ui' as ui show Gradient;
 
 void main() => runApp(const MyApp());
 
@@ -50,12 +51,32 @@ class _HomeState extends State<Home> {
         children: [
           const SizedBox(height: 200),
           AudioWave(
-            size: Size(MediaQuery.of(context).size.width, 200.0),
+            size: Size(MediaQuery.of(context).size.width, 100.0),
             updateFrequency: updateFrequency,
             waveController: waveController,
-            margin: const EdgeInsets.all(10.0),
+            margin: const EdgeInsets.all(20.0),
+            waveStyle: WaveStyle(
+              waveColor: Colors.white,
+              middleLineColor: Colors.white,
+              durationLinesColor: Colors.white,
+              durationLinesHeight: 8.0,
+              extendWaveform: true,
+              showMiddleLine: false,
+              labelSpacing: 8.0,
+              durationStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 18.0,
+              ),
+              gradient: ui.Gradient.linear(
+                const Offset(70, 50),
+                Offset(MediaQuery.of(context).size.width / 2, 0),
+                [Colors.red, Colors.green],
+              ),
+            ),
             decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14.0), color: Colors.black),
+                borderRadius: BorderRadius.circular(14.0),
+                color: Colors.black
+            ),
           ),
           const SizedBox(height: 40),
           Row(

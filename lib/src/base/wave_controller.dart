@@ -36,12 +36,24 @@ class WaveController extends ChangeNotifier {
 
   bool _hasPermission = false;
 
+  ///If we have microphone permission or not.
+  bool get hasPermission => _hasPermission;
+
   ///Use this to check permission and starts recording.
+  ///
   ///Can be called after pausing.
-  ///If called after stoping the recording, it will re-initialize
+  ///If called after stoping the recording, it will re-initialize.
+  ///
+  ///Path paramater is optional, if you want to provide provide with name
+  ///of the file.
+  ///
+  ///eg. /dir1/dir2/file-name
+  ///
+  ///Only supported audio file format is .m4a for IOS and .mp3 for Android.
+  ///More formats will be added shortly.
   Future<void> record([String? path]) async {
     if (_recorderState != RecorderState.recording) {
-      await _checkPermission();
+      await checkPermission();
       if (_hasPermission) {
         if (Platform.isAndroid && _recorderState == RecorderState.stopped) {
           await _initRecorder(path);
@@ -89,17 +101,22 @@ class WaveController extends ChangeNotifier {
     notifyListeners();
   }
 
-  ///checks microphone permission
-  Future<void> _checkPermission() async {
+  ///This method can be used to check microphone permission.
+  /// Returns true if we have permission
+  ///else false.
+  ///
+  /// This method is called during record().
+  Future<bool> checkPermission() async {
     final result = await AudioWaveInterface.instance.checkPermission();
     if (result) {
       _hasPermission = result;
     }
     notifyListeners();
+    return _hasPermission;
   }
 
   ///Use this to pause recording.
-  ///Can start recording again after pausing
+  ///Can start recording again after pausing.
   Future<void> pause() async {
     if (_recorderState == RecorderState.recording) {
       _isRecording = (await AudioWaveInterface.instance.pause()) ?? true;
@@ -113,7 +130,7 @@ class WaveController extends ChangeNotifier {
   }
 
   ///Use this stop recording.
-  ///Resouces are freed after calling this.
+  ///Resouces are freed after calling this and file is saved.
   Future<void> stop() async {
     if (_recorderState == RecorderState.recording ||
         _recorderState == RecorderState.paused) {
@@ -165,20 +182,21 @@ class WaveController extends ChangeNotifier {
   }
 
   ///Use this function to get wave to the initial state after scrolling,
-  ///whether recording is stopped or running
+  ///whether recording is stopped or running.
   void refresh() {
     _shouldRefresh = true;
     notifyListeners();
   }
 
   ///This function can be used to handle the refresh state.
-  ///for most cases refresh() should be fine
+  ///for most cases refresh() should be fine.
   void setRefresh(bool refresh) {
     _shouldRefresh = refresh;
     notifyListeners();
   }
 
-  ///Call this to free [resouces], it will also dispose the controller
+  ///This function must be called to free [resouces],
+  ///it will also dispose the controller.
   void disposeFunc() async {
     if (_timer != null) {
       _timer!.cancel();
