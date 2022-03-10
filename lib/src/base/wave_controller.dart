@@ -15,7 +15,7 @@ class WaveController extends ChangeNotifier {
   ///and in IOS value added
   late double normalizationFactor = Platform.isAndroid ? 60 : 40;
 
-  ///Current list of decibels(different for platform)
+  ///Current list of decibels(different values for each platform)
   List<double> get waveData => _waveData;
 
   RecorderState _recorderState = RecorderState.stopped;
@@ -40,39 +40,41 @@ class WaveController extends ChangeNotifier {
   ///Can be called after pausing.
   ///If called after stoping the recording, it will re-initialize
   Future<void> record([String? path]) async {
-    await _checkPermission();
-    if (_hasPermission) {
-      if (Platform.isAndroid && _recorderState == RecorderState.stopped) {
-        await _initRecorder(path);
-      }
-      if (Platform.isIOS) {
-        _recorderState = RecorderState.initialized;
-      }
-      if (_recorderState == RecorderState.paused && Platform.isAndroid) {
-        _isRecording = await AudioWaveInterface.instance.resume();
-        if (_isRecording) {
-          _startTimer();
-          _recorderState = RecorderState.recording;
-        } else {
-          throw "Failed to resume recording";
+    if (_recorderState != RecorderState.recording) {
+      await _checkPermission();
+      if (_hasPermission) {
+        if (Platform.isAndroid && _recorderState == RecorderState.stopped) {
+          await _initRecorder(path);
         }
-        notifyListeners();
-        return;
-      }
+        if (Platform.isIOS) {
+          _recorderState = RecorderState.initialized;
+        }
+        if (_recorderState == RecorderState.paused && Platform.isAndroid) {
+          _isRecording = await AudioWaveInterface.instance.resume();
+          if (_isRecording) {
+            _startTimer();
+            _recorderState = RecorderState.recording;
+          } else {
+            throw "Failed to resume recording";
+          }
+          notifyListeners();
+          return;
+        }
 
-      if (_recorderState == RecorderState.initialized) {
-        _isRecording = await AudioWaveInterface.instance.record(path);
-        if (_isRecording) {
-          _recorderState = RecorderState.recording;
-          _startTimer();
-        } else {
-          throw "Failed to start recording";
+        if (_recorderState == RecorderState.initialized) {
+          _isRecording = await AudioWaveInterface.instance.record(path);
+          if (_isRecording) {
+            _recorderState = RecorderState.recording;
+            _startTimer();
+          } else {
+            throw "Failed to start recording";
+          }
+          notifyListeners();
         }
+      } else {
+        _recorderState = RecorderState.stopped;
         notifyListeners();
       }
-    } else {
-      _recorderState = RecorderState.stopped;
-      notifyListeners();
     }
   }
 
@@ -87,7 +89,7 @@ class WaveController extends ChangeNotifier {
     notifyListeners();
   }
 
-  ///checks permission
+  ///checks microphone permission
   Future<void> _checkPermission() async {
     final result = await AudioWaveInterface.instance.checkPermission();
     if (result) {
@@ -113,7 +115,8 @@ class WaveController extends ChangeNotifier {
   ///Use this stop recording.
   ///Resouces are freed after calling this.
   Future<void> stop() async {
-    if (_recorderState == RecorderState.initialized) {
+    if (_recorderState == RecorderState.recording ||
+        _recorderState == RecorderState.paused) {
       _isRecording = await AudioWaveInterface.instance.stop();
     }
     if (!_isRecording) {
