@@ -1,10 +1,9 @@
 import 'package:audio_wave/src/base/label.dart';
 import 'package:flutter/material.dart';
-
 import 'base/utils.dart';
 
 ///This will paint the waveform
-///Addtion Information
+///Addtional Information
 ///this gives location of first wave from right to left
 ///-totalBackDistance.dx + dragOffset.dx + (spacing * i)
 ///this gives location of first wave from left to right
@@ -38,6 +37,7 @@ class WavePainter extends CustomPainter {
   final double durationTextPadding;
   final double durationLinesHeight;
   final double labelSpacing;
+  final Shader? gradient;
 
   WavePainter({
     required this.waveData,
@@ -65,6 +65,7 @@ class WavePainter extends CustomPainter {
     required this.durationTextPadding,
     required this.durationLinesHeight,
     required this.labelSpacing,
+    required this.gradient,
   })  : _wavePaint = Paint()
           ..color = waveColor
           ..strokeWidth = waveThickness
@@ -82,6 +83,9 @@ class WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (var i = 0; i < waveData.length; i++) {
+      ///wave gradient
+      if (gradient != null) _waveGradient();
+
       if (((spacing * i) + dragOffset.dx + spacing >
               size.width / (extendWaveform ? 1 : 2) + totalBackDistance.dx) &&
           callPushback) {
@@ -196,5 +200,9 @@ class WavePainter extends CustomPainter {
                 initialPosition,
             waveData[i] + size.height - bottomPadding),
         _wavePaint);
+  }
+
+  void _waveGradient() {
+    _wavePaint.shader = gradient;
   }
 }

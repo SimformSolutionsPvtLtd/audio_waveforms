@@ -57,11 +57,18 @@ class WaveStyle {
   final double labelSpacing;
 
   ///It might happen that label text gets cut or have extra clipping.
+  ///
   ///So use this to add or remove clipping
   final double? extraClipperHeight;
 
   ///Value > 0 will be padded right and value < 0 will be padded left
   final double durationTextPadding;
+
+  ///Provide gradient to waveform using this. Use shader as shown in example.
+  ///
+  ///For only two colors. offset.dx is gradient effect starts and offset.dy
+  ///is for y-axis effect.
+  final Shader? gradient;
 
   const WaveStyle({
     this.waveColor = Colors.blueGrey,
@@ -87,6 +94,7 @@ class WaveStyle {
     this.labelSpacing = 16.0,
     this.durationTextPadding = 20.0,
     this.durationLinesColor = Colors.blueAccent,
+    this.gradient,
   }) : assert(waveThickness < spacing,
             "waveThickness can't be greater than spacing");
 }
