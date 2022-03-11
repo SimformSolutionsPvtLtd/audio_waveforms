@@ -11,6 +11,10 @@ class WaveController extends ChangeNotifier {
   ///At which rate waveform needs to be updated
   late Duration updateFrequency = const Duration(milliseconds: 100);
 
+  late Encoder encoder = Encoder.aac;
+
+  late int sampleRate = 16000;
+
   ///Db we get from native is too high so in Android it the value is substracted
   ///and in IOS value added
   late double normalizationFactor = Platform.isAndroid ? 60 : 40;
@@ -44,13 +48,13 @@ class WaveController extends ChangeNotifier {
   ///Can be called after pausing.
   ///If called after stoping the recording, it will re-initialize.
   ///
-  ///Path paramater is optional, if you want to provide provide with name
-  ///of the file.
+  ///Path paramater is optional and if not provided current Datetime will be
+  /// file name and default extension will be .aac.
   ///
-  ///eg. /dir1/dir2/file-name
+  ///If you want to provide provide with name
+  ///of the file, add full path with name and extension.
   ///
-  ///Only supported audio file format is .m4a for IOS and .mp3 for Android.
-  ///More formats will be added shortly.
+  ///eg. /dir1/dir2/file-name.mp3
   Future<void> record([String? path]) async {
     if (_recorderState != RecorderState.recording) {
       await checkPermission();
@@ -74,7 +78,8 @@ class WaveController extends ChangeNotifier {
         }
 
         if (_recorderState == RecorderState.initialized) {
-          _isRecording = await AudioWaveInterface.instance.record(path);
+          _isRecording = await AudioWaveInterface.instance
+              .record(encoder.index, sampleRate, path);
           if (_isRecording) {
             _recorderState = RecorderState.recording;
             _startTimer();
@@ -92,7 +97,8 @@ class WaveController extends ChangeNotifier {
 
   ///This method is only required for Android platform
   Future<void> _initRecorder(String? path) async {
-    final initialized = await AudioWaveInterface.instance.initRecorder(path);
+    final initialized = await AudioWaveInterface.instance
+        .initRecorder(path, encoder.index, sampleRate);
     if (initialized) {
       _recorderState = RecorderState.initialized;
     } else {
@@ -131,17 +137,31 @@ class WaveController extends ChangeNotifier {
 
   ///Use this stop recording.
   ///Resouces are freed after calling this and file is saved.
-  Future<void> stop() async {
+  ///Returns path where file is saved.
+  ///
+  ///Also clears waveform and resets to initial state. This behaviour can be changed,
+  ///pass false and it will not clear waves.
+  Future<String?> stop([bool callReset = true]) async {
     if (_recorderState == RecorderState.recording ||
         _recorderState == RecorderState.paused) {
-      _isRecording = await AudioWaveInterface.instance.stop();
+      final path = await AudioWaveInterface.instance.stop();
+      if (path != null) {
+        _isRecording = false;
+        _timer?.cancel();
+        _recorderState = RecorderState.stopped;
+        if (callReset) _reset();
+        return path;
+      } else {
+        throw "Failed stop recording";
+      }
     }
-    if (!_isRecording) {
-      _timer?.cancel();
-      _recorderState = RecorderState.stopped;
-    } else {
-      throw "Failed stop recording";
-    }
+
+    notifyListeners();
+  }
+
+  void _reset() {
+    refresh();
+    _waveData.clear();
     notifyListeners();
   }
 

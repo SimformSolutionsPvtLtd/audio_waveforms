@@ -5,17 +5,20 @@ public class AudioWaveMethodCall: NSObject, AVAudioRecorderDelegate{
     var path: String?
     var hasPermission: Bool = false
     
-    public func startRecording(_ result: @escaping FlutterResult,_ path: String?){
+    public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ fileNameFormat: String){
         let settings = [
-            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 16000,
+            AVFormatIDKey: getEncoder(encoder ?? 0),
+            AVSampleRateKey: sampleRate ?? 16000,
             AVNumberOfChannelsKey: 1,
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
         let options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetooth]
         if (path == nil) {
             let directory = NSTemporaryDirectory()
-            let fileName = UUID().uuidString + ".m4a"
+            let date = Date()
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = fileNameFormat
+            let fileName = dateFormatter.string(from: date) + ".aac"
             
             self.path = NSURL.fileURL(withPathComponents: [directory, fileName])?.absoluteString
         } else {
@@ -41,7 +44,7 @@ public class AudioWaveMethodCall: NSObject, AVAudioRecorderDelegate{
     public func stopRecording(_ result: @escaping FlutterResult) {
         audioRecorder?.stop()
         audioRecorder = nil
-        result(false)
+        result(path)
     }
     
     public func pauseRecording(_ result: @escaping FlutterResult) {
@@ -73,8 +76,25 @@ public class AudioWaveMethodCall: NSObject, AVAudioRecorderDelegate{
             hasPermission = true
             break
         @unknown default:
+            hasPermission = false
             break
         }
         result(hasPermission)
+    }
+    public func getEncoder(_ enCoder: Int) -> Int {
+        switch(enCoder) {
+        case 1:
+            return Int(kAudioFormatMPEG4AAC_ELD)
+        case 2:
+            return Int(kAudioFormatMPEG4AAC_HE)
+        case 3:
+            return Int(kAudioFormatOpus)
+        case 4:
+            return Int(kAudioFormatAMR)
+        case 5:
+            return Int(kAudioFormatAMR_WB)
+        default:
+            return Int(kAudioFormatMPEG4AAC)
+        }
     }
 }

@@ -15,6 +15,8 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
 import java.io.IOException
+import java.text.DateFormat.getDateTimeInstance
+import java.util.*
 
 
 /** AudioWavePlugin */
@@ -26,6 +28,8 @@ class AudioWavePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var activity: Activity? = null
     private lateinit var audioWaveMethodCall: AudioWaveMethodCall
     private var path: String? = null
+    private var codec: Int = 0
+    private var sampleRate: Int = 16000
 
     object Constants {
         const val initRecorder = "initRecorder"
@@ -38,6 +42,9 @@ class AudioWavePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         const val path = "path"
         const val LOG_TAG = "AudioWave"
         const val methodChannelName = "simform_audio_wave_plugin/methods"
+        const val enCoder = "enCoder"
+        const val sampleRate = "sampleRate"
+        const val fileNameFormat = "dd-MM-yy-hh-mm-ss"
     }
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -51,12 +58,14 @@ class AudioWavePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         when (call.method) {
             Constants.initRecorder -> {
                 path = call.argument(Constants.path) as String?
-                checkPathAndInitialiseRecorder(result)
+                codec = (call.argument(Constants.enCoder) as Int?) ?: 0
+                sampleRate = (call.argument(Constants.sampleRate) as Int?) ?: 16000
+                checkPathAndInitialiseRecorder(result, codec, sampleRate)
             }
             Constants.startRecording -> audioWaveMethodCall.startRecorder(result, recorder)
             Constants.stopRecording -> {
+                audioWaveMethodCall.stopRecording(result, recorder, path!!)
                 recorder = null
-                audioWaveMethodCall.stopRecording(result, recorder)
             }
             Constants.pauseRecording -> audioWaveMethodCall.pauseRecording(result, recorder)
             Constants.resumeRecording -> audioWaveMethodCall.resumeRecording(result, recorder)
@@ -66,12 +75,20 @@ class AudioWavePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
     }
 
-    private fun checkPathAndInitialiseRecorder(result: Result) {
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    private fun checkPathAndInitialiseRecorder(
+        result: Result,
+        enCoder: Int,
+        sampleRate: Int
+    ) {
         if (path == null) {
             val outputDir = activity?.cacheDir
             val outputFile: File?
+            val dateTimeInstance = getDateTimeInstance()
+            dateTimeInstance.format(Constants.fileNameFormat)
+            val currentDate = dateTimeInstance.format(Date())
             try {
-                outputFile = File.createTempFile("audio-wave", ".mp3", outputDir)
+                outputFile = File.createTempFile(currentDate, ".aac", outputDir)
                 path = outputFile.path
                 try {
                     recorder = MediaRecorder()
@@ -79,12 +96,26 @@ class AudioWavePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     Log.e(Constants.LOG_TAG, "Failed to initialise Recorder")
                 }
 
-                audioWaveMethodCall.initRecorder(path!!, result, recorder)
+                audioWaveMethodCall.initRecorder(
+                    path!!,
+                    result,
+                    recorder,
+                    enCoder,
+                    enCoder,
+                    sampleRate
+                )
             } catch (e: IOException) {
                 Log.e(Constants.LOG_TAG, "Failed to create file")
             }
         } else {
-            audioWaveMethodCall.initRecorder(path!!, result, recorder)
+            audioWaveMethodCall.initRecorder(
+                path!!,
+                result,
+                recorder,
+                enCoder,
+                enCoder,
+                sampleRate
+            )
         }
     }
 
