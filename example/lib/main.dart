@@ -31,7 +31,7 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    waveController = WaveController();
+    waveController = WaveController()..encoder = Encoder.aac;
   }
 
   @override
@@ -43,9 +43,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Audio Wave Example"),
-      ),
+      backgroundColor: const Color(0xFF394253),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -74,47 +72,71 @@ class _HomeState extends State<Home> {
               ),
             ),
             decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14.0),
-                color: Colors.black
+              borderRadius: BorderRadius.circular(14.0),
+              gradient: const LinearGradient(
+                colors: <Color>[
+                  Color(0xFF615766),
+                  Color(0xFF394253),
+                  Color(0xFF412B4F),
+                ],
+                begin: Alignment.bottomLeft,
+                stops: <double>[0.2, 0.45, 0.8],
+              ),
             ),
           ),
           const SizedBox(height: 40),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Center(
-                child: CircleAvatar(
-                  backgroundColor: Colors.black,
-                  child: IconButton(
-                    onPressed: waveController.record,
-                    color: Colors.white,
-                    icon: const Icon(Icons.play_arrow),
+          Center(
+            child: Container(
+              decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                      colors: [Color(0xff2D3548), Color(0xff151922)],
+                      stops: [0.1, 0.45],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter),
+                  borderRadius: BorderRadius.circular(12.0)),
+              padding: const EdgeInsets.all(12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.black,
+                    child: IconButton(
+                      onPressed: waveController.record,
+                      color: Colors.white,
+                      icon: const Icon(Icons.play_arrow),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Center(
-                child: CircleAvatar(
-                  backgroundColor: Colors.black,
-                  child: IconButton(
-                    onPressed: waveController.pause,
-                    color: Colors.white,
-                    icon: const Icon(Icons.pause),
+                  const SizedBox(width: 10),
+                  CircleAvatar(
+                    backgroundColor: Colors.black,
+                    child: IconButton(
+                      onPressed: waveController.pause,
+                      color: Colors.white,
+                      icon: const Icon(Icons.pause),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Center(
-                child: CircleAvatar(
-                  backgroundColor: Colors.black,
-                  child: IconButton(
-                    onPressed: waveController.refresh,
-                    color: Colors.white,
-                    icon: const Icon(Icons.refresh),
+                  const SizedBox(width: 10),
+                  CircleAvatar(
+                    backgroundColor: Colors.black,
+                    child: IconButton(
+                      onPressed: waveController.stop,
+                      color: Colors.white,
+                      icon: const Icon(Icons.stop),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  CircleAvatar(
+                    backgroundColor: Colors.black,
+                    child: IconButton(
+                      onPressed: waveController.refresh,
+                      color: Colors.white,
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           )
         ],
       ),

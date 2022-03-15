@@ -17,18 +17,31 @@ import kotlin.math.log10
 private const val LOG_TAG = "AudioWave"
 private const val RECORD_AUDIO_REQUEST_CODE = 1001
 
-class AudioWaveMethodCall: PluginRegistry.RequestPermissionsResultListener {
+class AudioWaveMethodCall : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
-     fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
+    fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
         val db = 20 * log10((recorder?.maxAmplitude?.toDouble() ?: 0.0 / 32768.0))
-        result.success(db)
+        if (db == Double.NEGATIVE_INFINITY) {
+            Log.e(LOG_TAG, "Microphone might be turned off")
+        } else {
+            result.success(db)
+        }
     }
 
-    fun initRecorder(path: String, result: MethodChannel.Result, recorder: MediaRecorder?) {
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    fun initRecorder(
+        path: String,
+        result: MethodChannel.Result,
+        recorder: MediaRecorder?,
+        enCoder: Int,
+        outputFormat: Int,
+        sampleRate: Int
+    ) {
         recorder?.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setOutputFormat(getOutputFormat(outputFormat))
+            setAudioEncoder(getEncoder(enCoder))
+            setAudioSamplingRate(sampleRate)
             setOutputFile(path)
             try {
                 recorder.prepare()
@@ -39,13 +52,14 @@ class AudioWaveMethodCall: PluginRegistry.RequestPermissionsResultListener {
         }
     }
 
-    fun stopRecording(result: MethodChannel.Result, recorder: MediaRecorder?) {
+    fun stopRecording(result: MethodChannel.Result, recorder: MediaRecorder?, path: String) {
         try {
             recorder?.apply {
                 stop()
+                reset()
                 release()
             }
-            result.success(false)
+            result.success(path)
         } catch (e: IllegalStateException) {
             Log.e(LOG_TAG, "Failed to stop recording")
         }
@@ -79,6 +93,7 @@ class AudioWaveMethodCall: PluginRegistry.RequestPermissionsResultListener {
             Log.e(LOG_TAG, "Failed to resume recording")
         }
     }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>?,
@@ -97,7 +112,7 @@ class AudioWaveMethodCall: PluginRegistry.RequestPermissionsResultListener {
         return result == PackageManager.PERMISSION_GRANTED
     }
 
-    fun checkPermission(result: MethodChannel.Result,activity: Activity?) {
+    fun checkPermission(result: MethodChannel.Result, activity: Activity?) {
         if (!isPermissionGranted(activity)) {
             activity?.let {
                 ActivityCompat.requestPermissions(
@@ -108,5 +123,31 @@ class AudioWaveMethodCall: PluginRegistry.RequestPermissionsResultListener {
         } else {
             result.success(true)
         }
+    }
+
+    private fun getEncoder(enCoder: Int): Int {
+        when (enCoder) {
+
+            1 -> return MediaRecorder.AudioEncoder.AAC_ELD
+            2 -> return MediaRecorder.AudioEncoder.HE_AAC
+            3 -> return MediaRecorder.AudioEncoder.AMR_NB
+            4 -> return MediaRecorder.AudioEncoder.AMR_WB
+            5 -> {
+                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    MediaRecorder.AudioEncoder.OPUS
+                } else {
+                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
+                    MediaRecorder.AudioEncoder.AAC
+                }
+            }
+            else -> return MediaRecorder.AudioEncoder.AAC
+        }
+    }
+
+    private fun getOutputFormat(format: Int): Int {
+        if (format == 3 || format == 4) {
+            return MediaRecorder.OutputFormat.THREE_GPP
+        }
+        return MediaRecorder.OutputFormat.MPEG_4
     }
 }

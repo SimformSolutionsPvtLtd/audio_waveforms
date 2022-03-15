@@ -13,6 +13,9 @@ public class SwiftAudioWavePlugin: NSObject, FlutterPlugin {
         static let getDecibel = "getDecibel"
         static let checkPermission = "checkPermission"
         static let path = "path"
+        static let encoder = "encoder"
+        static let sampleRate = "sampleRate"
+        static let fileNameFormat = "YY-MM-dd-HH-mm-ss"
     }
     
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -26,7 +29,8 @@ public class SwiftAudioWavePlugin: NSObject, FlutterPlugin {
         let args = call.arguments as? Dictionary<String, Any>
         switch call.method {
         case Constants.startRecording:
-            audioWaveMethodCall.startRecording(result,args?[Constants.path] as? String)
+            audioWaveMethodCall.startRecording(result,  args?[Constants.path] as? String,
+                                               args?[Constants.encoder] as? Int, args?[Constants.sampleRate] as? Int,Constants.fileNameFormat)
             break
         case Constants.pauseRecording:
             audioWaveMethodCall.pauseRecording(result)

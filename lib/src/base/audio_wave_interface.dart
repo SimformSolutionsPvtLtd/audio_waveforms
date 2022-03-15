@@ -12,18 +12,31 @@ class AudioWaveInterface {
       MethodChannel(Constants.methodChannelName);
 
   ///platform call to start recording
-  Future<bool> record([String? path]) async {
+  Future<bool> record(int audioFormat, int sampleRate, [String? path]) async {
     final _isRecording = await _methodChannel.invokeMethod(
         Constants.startRecording,
-        Platform.isIOS ? {Constants.path: path} : null);
+        Platform.isIOS
+            ? {
+                Constants.path: path,
+                Constants.codec: audioFormat,
+                Constants.sampleRate: sampleRate,
+              }
+            : null);
     return _isRecording ?? false;
   }
 
   ///platform call to initialise the recorder.
   ///This method is only required for Android platform
-  Future<bool> initRecorder(String? path) async {
-    final initialized = await _methodChannel
-        .invokeMethod(Constants.initRecorder, {Constants.path: path});
+  Future<bool> initRecorder(
+      String? path, int audioFormat, int sampleRate) async {
+    final initialized = await _methodChannel.invokeMethod(
+      Constants.initRecorder,
+      {
+        Constants.path: path,
+        Constants.codec: audioFormat,
+        Constants.sampleRate: sampleRate,
+      },
+    );
     return initialized ?? false;
   }
 
@@ -35,10 +48,10 @@ class AudioWaveInterface {
   }
 
   ///platform call to stop recording
-  Future<bool> stop() async {
+  Future<String?> stop() async {
     final _isRecording =
         await _methodChannel.invokeMethod(Constants.stopRecording);
-    return _isRecording ?? false;
+    return _isRecording;
   }
 
   ///platform call to resume recording.
