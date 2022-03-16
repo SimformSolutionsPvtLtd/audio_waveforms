@@ -1,4 +1,4 @@
-package com.simform.audiowave.audio_wave
+package com.simform.audio_waveforms
 
 import android.Manifest
 import android.app.Activity
@@ -14,10 +14,10 @@ import java.io.IOException
 import java.lang.IllegalStateException
 import kotlin.math.log10
 
-private const val LOG_TAG = "AudioWave"
+private const val LOG_TAG = "AudioWaveforms"
 private const val RECORD_AUDIO_REQUEST_CODE = 1001
 
-class AudioWaveMethodCall : PluginRegistry.RequestPermissionsResultListener {
+class AudioWaveformsMethodCall : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
         val db = 20 * log10((recorder?.maxAmplitude?.toDouble() ?: 0.0 / 32768.0))

@@ -38,8 +38,8 @@ class WaveStyle {
   ///Extend the wave to the end of size.width, default is size.width/2
   final bool extendWaveform;
 
-  ///Show duration labels. Default is true
-  final bool showDurationLine;
+  ///Show duration labels. Default is false
+  final bool showDurationLabel;
 
   ///Show duration label in HH:MM:SS format. Default is MM:SS
   final bool showHourInDuration;
@@ -81,7 +81,7 @@ class WaveStyle {
     this.middleLineColor = Colors.redAccent,
     this.middleLineThickness = 3.0,
     this.waveThickness = 3.0,
-    this.showDurationLine = true,
+    this.showDurationLabel = false,
     this.extendWaveform = false,
     this.backgroundColor = Colors.black,
     this.showHourInDuration = false,

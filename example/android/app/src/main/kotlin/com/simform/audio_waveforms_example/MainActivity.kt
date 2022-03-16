@@ -1,4 +1,4 @@
-package com.simform.audiowave.audio_wave_example
+package com.simform.audio_waveforms_example
 
 import io.flutter.embedding.android.FlutterActivity
 

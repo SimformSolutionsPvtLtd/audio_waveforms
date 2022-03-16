@@ -1,4 +1,4 @@
-import 'package:audio_wave/src/base/label.dart';
+import '/src/base/label.dart';
 import 'package:flutter/material.dart';
 import 'base/utils.dart';
 
@@ -26,7 +26,7 @@ class WavePainter extends CustomPainter {
   final VoidCallback pushBack;
   final bool callPushback;
   final bool extendWaveform;
-  final bool showDurationLine;
+  final bool showDurationLabel;
   final bool showHourInDuration;
   final double updateFrequecy;
   final Paint _wavePaint;
@@ -59,7 +59,7 @@ class WavePainter extends CustomPainter {
     required this.extendWaveform,
     required this.updateFrequecy,
     required this.showHourInDuration,
-    required this.showDurationLine,
+    required this.showDurationLabel,
     required this.durationStyle,
     required this.durationLinesColor,
     required this.durationTextPadding,
@@ -99,7 +99,7 @@ class WavePainter extends CustomPainter {
       if (showBottom) _drawLowerWave(canvas, size, i);
 
       ///duration labels
-      if (showDurationLine) {
+      if (showDurationLabel) {
         _addLabel(canvas, i, size);
         _drawTextInRange(canvas, i, size);
       }

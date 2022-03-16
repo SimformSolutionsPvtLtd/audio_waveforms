@@ -1,6 +1,6 @@
 import AVFoundation
 
-public class AudioWaveMethodCall: NSObject, AVAudioRecorderDelegate{
+public class AudioWaveformsMethodCall: NSObject, AVAudioRecorderDelegate{
     var audioRecorder: AVAudioRecorder?
     var path: String?
     var hasPermission: Bool = false

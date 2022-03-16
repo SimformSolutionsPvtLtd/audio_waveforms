@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:audio_wave/src/base/constants.dart';
+import '/src/base/constants.dart';
 import 'package:flutter/services.dart';
 
 class AudioWaveInterface {

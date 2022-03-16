@@ -1,4 +1,4 @@
-name: audio_wave
+name: audio_waveforms
 description: A new Flutter project.
 version: 0.0.1
 homepage:
@@ -15,12 +15,12 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^1.0.0
 
-
 flutter:
   plugin:
     platforms:
       android:
-        package: com.simform.audiowave.audio_wave
-        pluginClass: AudioWavePlugin
+        package: com.simform.audio_waveforms
+        pluginClass: AudioWaveformsPlugin
       ios:
-        pluginClass: AudioWavePlugin
+        pluginClass: AudioWaveformsPlugin
+

@@ -1,4 +1,4 @@
-group 'com.simform.audiowave.audio_wave'
+group 'com.simform.audio_waveforms'
 version '1.0-SNAPSHOT'
 
 buildscript {

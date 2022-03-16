@@ -1,4 +1,4 @@
-# audio_wave
+# audio_waveforms
 
 A new Flutter project.
 
