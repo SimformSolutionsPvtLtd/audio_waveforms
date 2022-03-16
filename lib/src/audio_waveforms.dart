@@ -1,25 +1,26 @@
-import 'package:audio_waveforms/src/wave_painter.dart';
 import 'package:flutter/material.dart';
-import '../audio_waveforms.dart';
+import '/audio_waveforms.dart';
+import '/src/base/wave_style.dart';
+import '/src/wave_painter.dart';
 import './base/wave_controller.dart';
 import 'base/wave_clipper.dart';
 
-class AudioWave extends StatefulWidget {
+class AudioWaveforms extends StatefulWidget {
   final Size size;
-  final Duration updateFrequency;
   final WaveController waveController;
   final WaveStyle waveStyle;
   final EdgeInsets? padding;
   final EdgeInsets? margin;
   final BoxDecoration? decoration;
   final Color? backgroundColor;
+  final bool enableGesture;
 
-  const AudioWave({
+  const AudioWaveforms({
     Key? key,
     required this.size,
-    required this.updateFrequency,
     required this.waveController,
     this.waveStyle = const WaveStyle(),
+    this.enableGesture = false,
     this.padding,
     this.margin,
     this.decoration,
@@ -27,10 +28,11 @@ class AudioWave extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _AudioWaveState createState() => _AudioWaveState();
+  _AudioWaveformsState createState() => _AudioWaveformsState();
 }
 
-class _AudioWaveState extends State<AudioWave> {
+class _AudioWaveformsState extends State<AudioWaveforms>
+    with SingleTickerProviderStateMixin {
   bool _isScrolled = false;
 
   Offset _totalBackDistance = Offset.zero;
@@ -61,8 +63,10 @@ class _AudioWaveState extends State<AudioWave> {
       color: widget.backgroundColor,
       decoration: widget.decoration,
       child: GestureDetector(
-        onHorizontalDragUpdate: _handleHorizontalDragUpdate,
-        onHorizontalDragStart: _handleHorizontalDragStart,
+        onHorizontalDragUpdate:
+            widget.enableGesture ? _handleHorizontalDragUpdate : null,
+        onHorizontalDragStart:
+            widget.enableGesture ? _handleHorizontalDragStart : null,
         child: ClipPath(
           clipper: WaveClipper(!widget.waveStyle.showDurationLabel
               ? 0.0

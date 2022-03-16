@@ -53,12 +53,12 @@ build/
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 
-/audio_wave.iml
+/audio_waveforms.iml
 
 .idea/instapk.xml
 instapk.log*
 ios/Frameworks/
 ios/Runner.xcworkspace/xcshareddata/
 example/ios/Flutter/flutter_export_environment.sh
-audio_wave.iml
+audio_waveforms.iml
 pubspec.lock

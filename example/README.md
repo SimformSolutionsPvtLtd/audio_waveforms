@@ -1,6 +1,6 @@
-# audio_wave_example
+# audio_waveforms_example
 
-Demonstrates how to use the audio_wave plugin.
+Demonstrates how to use the audio_waveforms plugin.
 
 ## Getting Started
 

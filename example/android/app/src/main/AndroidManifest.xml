@@ -1,8 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.simform.audiowave.audio_wave_example">
+    package="com.simform.audio_waveforms_example">
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
    <application
-        android:label="audio_wave_example"
+        android:label="audio_waveforms_example"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
