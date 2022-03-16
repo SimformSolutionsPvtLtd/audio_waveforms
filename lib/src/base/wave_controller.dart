@@ -15,7 +15,7 @@ class WaveController extends ChangeNotifier {
 
   late int sampleRate = 16000;
 
-  ///Db we get from native is too high so in Android it the value is substracted
+  ///Db we get from native is too high so in Android it the value is subtracted
   ///and in IOS value added
   late double normalizationFactor = Platform.isAndroid ? 60 : 40;
 
@@ -29,7 +29,7 @@ class WaveController extends ChangeNotifier {
 
   bool _isRecording = false;
 
-  ///State of recordning on/off
+  ///State of recording on/off
   bool get isRecording => _isRecording;
 
   bool _shouldRefresh = true;
@@ -46,9 +46,9 @@ class WaveController extends ChangeNotifier {
   ///Use this to check permission and starts recording.
   ///
   ///Can be called after pausing.
-  ///If called after stoping the recording, it will re-initialize.
+  ///If called after stopping the recording, it will re-initialize.
   ///
-  ///Path paramater is optional and if not provided current Datetime will be
+  ///Path parameter is optional and if not provided current Datetime will be
   /// file name and default extension will be .aac.
   ///
   ///If you want to provide provide with name
@@ -136,7 +136,7 @@ class WaveController extends ChangeNotifier {
   }
 
   ///Use this stop recording.
-  ///Resouces are freed after calling this and file is saved.
+  ///Resources are freed after calling this and file is saved.
   ///Returns path where file is saved.
   ///
   ///Also clears waveform and resets to initial state. This behaviour can be changed,
@@ -215,7 +215,7 @@ class WaveController extends ChangeNotifier {
     notifyListeners();
   }
 
-  ///This function must be called to free [resouces],
+  ///This function must be called to free [resources],
   ///it will also dispose the controller.
   void disposeFunc() async {
     if (_timer != null) {
