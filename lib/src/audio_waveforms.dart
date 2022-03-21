@@ -31,8 +31,7 @@ class AudioWaveforms extends StatefulWidget {
   _AudioWaveformsState createState() => _AudioWaveformsState();
 }
 
-class _AudioWaveformsState extends State<AudioWaveforms>
-    with SingleTickerProviderStateMixin {
+class _AudioWaveformsState extends State<AudioWaveforms> {
   bool _isScrolled = false;
 
   Offset _totalBackDistance = Offset.zero;
