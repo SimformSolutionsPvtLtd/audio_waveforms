@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '/audio_waveforms.dart';
-import '/src/base/wave_style.dart';
 import '/src/wave_painter.dart';
-import './base/wave_controller.dart';
 import 'base/wave_clipper.dart';
 
 class AudioWaveforms extends StatefulWidget {
