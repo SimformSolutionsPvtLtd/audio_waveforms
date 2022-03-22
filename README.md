@@ -45,7 +45,7 @@ dependencies:
 
 2.  Import the package.
 ```dart
-import 'import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:audio_waveforms/audio_waveforms.dart';
 ```
 
 ## Usage
