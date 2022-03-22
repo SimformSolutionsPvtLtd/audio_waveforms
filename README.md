@@ -1,4 +1,4 @@
-![Audio Waveforms - Simform LLC.](preview/banner.png)
+![Audio Waveforms - Simform LLC.](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/blob/0.0.2/preview/banner.png)
 
 # Audio Waveforms
 
@@ -6,7 +6,7 @@ Use this plugin to generate waveforms while recording audio in any file formats 
 by given encoders. We can use gestures to scroll through the waveforms and also style waveforms.
 
 ## Preview
-<a href="preview/demo.gif" title="Demo - Simform LLC."><img src="preview/demo.gif" width="390" height="700"></a>
+<a href="preview/demo.gif" title="Demo - Simform LLC."><img src="https://github.com/SimformSolutionsPvtLtd/audio_waveforms/blob/0.0.2/preview/demo.gif" width="390" height="700"></a>
 
 ## Platform specific configuration
 
