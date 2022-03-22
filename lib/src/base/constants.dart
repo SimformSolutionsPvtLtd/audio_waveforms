@@ -1,7 +1,8 @@
 class Constants {
   Constants._();
 
-  static const String methodChannelName = 'simform_audio_waveforms_plugin/methods';
+  static const String methodChannelName =
+      'simform_audio_waveforms_plugin/methods';
   static const String initRecorder = 'initRecorder';
   static const String startRecording = 'startRecording';
   static const String stopRecording = 'stopRecording';

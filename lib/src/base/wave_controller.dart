@@ -157,6 +157,7 @@ class WaveController extends ChangeNotifier {
     }
 
     notifyListeners();
+    return null;
   }
 
   void _reset() {
