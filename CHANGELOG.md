@@ -1,3 +1,7 @@
+## [0.0.3+2] - 23nd March, 2022
+
+* Fixed gif preview
+
 ## [0.0.3+1] - 22nd March, 2022
 
 * Updated gif preview url
