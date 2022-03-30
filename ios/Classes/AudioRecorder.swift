@@ -1,9 +1,11 @@
 import AVFoundation
+import Accelerate
 
-public class AudioWaveformsMethodCall: NSObject, AVAudioRecorderDelegate{
+public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var audioRecorder: AVAudioRecorder?
     var path: String?
     var hasPermission: Bool = false
+    public var meteringLevels: [Float]?
     
     public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ fileNameFormat: String){
         let settings = [
@@ -53,9 +55,8 @@ public class AudioWaveformsMethodCall: NSObject, AVAudioRecorderDelegate{
     }
     
     public func getDecibel(_ result: @escaping FlutterResult) {
-        var amp = Float()
         audioRecorder?.updateMeters()
-        amp = audioRecorder?.peakPower(forChannel: 0) ?? 0.0
+        let amp = audioRecorder?.averagePower(forChannel: 0) ?? 0.0
         result(amp)
     }
     

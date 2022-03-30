@@ -17,12 +17,13 @@ import kotlin.math.log10
 private const val LOG_TAG = "AudioWaveforms"
 private const val RECORD_AUDIO_REQUEST_CODE = 1001
 
-class AudioWaveformsMethodCall : PluginRegistry.RequestPermissionsResultListener {
+//  TODO: rename to recorder
+class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
         val db = 20 * log10((recorder?.maxAmplitude?.toDouble() ?: 0.0 / 32768.0))
         if (db == Double.NEGATIVE_INFINITY) {
-            Log.e(LOG_TAG, "Microphone might be turned off")
+            Log.d(LOG_TAG, "Microphone might be turned off")
         } else {
             result.success(db)
         }

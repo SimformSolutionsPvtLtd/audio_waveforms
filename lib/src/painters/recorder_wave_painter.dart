@@ -1,12 +1,17 @@
 import '/src/base/label.dart';
 import 'package:flutter/material.dart';
-import 'base/utils.dart';
+import '../base/utils.dart';
 
 ///This will paint the waveform
-///Addtional Information
+///
+///Addtional Information to play around
+///
 ///this gives location of first wave from right to left
+///
 ///-totalBackDistance.dx + dragOffset.dx + (spacing * i)
+///
 ///this gives location of first wave from left to right
+///
 ///-totalBackDistance.dx + dragOffset.dx
 class WavePainter extends CustomPainter {
   final List<double> waveData;
@@ -38,7 +43,8 @@ class WavePainter extends CustomPainter {
   final double durationLinesHeight;
   final double labelSpacing;
   final Shader? gradient;
-
+  final bool shouldClearLabels;
+  final VoidCallback revertClearlabelCall;
   WavePainter({
     required this.waveData,
     required this.waveColor,
@@ -66,6 +72,8 @@ class WavePainter extends CustomPainter {
     required this.durationLinesHeight,
     required this.labelSpacing,
     required this.gradient,
+    required this.shouldClearLabels,
+    required this.revertClearlabelCall,
   })  : _wavePaint = Paint()
           ..color = waveColor
           ..strokeWidth = waveThickness
@@ -74,7 +82,7 @@ class WavePainter extends CustomPainter {
           ..color = middleLineColor
           ..strokeWidth = middleLineThickness,
         _durationLinePaint = Paint()
-          ..strokeWidth = 2
+          ..strokeWidth = 3
           ..color = durationLinesColor;
   var _labelPadding = 0.0;
 
@@ -82,6 +90,10 @@ class WavePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if(shouldClearLabels){
+      _labels.clear();
+      revertClearlabelCall();
+    }
     for (var i = 0; i < waveData.length; i++) {
       ///wave gradient
       if (gradient != null) _waveGradient();

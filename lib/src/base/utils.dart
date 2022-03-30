@@ -46,3 +46,7 @@ enum AudioOutputFormat {
   ///if android version is not greater or equal to [Q], mpeg4 will be set
   webm
 }
+
+enum PlayerState { readingComplete, initialized, playing, resumed, paused, stopped }
+
+enum DurationType { current, max }
