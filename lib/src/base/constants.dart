@@ -14,4 +14,21 @@ class Constants {
   static const String encoder = 'encoder';
   static const String audioFormat = 'audioFormat';
   static const String sampleRate = 'sampleRate';
+  static const String readAudioFile = 'readAudioFile';
+  static const String convertToBytes = 'convertToBytes';
+  static const String preparePlayer = "preparePlayer";
+  static const String startPlayer = "startPlayer";
+  static const String stopPlayer = "stopPlayer";
+  static const String pausePlayer = "pausePlayer";
+  static const String seekTo = "seekTo";
+  static const String progress = "progress";
+  static const String setVolume = "setVolume";
+  static const String volume = "volume";
+  static const String rightVolume = "rightVolume";
+  static const String getDuration = "getDuration";
+  static const String durationType = "durationType";
+  static const String seekToStart = "seekToStart";
+  static const String durationEventChannel = "durationEventChannel";
+
+  static const int byteSize = 8;
 }

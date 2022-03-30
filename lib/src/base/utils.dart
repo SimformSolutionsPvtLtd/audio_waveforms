@@ -77,3 +77,7 @@ enum IosEncoder {
   kAudioFormatAppleLossless,
   kAudioFormatMPEG4AAC_HE_V2
 }
+
+enum PlayerState { readingComplete, initialized, playing, resumed, paused, stopped }
+
+enum DurationType { current, max }

@@ -1,3 +1,12 @@
+## [0.1.0] - 12 April, 2022 [Unreleased]
+
+* Added functionality to play audio file and generate waveform from it.
+* Breaking: Renamed WaveController to RecorderController
+* Updated metering level for ios to average power
+* Fixed label would not clear after stopping the recorder. With this, exposed `reset()` function to remove labels
+when `callReset` flag in `stop()` is set to false.
+
+
 ## [0.0.4] - 23 April, 2022 [Unreleased]
 
 * Separated encoder input for android and ios better support
