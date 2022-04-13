@@ -21,6 +21,8 @@ class FileWaveformsPainter extends CustomPainter {
   double visualizerHeight;
   Shader? staleWaveGradient;
   StrokeCap waveCap;
+  Color waveColor;
+  Color liveWaveColor;
 
   FileWaveformsPainter({
     required this.waveData,
@@ -40,13 +42,16 @@ class FileWaveformsPainter extends CustomPainter {
     required this.visualizerHeight,
     required this.staleWaveGradient,
     required this.waveCap,
+    required this.waveColor,
+    required this.liveWaveColor,
     this.liveWaveGradient,
+
   })  : wavePaint = Paint()
-          ..color = Colors.white
+          ..color = waveColor
           ..strokeWidth = waveThickness
           ..strokeCap = waveCap,
         liveAudioPaint = Paint()
-          ..color = Colors.deepOrange
+          ..color = liveWaveColor
           ..strokeWidth = waveThickness
           ..strokeCap = waveCap,
         seeklinePaint = Paint()

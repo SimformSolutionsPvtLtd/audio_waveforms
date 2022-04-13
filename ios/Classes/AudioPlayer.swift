@@ -19,6 +19,7 @@ class AudioPlayer : NSObject, FlutterStreamHandler {
         if(!(path ?? "").isEmpty){
             url = URL.init(fileURLWithPath: path!)
             item = AVPlayerItem(url: url!)
+            //player?.replaceCurrentItem(with: <#T##AVPlayerItem?#>)
             player = AVPlayer(playerItem: item!)
             player?.volume = Float(volume ?? 1.0)
             result(true)
@@ -115,6 +116,7 @@ class AudioPlayer : NSObject, FlutterStreamHandler {
             NotificationCenter.default.removeObserver(didAudioEndObserver!)
         }
         sink = nil
+       // player?.replaceCurrentItem(with: nil)
         return nil
     }
 }

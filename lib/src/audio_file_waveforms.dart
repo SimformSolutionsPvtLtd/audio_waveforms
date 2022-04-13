@@ -11,7 +11,7 @@ class AudioFileWaveforms extends StatefulWidget {
   final PlayerController playerController;
 
   ///Use this to style the waveform.
-  final PlayerWaveStyle waveStyle;
+  final PlayerWaveStyle playerWaveStyle;
 
   ///Use this to give padding around waveform.
   final EdgeInsets? padding;
@@ -58,7 +58,7 @@ class AudioFileWaveforms extends StatefulWidget {
     Key? key,
     required this.size,
     required this.playerController,
-    this.waveStyle = const PlayerWaveStyle(),
+    this.playerWaveStyle = const PlayerWaveStyle(),
     this.enableSeekGesture = true,
     this.padding,
     this.margin,
@@ -81,7 +81,9 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   late AnimationController animationController;
   late Animation<double> animation;
   double _progress = 0.0;
-  bool showSeekLine = true;
+
+  //TODO: update this in PR
+  bool showSeekLine = false;
 
   @override
   void initState() {
@@ -104,7 +106,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
           widget.playerController.durationStreamController.stream
               .listen((event) {
             _currentDuration = event;
-            showSeekLine = widget.waveStyle.showSeeker;
+            showSeekLine = widget.playerWaveStyle.showSeeker;
             if (mounted) setState(() {});
           });
         }
@@ -115,6 +117,8 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
 
   @override
   void dispose() {
+    animation.removeListener(() {});
+    animationController.dispose();
     widget.playerController.removeListener(() {});
     super.dispose();
   }
@@ -147,16 +151,18 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
               animValue: _progress,
               currentSeekPostion: _currentSeekPositon,
               showSeekLine: showSeekLine,
-              scaleFactor: widget.waveStyle.scaleFactor,
-              seekLineColor: widget.waveStyle.seekLineColor,
-              liveWaveGradient: widget.waveStyle.liveWaveGradient,
-              waveThickness: widget.waveStyle.waveThickness,
-              seekLineThickness: widget.waveStyle.seekLineThickness,
-              showBottom: widget.waveStyle.showBottom,
-              showTop: widget.waveStyle.showTop,
-              visualizerHeight: widget.waveStyle.visualizerHeight,
-              staleWaveGradient: widget.waveStyle.staleWavegradient,
-              waveCap: widget.waveStyle.waveCap,
+              scaleFactor: widget.playerWaveStyle.scaleFactor,
+              seekLineColor: widget.playerWaveStyle.seekLineColor,
+              liveWaveGradient: widget.playerWaveStyle.liveWaveGradient,
+              waveThickness: widget.playerWaveStyle.waveThickness,
+              seekLineThickness: widget.playerWaveStyle.seekLineThickness,
+              showBottom: widget.playerWaveStyle.showBottom,
+              showTop: widget.playerWaveStyle.showTop,
+              visualizerHeight: widget.playerWaveStyle.visualizerHeight,
+              staleWaveGradient: widget.playerWaveStyle.staleWavegradient,
+              waveCap: widget.playerWaveStyle.waveCap,
+              waveColor: widget.playerWaveStyle.waveColor,
+              liveWaveColor: widget.playerWaveStyle.liveWaveColor,
             ),
             size: widget.size,
           ),
