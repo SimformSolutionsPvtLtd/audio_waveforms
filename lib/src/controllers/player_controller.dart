@@ -3,9 +3,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:audio_waveforms/src/base/audio_waveforms_interface.dart';
+import 'package:audio_waveforms/src/base/platform_streams.dart';
 import 'package:flutter/material.dart';
-
-import '../base/audio_waveforms_interface.dart';
 
 class PlayerController extends ChangeNotifier {
   Uint8List? _bufferData;
@@ -20,20 +20,20 @@ class PlayerController extends ChangeNotifier {
 
   String? _audioFilePath;
 
-  ///This stream controller can be used to listen to get current duration of playing
-  ///audio. Events will be sent every 200 milliseconds.
-  ///
-  ///The duration data is in [milliseconds].
-  StreamController<int> durationStreamController = StreamController<int>();
-
-  StreamSubscription? _durationStreamSubscribtion;
-
   int _maxDuration = -1;
 
   ///provides [max] duration of currenly provided audio file.
   int get maxDuration => _maxDuration;
 
   bool _seekToStart = true;
+
+  final UniqueKey _playerKey = UniqueKey();
+
+  String get playerKey => _playerKey.toString();
+
+  PlayerController() {
+    AudioWaveformsInterface.instance.setMethodCallHandler();
+  }
 
   ///Reads bytes from audio file
   Future<void> _readAudioFile(String path) async {
@@ -65,8 +65,8 @@ class PlayerController extends ChangeNotifier {
     await _readAudioFile(path);
     if ((_playerState == PlayerState.readingComplete &&
         _audioFilePath != null)) {
-      final isPrepared =
-          await AudioWaveformsInterface.instance.preparePlayer(path, volume);
+      final isPrepared = await AudioWaveformsInterface.instance
+          .preparePlayer(path, _playerKey.toString(), volume);
       if (isPrepared) {
         _maxDuration = await getDuration();
         _playerState = PlayerState.initialized;
@@ -77,7 +77,7 @@ class PlayerController extends ChangeNotifier {
     }
   }
 
-  ///Use this function to start player to play the audio.
+  ///Use this function to start the player to play/resume the audio.
   ///
   ///When playing audio is finished player will be seeked to [start]. To change
   ///this behaviour pass false for [seekToStart] parameter and player position will
@@ -87,12 +87,9 @@ class PlayerController extends ChangeNotifier {
         _playerState == PlayerState.paused) {
       _seekToStart = seekToStart ?? true;
       final isStarted = await AudioWaveformsInterface.instance
-          .startPlayer(seekToStart ?? true);
+          .startPlayer(_playerKey.toString(), _seekToStart);
       if (isStarted) {
         _playerState = PlayerState.playing;
-        if (!durationStreamController.hasListener) {
-          _startDurationStream();
-        }
       } else {
         throw "Failed to start player";
       }
@@ -102,33 +99,18 @@ class PlayerController extends ChangeNotifier {
 
   ///Use this to pause the playing audio
   Future<void> pausePlayer() async {
-    _durationStreamSubscribtion?.pause();
-    final isPaused = await AudioWaveformsInterface.instance.pausePlayer();
+    final isPaused = await AudioWaveformsInterface.instance
+        .pausePlayer(_playerKey.toString());
     if (isPaused) {
       _playerState = PlayerState.paused;
     }
     notifyListeners();
   }
 
-  ///Resumes playing the audio. It retains [seekToStart] behaviour from
-  /// startPlayer().
-  Future<void> resumePlayer() async {
-    if (_playerState == PlayerState.initialized ||
-        _playerState == PlayerState.paused) {
-      final isResumed =
-          await AudioWaveformsInterface.instance.startPlayer(_seekToStart);
-      if (isResumed) {
-        _durationStreamSubscribtion?.resume();
-        _playerState = PlayerState.resumed;
-      }
-    }
-    notifyListeners();
-  }
-
   ///Use this to stop player. After calling this, resources are [freed].
   Future<void> stopPlayer() async {
-    await _durationStreamSubscribtion?.cancel();
-    final isStopped = await AudioWaveformsInterface.instance.stopPlayer();
+    final isStopped = await AudioWaveformsInterface.instance
+        .stopPlayer(_playerKey.toString());
     if (isStopped) {
       _playerState = PlayerState.stopped;
     }
@@ -140,7 +122,8 @@ class PlayerController extends ChangeNotifier {
   ///
   ///Volume has to be between 0.0 to 1.0.
   Future<bool> setVolume(double volume) async {
-    final result = await AudioWaveformsInterface.instance.setVolume(volume);
+    final result = await AudioWaveformsInterface.instance
+        .setVolume(volume, _playerKey.toString());
     return result;
   }
 
@@ -151,7 +134,7 @@ class PlayerController extends ChangeNotifier {
   /// Default is Duration.max
   Future<int> getDuration([DurationType? durationType]) async {
     final duration = await AudioWaveformsInterface.instance
-        .getDuration(durationType?.index ?? 1);
+        .getDuration(_playerKey.toString(), durationType?.index ?? 1);
     return duration ?? -1;
   }
 
@@ -159,27 +142,36 @@ class PlayerController extends ChangeNotifier {
   ///
   /// Minimum Android O is required to use this funtion otherwise nothing happens.
   Future<void> seekTo(int progress) async {
-    if (_playerState == PlayerState.playing ||
-        _playerState == PlayerState.resumed) {
-      await AudioWaveformsInterface.instance.seekTo(progress);
+    if (progress < 0) return;
+    if (_playerState == PlayerState.playing) {
+      await AudioWaveformsInterface.instance
+          .seekTo(_playerKey.toString(), progress);
     }
   }
 
-  void _startDurationStream() {
-    _durationStreamSubscribtion = AudioWaveformsInterface.instance
-        .listenToDurationStream()
-        .listen((currentDuration) {
-      if (currentDuration is int) {
-        durationStreamController.add(currentDuration);
-      }
-    });
-    durationStreamController.stream.asBroadcastStream();
+  ///Calling this will stop the player and it will dispose player in native
+  ///It will also dispose the the controller.
+  ///
+  ///As there is common stream for every players stream
+  /// will be still active without any events.
+  /// To dispose it call [stopAllPlayers].
+  void disposeFunc() async {
+    if (playerState != PlayerState.stopped) await stopPlayer();
+    dispose();
   }
 
-  void disposeFunc() async {
-    await durationStreamController.close();
-    _durationStreamSubscribtion?.cancel();
-    if (playerState != PlayerState.stopped) await stopPlayer();
+  ///This method is to dispose [multiple] players all at once.
+  ///
+  /// This method is required to call only [once] from any one of the [PlayerController]s.
+  ///
+  /// Call this only when [truely] initialising a new [PlayerController] is not required.
+  ///
+  /// Note -: this method will close stream and dispose all the players but
+  /// it will only dispose controller who's stopAllPlayers method was called
+  /// calling [disposeFunc] is still required for every other [PlayerController]
+  void stopAllPlayers() async {
+    PlatformStreams.instance.dispose();
+    await AudioWaveformsInterface.instance.stopAllPlayers();
     dispose();
   }
 }

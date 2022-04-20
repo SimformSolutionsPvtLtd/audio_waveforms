@@ -1,15 +1,11 @@
-import 'dart:math';
-import 'package:audio_waveforms/src/base/constants.dart';
 import 'package:flutter/material.dart';
 
 ///Referenced from https://stackoverflow.com/questions/38744579/show-waveform-of-audio
 class FileWaveformsPainter extends CustomPainter {
-  List<int> waveData;
+  List<double> waveformData;
+  List<double> waveformXPostion;
   double waveThickness;
-  double multiplier;
   double density;
-  int maxDuration, currentDuration;
-  double animValue;
   double currentSeekPostion;
   bool showSeekLine;
   double scaleFactor;
@@ -19,19 +15,14 @@ class FileWaveformsPainter extends CustomPainter {
   bool showTop;
   bool showBottom;
   double visualizerHeight;
-  Shader? staleWaveGradient;
   StrokeCap waveCap;
-  Color waveColor;
   Color liveWaveColor;
+  double denseness;
+  double audioProgress;
 
   FileWaveformsPainter({
-    required this.waveData,
     required this.waveThickness,
-    required this.multiplier,
     required this.density,
-    required this.maxDuration,
-    required this.currentDuration,
-    required this.animValue,
     required this.currentSeekPostion,
     required this.showSeekLine,
     required this.scaleFactor,
@@ -40,17 +31,14 @@ class FileWaveformsPainter extends CustomPainter {
     required this.showTop,
     required this.showBottom,
     required this.visualizerHeight,
-    required this.staleWaveGradient,
     required this.waveCap,
-    required this.waveColor,
     required this.liveWaveColor,
+    required this.waveformData,
+    required this.waveformXPostion,
+    required this.denseness,
+    required this.audioProgress,
     this.liveWaveGradient,
-
-  })  : wavePaint = Paint()
-          ..color = waveColor
-          ..strokeWidth = waveThickness
-          ..strokeCap = waveCap,
-        liveAudioPaint = Paint()
+  })  : liveWavePaint = Paint()
           ..color = liveWaveColor
           ..strokeWidth = waveThickness
           ..strokeCap = waveCap,
@@ -59,160 +47,145 @@ class FileWaveformsPainter extends CustomPainter {
           ..strokeWidth = seekLineThickness
           ..strokeCap = waveCap;
 
-  Paint wavePaint;
-  Paint liveAudioPaint;
+  Paint liveWavePaint;
   Paint seeklinePaint;
 
-  double _denseness = 1.0;
   double _seekerXPosition = 0.0;
 
   @override
   void paint(Canvas canvas, Size size) {
-    _updatePlayerPercent(size);
-    _drawWave(size, canvas);
-    if (showSeekLine) _drawSeekLine(size, canvas);
+    _drawLiveWave(size, canvas);
   }
 
   @override
   bool shouldRepaint(FileWaveformsPainter oldDelegate) => true;
 
+  //TODO: fix seek line
   void _drawSeekLine(Size size, Canvas canvas) {
-    if (scrubberProgress() == 1.0) {
+    if (audioProgress == 1.0) {
       canvas.drawLine(
-        Offset(_seekerXPosition + liveAudioPaint.strokeWidth, 0),
-        Offset(_seekerXPosition + liveAudioPaint.strokeWidth, size.height),
+        Offset(_seekerXPosition + liveWavePaint.strokeWidth * 3, 0),
+        Offset(_seekerXPosition + liveWavePaint.strokeWidth * 3, size.height),
         seeklinePaint,
       );
     } else {
       canvas.drawLine(
-        Offset(_seekerXPosition, 0),
-        Offset(_seekerXPosition, size.height),
+        Offset(
+            waveformXPostion.last * audioProgress + liveWavePaint.strokeWidth,
+            0),
+        Offset(
+            waveformXPostion.last * audioProgress + liveWavePaint.strokeWidth,
+            size.height),
         seeklinePaint,
       );
     }
   }
 
-  void _drawWave(Size size, Canvas canvas) {
-    if (liveWaveGradient != null) liveAudioPaint.shader = liveWaveGradient;
-    if (staleWaveGradient != null) wavePaint.shader = staleWaveGradient;
-    double totalBarsCount = size.width / dp(3);
-    if (totalBarsCount <= 0.1) return;
-    int samplesCount = waveData.length * 8 ~/ 5;
-    double samplesPerBar = samplesCount / totalBarsCount;
-    double barCounter = 0;
-    int nextBarNum = 0;
-    int y = (size.height - dp(visualizerHeight.toDouble())) ~/ 2;
-    int barNum = 0;
-    int lastBarNum;
-    int drawBarCount;
-    int byte;
-    for (int i = 0; i < samplesCount; i++) {
-      if (i != nextBarNum) {
-        continue;
-      }
-      drawBarCount = 0;
-      lastBarNum = nextBarNum;
-
-      while (lastBarNum == nextBarNum) {
-        barCounter += samplesPerBar;
-        nextBarNum = barCounter.toInt();
-        drawBarCount++;
-      }
-      int bitPointer = i * 5;
-      double byteNum = bitPointer / Constants.byteSize;
-      double byteBitOffset = bitPointer - byteNum * Constants.byteSize;
-      int currentByteCount = (Constants.byteSize - byteBitOffset).toInt();
-      int nextByteRest = 5 - currentByteCount;
-      byte = (waveData[byteNum.toInt()] >> byteBitOffset.toInt() &
-          ((2 << min(5, currentByteCount) - 1)) - 1);
-      if (nextByteRest > 0) {
-        byte <<= nextByteRest;
-        byte |= waveData[byteNum.toInt() + 1] & ((2 << (nextByteRest - 1)) - 1);
-      }
-      for (int j = 0; j < drawBarCount; j++) {
-        int x = barNum * dp(3);
-        double left = x.toDouble();
-        double top = y.toDouble() +
-            dp(visualizerHeight - max(1, visualizerHeight * byte / 31));
-        double bottom = y.toDouble() + dp(visualizerHeight).toDouble();
-        if (x < size.width) {
-          if (x < _denseness && x + dp(2) < _denseness) {
-            _seekerXPosition = left;
-            if (showBottom) {
-              canvas.drawLine(
-                  Offset(left, size.height / 2),
-                  Offset(left, size.height / 2 + (bottom - top) * scaleFactor),
-                  liveAudioPaint);
-            }
+  void _drawLiveWave(Size size, Canvas canvas) {
+    if (liveWaveGradient != null) liveWavePaint.shader = liveWaveGradient;
+    for (int i = 0; i < waveformData.length; i++) {
+      int x = i * _dp(3);
+      if (x < size.width) {
+        if (x < denseness && x + _dp(2) < denseness) {
+          _seekerXPosition = x.toDouble();
+          if (showBottom) {
+            canvas.drawLine(
+                Offset(waveformXPostion[i], size.height / 2),
+                Offset(waveformXPostion[i],
+                    size.height / 2 + waveformData[i] * scaleFactor),
+                liveWavePaint);
+          }
+          if (showTop) {
+            canvas.drawLine(
+                Offset(waveformXPostion[i], size.height / 2),
+                Offset(waveformXPostion[i],
+                    size.height / 2 + (-waveformData[i] * scaleFactor)),
+                liveWavePaint);
+          }
+        } else {
+          if (x < denseness) {
             if (showTop) {
               canvas.drawLine(
-                  Offset(left, size.height / 2),
-                  Offset(left, size.height / 2 + (top - bottom) * scaleFactor),
-                  liveAudioPaint);
+                  Offset(waveformXPostion[i], size.height / 2),
+                  Offset(waveformXPostion[i],
+                      size.height / 2 + (-waveformData[i] * scaleFactor)),
+                  liveWavePaint);
             }
-          } else {
             if (showBottom) {
               canvas.drawLine(
-                  Offset(left, size.height / 2),
-                  Offset(
-                      left,
-                      size.height / 2 +
-                          ((bottom - top) * animValue) * scaleFactor),
-                  wavePaint);
-            }
-            if (showTop) {
-              canvas.drawLine(
-                  Offset(left, size.height / 2),
-                  Offset(
-                      left,
-                      size.height / 2 +
-                          ((top - bottom) * animValue) * scaleFactor),
-                  wavePaint);
-            }
-            if (x < _denseness) {
-              _seekerXPosition = left;
-              if (showBottom) {
-                canvas.drawLine(
-                    Offset(left, size.height / 2),
-                    Offset(
-                        left, size.height / 2 + (bottom - top) * scaleFactor),
-                    liveAudioPaint);
-              }
-              if (showTop) {
-                canvas.drawLine(
-                    Offset(left, size.height / 2),
-                    Offset(
-                        left, size.height / 2 + (top - bottom) * scaleFactor),
-                    liveAudioPaint);
-              }
+                  Offset(waveformXPostion[i], size.height / 2),
+                  Offset(waveformXPostion[i],
+                      size.height / 2 + waveformData[i] * scaleFactor),
+                  liveWavePaint);
             }
           }
         }
-
-        barNum++;
       }
     }
   }
 
-  void _updatePlayerPercent(Size size) {
-    _denseness = (size.width * scrubberProgress()).ceilToDouble();
-    if (_denseness < 0) {
-      _denseness = 0;
-    } else if (_denseness > size.width) {
-      _denseness = size.width;
-    }
-  }
-
-  int dp(double value) {
+  int _dp(double value) {
     if (value == 0) return 0;
     return (density * value).ceil();
   }
+}
 
-  double scrubberProgress() {
-    if (currentDuration / maxDuration > 0.99) {
-      return 1.0;
+class FixedWavePainter extends CustomPainter {
+  List<double> waveformData;
+  List<double> waveformXPostion;
+  bool showTop;
+  bool showBottom;
+  double animValue;
+  double scaleFactor;
+  Color waveColor;
+  StrokeCap waveCap;
+  double waveThickness;
+  Shader? fixedWaveGradient;
+
+  FixedWavePainter({
+    required this.waveformData,
+    required this.waveformXPostion,
+    required this.showTop,
+    required this.showBottom,
+    required this.animValue,
+    required this.scaleFactor,
+    required this.waveColor,
+    required this.waveCap,
+    required this.waveThickness,
+    this.fixedWaveGradient,
+  }) : wavePaint = Paint()
+          ..color = waveColor
+          ..strokeWidth = waveThickness
+          ..strokeCap = waveCap;
+
+  Paint wavePaint;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    _drawFixedWave(size, canvas);
+  }
+
+  @override
+  bool shouldRepaint(FixedWavePainter oldDelegate) => false;
+
+  void _drawFixedWave(Size size, Canvas canvas) {
+    if (fixedWaveGradient != null) wavePaint.shader = fixedWaveGradient;
+
+    for (int i = 0; i < waveformData.length; i++) {
+      if (showTop) {
+        canvas.drawLine(
+            Offset(waveformXPostion[i], size.height / 2),
+            Offset(waveformXPostion[i],
+                size.height / 2 + (waveformData[i] * animValue) * scaleFactor),
+            wavePaint);
+      }
+      if (showBottom) {
+        canvas.drawLine(
+            Offset(waveformXPostion[i], size.height / 2),
+            Offset(waveformXPostion[i],
+                size.height / 2 + -(waveformData[i] * animValue) * scaleFactor),
+            wavePaint);
+      }
     }
-    if (maxDuration == 0) return 0;
-    return currentDuration / maxDuration;
   }
 }

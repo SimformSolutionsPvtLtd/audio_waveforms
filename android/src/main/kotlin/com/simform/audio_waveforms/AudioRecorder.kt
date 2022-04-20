@@ -17,7 +17,6 @@ import kotlin.math.log10
 private const val LOG_TAG = "AudioWaveforms"
 private const val RECORD_AUDIO_REQUEST_CODE = 1001
 
-//  TODO: rename to recorder
 class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {

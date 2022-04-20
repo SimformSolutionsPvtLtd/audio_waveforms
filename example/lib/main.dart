@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 
 import 'package:path_provider/path_provider.dart';
+import 'dart:ui' as ui show Gradient;
 
 void main() => runApp(const MyApp());
 
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'Flutter Audio Waveforms',
+      title: 'Audio Waveforms',
       debugShowCheckedModeBanner: false,
       home: Home(),
     );
@@ -27,15 +28,12 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with WidgetsBindingObserver {
   late final RecorderController recorderController;
   late final PlayerController playerController;
-  late final PlayerController playerController2;
   String? path;
   String? musicFile;
-  String? musicFile2;
   bool isPlaying = false;
-  bool isPlaying2 = false;
   bool isRecording = false;
 
   @override
@@ -46,37 +44,23 @@ class _HomeState extends State<Home> {
       ..androidOutputFormat = AndroidOutputFormat.mpeg4
       ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
       ..sampleRate = 16000;
-    playerController2 = PlayerController()
-      ..addListener(() {
-        if (playerController2.playerState == PlayerState.playing) {
-          isPlaying2 = true;
-        } else {
-          isPlaying2 = false;
-        }
-        if (mounted) setState(() {});
-      });
     playerController = PlayerController()
       ..addListener(() {
-        if (playerController.playerState == PlayerState.playing) {
-          isPlaying = true;
-        } else {
-          isPlaying = false;
-        }
         if (mounted) setState(() {});
       });
     _getDir();
     _pickFile();
   }
 
-  ///For this example, use this record from mic and directly provide that
-  /// path to also generate waveforms from file
+  ///After completing the recording, this also
+  ///can be passed to [playerController] to get waveforms.
   void _getDir() async {
     final dir = await getApplicationDocumentsDirectory();
     path = "${dir.path}/music.aac";
   }
 
   void _pickFile() async {
-    await Future.delayed(const Duration(seconds: 2)).whenComplete(() async {
+    await Future.delayed(const Duration(seconds: 3)).whenComplete(() async {
       FilePickerResult? result = await FilePicker.platform.pickFiles();
       if (result != null) {
         musicFile = result.files.single.path;
@@ -87,26 +71,24 @@ class _HomeState extends State<Home> {
     });
   }
 
-  void _pickFile2() async {
-    await Future.delayed(const Duration(seconds: 2)).whenComplete(() async {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-      if (result != null) {
-        musicFile2 = result.files.single.path;
-        await playerController2.preparePlayer(musicFile2!);
-      } else {
-        print("File not picked");
-      }
-    });
-  }
-
   @override
   void dispose() {
-    print('here');
     recorderController.disposeFunc();
-    playerController.disposeFunc();
-    playerController2.disposeFunc();
-
+    playerController.stopAllPlayers();
     super.dispose();
+  }
+
+  ///As recording/playing media is resource heavy task,
+  ///you don't want any resources to stay allocated even after
+  ///app is killed. So it is recommended that if app is directly killed then
+  ///this still will be called and we can free up resouces.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      recorderController.disposeFunc();
+      playerController.disposeFunc();
+    }
+    super.didChangeAppLifecycleState(state);
   }
 
   @override
@@ -129,37 +111,10 @@ class _HomeState extends State<Home> {
             if (playerController.playerState != PlayerState.stopped) ...[
               WaveBubble(
                 playerController: playerController,
-                onTap: () async {
-                  if(playerController2.playerState == PlayerState.playing){
-                    playerController2.stopPlayer();
-                  }
-                  playerController.playerState == PlayerState.playing
-                      ? playerController.pausePlayer()
-                      : playerController.playerState == PlayerState.paused
-                      ? playerController.resumePlayer()
-                      : playerController.startPlayer();
-                }
-                    ,
+                isPlaying: playerController.playerState == PlayerState.playing,
+                onTap: _playOrPlausePlayer,
               ),
-              const ChatBubble(
-                  text: 'That was cool, hear this!', isSender: true),
-            ],
-            if (playerController2.playerState != PlayerState.stopped) ...[
-              WaveBubble(
-                playerController: playerController2,
-                onTap: () async {
-                  if(playerController.playerState == PlayerState.playing){
-                    playerController.stopPlayer();
-                  }
-                  playerController2.playerState == PlayerState.playing
-                      ? playerController2.pausePlayer()
-                      : playerController2.playerState == PlayerState.paused
-                          ? playerController2.resumePlayer()
-                          : playerController2.startPlayer();
-                },
-              ),
-              const ChatBubble(
-                  text: 'That was cool, hear this!', isSender: true),
+              const ChatBubble(text: 'That was cool!', isSender: true),
             ],
             const Spacer(),
             Row(
@@ -169,12 +124,17 @@ class _HomeState extends State<Home> {
                   child: isRecording
                       ? AudioWaveforms(
                           enableGesture: true,
-                          size: const Size(250, 50),
-                          waveController: recorderController,
-                          waveStyle: const WaveStyle(
+                          size: Size(MediaQuery.of(context).size.width / 2, 50),
+                          recorderController: recorderController,
+                          waveStyle: WaveStyle(
                             waveColor: Colors.white,
                             extendWaveform: true,
                             showMiddleLine: false,
+                            gradient: ui.Gradient.linear(
+                              const Offset(70, 50),
+                              Offset(MediaQuery.of(context).size.width / 2, 0),
+                              [Colors.red, Colors.green],
+                            ),
                           ),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12.0),
@@ -183,50 +143,34 @@ class _HomeState extends State<Home> {
                           padding: const EdgeInsets.only(left: 18),
                           margin: const EdgeInsets.symmetric(horizontal: 15),
                         )
-                      : Row(
-                          children: [
-                            Container(
-                              width: 200,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1E1B26),
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              padding: const EdgeInsets.only(left: 18),
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 15),
-                              child: const TextField(
-                                decoration: InputDecoration(
-                                  hintText: "Type Something...",
-                                  hintStyle: TextStyle(color: Colors.white54),
-                                  border: InputBorder.none,
-                                ),
-                              ),
+                      : Container(
+                          width: MediaQuery.of(context).size.width / 1.7,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E1B26),
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          padding: const EdgeInsets.only(left: 18),
+                          margin: const EdgeInsets.symmetric(horizontal: 15),
+                          child: const TextField(
+                            decoration: InputDecoration(
+                              hintText: "Type Something...",
+                              hintStyle: TextStyle(color: Colors.white54),
+                              border: InputBorder.none,
                             ),
-                            IconButton(
-                              onPressed: () {
-                                _pickFile2();
-                              },
-                              icon: const Icon(
-                                Icons.send,
-                                color: Colors.white,
-                              ),
-                            )
-                          ],
+                          ),
                         ),
+                ),
+                IconButton(
+                  onPressed: _refreshWave,
+                  icon: Icon(
+                    isRecording ? Icons.refresh : Icons.send,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 IconButton(
-                  onPressed: () async {
-                    if (isRecording) {
-                      await recorderController.stop(false);
-                    } else {
-                      await recorderController.record(path);
-                    }
-                    setState(() {
-                      isRecording = !isRecording;
-                    });
-                  },
+                  onPressed: _startOrStopRecording,
                   icon: Icon(isRecording ? Icons.stop : Icons.mic),
                   color: Colors.white,
                   iconSize: 28,
@@ -238,5 +182,26 @@ class _HomeState extends State<Home> {
         ),
       ),
     );
+  }
+
+  void _playOrPlausePlayer() async {
+    playerController.playerState == PlayerState.playing
+        ? await playerController.pausePlayer()
+        : await playerController.startPlayer(false);
+  }
+
+  void _startOrStopRecording() async {
+    if (isRecording) {
+      await recorderController.stop(false);
+    } else {
+      await recorderController.record(path);
+    }
+    setState(() {
+      isRecording = !isRecording;
+    });
+  }
+
+  void _refreshWave() {
+    if (isRecording) recorderController.refresh();
   }
 }

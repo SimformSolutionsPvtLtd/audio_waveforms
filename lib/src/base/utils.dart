@@ -78,6 +78,31 @@ enum IosEncoder {
   kAudioFormatMPEG4AAC_HE_V2
 }
 
-enum PlayerState { readingComplete, initialized, playing, resumed, paused, stopped }
+///States of audio player
+enum PlayerState {
+  ///When reading of audio file is completed
+  readingComplete,
 
-enum DurationType { current, max }
+  ///When player is [initialised]
+  initialized,
+
+  ///When player is playing the audio file
+  playing,
+  ///When player is paused.
+  paused,
+
+  ///when player is stopped. Default state of any player ([uninitialised]).
+  stopped
+}
+
+///There are two type duration which we can get.
+///
+/// 1. Max duration is [full] duration of audio file
+///
+/// 2. Current duration is how much audio has been played
+enum DurationType {
+  current,
+
+  ///Default
+  max
+}

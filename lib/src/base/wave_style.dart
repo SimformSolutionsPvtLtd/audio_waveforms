@@ -26,7 +26,7 @@ class WaveStyle {
   ///Color line in the middle
   final Color middleLineColor;
 
-  ///Thickness of middle line. For microphone recording this line is in the middle.
+  ///Thickness of middle line.
   final double middleLineThickness;
 
   ///Width of each wave

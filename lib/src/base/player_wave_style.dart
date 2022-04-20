@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 
 class PlayerWaveStyle {
   ///Color of the [wave] which is behind the live wave.
-  final Color waveColor;
+  final Color fixedWaveColor;
 
   ///Color of the [live] wave which idicates currenly played part.
   final Color liveWaveColor;
 
   ///Whether to show seeker or not
-  final bool showSeeker;
+  //TODO: fix seek line
+  // final bool showSeeker;
 
   ///Whether to show upper wave or not defaults to true
   final bool showTop;
@@ -33,7 +34,7 @@ class PlayerWaveStyle {
   final Color backgroundColor;
 
   ///Provide gradient to waves which is behind the live wave. Use shader as shown in example.
-  final Shader? staleWavegradient;
+  final Shader? fixedWavegradient;
 
   ///This is applied to each wave while generating. Use this to [scale] the waves.
   /// Defaluts to 1.0.
@@ -46,9 +47,8 @@ class PlayerWaveStyle {
   final double visualizerHeight;
 
   const PlayerWaveStyle({
-    this.waveColor = Colors.white,
+    this.fixedWaveColor = Colors.white,
     this.liveWaveColor = Colors.deepOrange,
-    this.showSeeker = true,
     this.showTop = true,
     this.showBottom = true,
     this.waveCap = StrokeCap.round,
@@ -56,7 +56,7 @@ class PlayerWaveStyle {
     this.seekLineThickness = 3.0,
     this.waveThickness = 3.0,
     this.backgroundColor = Colors.black,
-    this.staleWavegradient,
+    this.fixedWavegradient,
     this.scaleFactor = 1.0,
     this.liveWaveGradient,
     this.visualizerHeight = 28.0,

@@ -12,7 +12,7 @@ class Constants {
   static const String checkPermission = 'checkPermission';
   static const String path = 'path';
   static const String encoder = 'encoder';
-  static const String audioFormat = 'audioFormat';
+  static const String outputFormat = 'outputFormat';
   static const String sampleRate = 'sampleRate';
   static const String readAudioFile = 'readAudioFile';
   static const String convertToBytes = 'convertToBytes';
@@ -29,6 +29,10 @@ class Constants {
   static const String durationType = "durationType";
   static const String seekToStart = "seekToStart";
   static const String durationEventChannel = "durationEventChannel";
+  static const String playerKey = "playerKey";
+  static const String current = "current";
+  static const String onCurrentDuration = "onCurrentDuration";
+  static const String stopAllPlayers = "stopAllPlayers";
 
   static const int byteSize = 8;
 }

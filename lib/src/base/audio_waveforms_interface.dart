@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:audio_waveforms/src/base/current_duration_identifier.dart';
+import 'package:audio_waveforms/src/base/platform_streams.dart';
+
 import '/src/base/constants.dart';
 import 'package:flutter/services.dart';
 
@@ -10,9 +13,6 @@ class AudioWaveformsInterface {
 
   static const MethodChannel _methodChannel =
       MethodChannel(Constants.methodChannelName);
-
-  static const EventChannel _eventChannel =
-      EventChannel(Constants.durationEventChannel);
 
   ///platform call to start recording
   Future<bool> record(int audioFormat, int sampleRate, [String? path]) async {
@@ -31,12 +31,12 @@ class AudioWaveformsInterface {
   ///platform call to initialise the recorder.
   ///This method is only required for Android platform
   Future<bool> initRecorder(
-      String? path, int encoder ,int audioFormat, int sampleRate) async {
+      String? path, int encoder, int outputFormat, int sampleRate) async {
     final initialized = await _methodChannel.invokeMethod(
       Constants.initRecorder,
       {
         Constants.path: path,
-        Constants.audioFormat: audioFormat,
+        Constants.outputFormat: outputFormat,
         Constants.encoder: encoder,
         Constants.sampleRate: sampleRate,
       },
@@ -80,58 +80,79 @@ class AudioWaveformsInterface {
   }
 
   ///platform call to prepare player
-  Future<bool> preparePlayer(String path, [double? volume]) async {
+  Future<bool> preparePlayer(String path, String key, [double? volume]) async {
     var result = await _methodChannel.invokeMethod(Constants.preparePlayer, {
       Constants.path: path,
       Constants.volume: volume,
+      Constants.playerKey: key,
     });
     return result ?? false;
   }
 
   ///platfomr call to start player
-  Future<bool> startPlayer(bool seekToStart) async {
-    var result = await _methodChannel.invokeMethod(
-        Constants.startPlayer, {Constants.seekToStart: seekToStart});
+  Future<bool> startPlayer(String key, bool seekToStart) async {
+    var result = await _methodChannel.invokeMethod(Constants.startPlayer, {
+      Constants.playerKey: key,
+      Constants.seekToStart: seekToStart,
+    });
     return result ?? false;
   }
 
   ///platform call to stop player
-  Future<bool> stopPlayer() async {
-    var result = await _methodChannel.invokeMethod(Constants.stopPlayer);
+  Future<bool> stopPlayer(String key) async {
+    var result = await _methodChannel
+        .invokeMethod(Constants.stopPlayer, {Constants.playerKey: key});
     return result ?? false;
   }
 
   ///platform call to pause player
-  Future<bool> pausePlayer() async {
-    var result = await _methodChannel.invokeMethod(Constants.pausePlayer);
+  Future<bool> pausePlayer(String key) async {
+    var result = await _methodChannel
+        .invokeMethod(Constants.pausePlayer, {Constants.playerKey: key});
     return result ?? false;
   }
 
   ///platform call to get duration max/current
-  Future<int?> getDuration(int durationType) async {
+  Future<int?> getDuration(String key, int durationType) async {
     var duration = await _methodChannel.invokeMethod(Constants.getDuration, {
       Constants.durationType: durationType,
+      Constants.playerKey: key,
     });
     return duration;
   }
 
   ///platform call to set volume
-  Future<bool> setVolume(double volume) async {
+  Future<bool> setVolume(double volume, String key) async {
     var result = await _methodChannel.invokeMethod(Constants.setVolume, {
       Constants.volume: volume,
+      Constants.playerKey: key,
     });
     return result ?? false;
   }
 
   ///platform call to seek audio at provided position
-  Future<bool> seekTo(int progress) async {
-    var result = await _methodChannel
-        .invokeMethod(Constants.seekTo, {Constants.progress: progress});
+  Future<bool> seekTo(String key, int progress) async {
+    var result = await _methodChannel.invokeMethod(Constants.seekTo,
+        {Constants.progress: progress, Constants.playerKey: key});
     return result ?? false;
   }
 
-  ///platform stream for current duration
-  Stream<dynamic> listenToDurationStream() {
-    return _eventChannel.receiveBroadcastStream();
+  Future<bool> stopAllPlayers() async {
+    var result = await _methodChannel.invokeMethod(Constants.stopAllPlayers);
+    return result ?? false;
+  }
+
+  void setMethodCallHandler() async {
+    _methodChannel.setMethodCallHandler((call) async {
+      switch (call.method) {
+        case Constants.onCurrentDuration:
+          var duration = call.arguments[Constants.current];
+          var key = call.arguments[Constants.playerKey];
+          if (duration.runtimeType == int) {
+            var indentifier = CurrentDurationIndentifier(key, duration);
+            PlatformStreams.instance.addDurationEvent(indentifier);
+          }
+      }
+    });
   }
 }
