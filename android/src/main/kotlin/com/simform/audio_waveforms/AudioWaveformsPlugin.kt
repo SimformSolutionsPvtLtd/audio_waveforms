@@ -16,7 +16,6 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
 import java.io.IOException
-import java.text.DateFormat.getDateTimeInstance
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -27,24 +26,10 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var activity: Activity? = null
     private lateinit var audioWaveMethodCall: AudioWaveformsMethodCall
     private var path: String? = null
-    private var codec: Int = 0
+    private var encoder: Int = 0
+    private var outputFormat: Int = 0
     private var sampleRate: Int = 16000
 
-    object Constants {
-        const val initRecorder = "initRecorder"
-        const val startRecording = "startRecording"
-        const val stopRecording = "stopRecording"
-        const val pauseRecording = "pauseRecording"
-        const val resumeRecording = "resumeRecording"
-        const val getDecibel = "getDecibel"
-        const val checkPermission = "checkPermission"
-        const val path = "path"
-        const val LOG_TAG = "AudioWave"
-        const val methodChannelName = "simform_audio_waveforms_plugin/methods"
-        const val enCoder = "enCoder"
-        const val sampleRate = "sampleRate"
-        const val fileNameFormat = "dd-MM-yy-hh-mm-ss"
-    }
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, Constants.methodChannelName)
@@ -57,9 +42,10 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         when (call.method) {
             Constants.initRecorder -> {
                 path = call.argument(Constants.path) as String?
-                codec = (call.argument(Constants.enCoder) as Int?) ?: 0
+                encoder = (call.argument(Constants.encoder) as Int?) ?: 0
+                outputFormat = (call.argument(Constants.outputFormat) as Int?) ?: 0
                 sampleRate = (call.argument(Constants.sampleRate) as Int?) ?: 16000
-                checkPathAndInitialiseRecorder(result, codec, sampleRate)
+                checkPathAndInitialiseRecorder(result, encoder, outputFormat, sampleRate)
             }
             Constants.startRecording -> audioWaveMethodCall.startRecorder(result, recorder)
             Constants.stopRecording -> {
@@ -77,7 +63,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun checkPathAndInitialiseRecorder(
         result: Result,
-        enCoder: Int,
+        encoder: Int,
+        outputFormat: Int,
         sampleRate: Int
     ) {
         try {
@@ -97,8 +84,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     path!!,
                     result,
                     recorder,
-                    enCoder,
-                    enCoder,
+                    encoder,
+                    outputFormat,
                     sampleRate
                 )
             } catch (e: IOException) {
@@ -109,8 +96,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 path!!,
                 result,
                 recorder,
-                enCoder,
-                enCoder,
+                encoder,
+                outputFormat,
                 sampleRate
             )
         }

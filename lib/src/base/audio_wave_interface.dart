@@ -18,7 +18,7 @@ class AudioWaveInterface {
         Platform.isIOS
             ? {
                 Constants.path: path,
-                Constants.codec: audioFormat,
+                Constants.encoder: audioFormat,
                 Constants.sampleRate: sampleRate,
               }
             : null);
@@ -28,12 +28,13 @@ class AudioWaveInterface {
   ///platform call to initialise the recorder.
   ///This method is only required for Android platform
   Future<bool> initRecorder(
-      String? path, int audioFormat, int sampleRate) async {
+      String? path, int encoder ,int audioFormat, int sampleRate) async {
     final initialized = await _methodChannel.invokeMethod(
       Constants.initRecorder,
       {
         Constants.path: path,
-        Constants.codec: audioFormat,
+        Constants.audioFormat: audioFormat,
+        Constants.encoder: encoder,
         Constants.sampleRate: sampleRate,
       },
     );
