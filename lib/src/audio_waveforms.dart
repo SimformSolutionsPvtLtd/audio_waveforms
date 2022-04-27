@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '/audio_waveforms.dart';
-import '/src/wave_painter.dart';
+import 'painters/recorder_wave_painter.dart';
 import 'base/wave_clipper.dart';
 
 class AudioWaveforms extends StatefulWidget {
   final Size size;
-  final WaveController waveController;
+  final RecorderController recorderController;
   final WaveStyle waveStyle;
   final EdgeInsets? padding;
   final EdgeInsets? margin;
@@ -16,7 +16,7 @@ class AudioWaveforms extends StatefulWidget {
   const AudioWaveforms({
     Key? key,
     required this.size,
-    required this.waveController,
+    required this.recorderController,
     this.waveStyle = const WaveStyle(),
     this.enableGesture = false,
     this.padding,
@@ -41,14 +41,14 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   @override
   void initState() {
     super.initState();
-    widget.waveController.addListener(() {
+    widget.recorderController.addListener(() {
       if (mounted) setState(() {});
     });
   }
 
   @override
   void dispose() {
-    widget.waveController.removeListener(() {});
+    widget.recorderController.removeListener(() {});
     super.dispose();
   }
 
@@ -78,8 +78,8 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 waveThickness: widget.waveStyle.waveThickness,
                 middleLineThickness: widget.waveStyle.middleLineThickness,
                 middleLineColor: widget.waveStyle.middleLineColor,
-                waveData: widget.waveController.waveData,
-                callPushback: widget.waveController.shouldRefresh,
+                waveData: widget.recorderController.waveData,
+                callPushback: widget.recorderController.shouldRefresh,
                 bottomPadding:
                     widget.waveStyle.bottomPadding ?? widget.size.height / 2,
                 spacing: widget.waveStyle.spacing,
@@ -98,11 +98,14 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 durationLinesColor: widget.waveStyle.durationLinesColor,
                 durationStyle: widget.waveStyle.durationStyle,
                 updateFrequecy: const Duration(seconds: 1).inMilliseconds /
-                    widget.waveController.updateFrequency.inMilliseconds,
+                    widget.recorderController.updateFrequency.inMilliseconds,
                 durationTextPadding: widget.waveStyle.durationTextPadding,
                 durationLinesHeight: widget.waveStyle.durationLinesHeight,
                 labelSpacing: widget.waveStyle.labelSpacing,
                 gradient: widget.waveStyle.gradient,
+                shouldClearLabels: widget.recorderController.shouldClearLabels,
+                revertClearlabelCall:
+                    widget.recorderController.revertClearlabelCall,
               ),
             ),
           ),
@@ -114,7 +117,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   ///This handles scrolling of the wave
   void _handleHorizontalDragUpdate(DragUpdateDetails details) {
     var direction = details.globalPosition.dx - _initialOffsetPosition;
-    widget.waveController.setRefresh(false);
+    widget.recorderController.setRefresh(false);
     _isScrolled = true;
 
     ///left to right
@@ -130,7 +133,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
     else if (-_totalBackDistance.dx +
                 _dragOffset.dx +
                 (widget.waveStyle.spacing *
-                    widget.waveController.waveData.length) +
+                    widget.recorderController.waveData.length) +
                 details.delta.dx >
             (widget.waveStyle.extendWaveform
                 ? widget.size.width
@@ -152,7 +155,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   void _pushBackWave() {
     if (_isScrolled) {
       _initialPosition =
-          widget.waveStyle.spacing * widget.waveController.waveData.length -
+          widget.waveStyle.spacing * widget.recorderController.waveData.length -
               widget.size.width / 2;
       _totalBackDistance =
           _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);

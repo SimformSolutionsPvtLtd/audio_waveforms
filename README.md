@@ -3,7 +3,11 @@
 # Audio Waveforms
 
 Use this plugin to generate waveforms while recording audio in any file formats supported
-by given encoders. We can use gestures to scroll through the waveforms and also style waveforms.
+by given encoders or from audio files. We can use gestures to scroll through the waveforms or seek to
+any position while playing audio and also style waveforms.
+
+
+### Recorder
 
 ## Preview
 <a href="https://raw.githubusercontent.com/SimformSolutionsPvtLtd/audio_waveforms/main/preview/demo.gif"><img src="https://raw.githubusercontent.com/SimformSolutionsPvtLtd/audio_waveforms/main/preview/demo.gif" width="390px;" height="700px;"/></a>
@@ -50,47 +54,47 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 
 ## Usage
 
-1. Initialise WaveController.
+1. Initialise WaveController
 ```dart
-late final WaveController waveController;
+late final RecorderController recorderController;
 
-  @override
-  void initState() {
-    super.initState();
-    waveController = WaveController();
-  }
+@override
+void initState() {
+  super.initState();
+  recorderController = RecorderController();
+}
 ```
-2. Use `AudioWaveforms` widget in widget tree.
+2. Use `AudioWaveforms` widget in widget tree
 ```dart
 AudioWaveforms(
   size: Size(MediaQuery.of(context).size.width, 200.0),
-  waveController: waveController,
+  recorderController: recorderController,
 ),
 ```
 3. Start recording (it will also display waveforms)
 ```dart
-await waveController.record();
+await recorderController.record();
 ```
 You can provide file name with extension and full path in path parameter of record function. If
 not provided .aac is default extension and dateTime will be file name.
 
 4. Pause recording
 ```dart
-await waveController.pause();
+await recorderController.pause();
 ```
 5. Stop recording
 ```dart
-final path = await waveController.stop();
+final path = await recorderController.stop();
 ```
 Calling this will save the recording at provided path and it will return path to that file.
 
 6. Disposing WaveController
 ```dart
 @override
-  void dispose() {
-    waveController.disposeFunc();
-    super.dispose();
-  }
+void dispose() {
+ recorderController.disposeFunc();
+ super.dispose();
+}
 ```
 
 ## Additional feature
@@ -104,32 +108,12 @@ By enabling gestures, you can scroll through waveform in recording state or paus
 
 2. Refreshing the wave to initial position after scrolling
 ```dart
-waveController.refresh();
+recorderController.refresh();
 ```
 Once scrolled waveform will stop updating position with newly added wave while recording so we can
 use this to get waves updating again. It can also be used in paused/stopped state.
 
-3. Changing background of the Waveform
-```dart
- AudioWaveforms(
-  size: Size(MediaQuery.of(context).size.width, 200.0),
-  waveController: waveController,
-  margin: const EdgeInsets.all(10.0),
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(14.0),
-    gradient: const LinearGradient(
-      colors: <Color>[
-       Color(0xFF615766),
-       Color(0xFF394253),
-       Color(0xFF412B4F),
-      ],
-    begin: Alignment.bottomLeft,
-    stops: <double>[0.2, 0.45, 0.8],
-    ),
-  ),
-),
-```
-4. Changing style of the waves
+3. Changing style of the waves
 ```dart
 AudioWaveforms(
  waveStyle: WaveStyle(
@@ -142,7 +126,7 @@ AudioWaveforms(
  ),
 ),
 ```
-5. Applying gradient to waves
+4. Applying gradient to waves
 ```dart
 AudioWaveforms(
   waveStyle: WaveStyle(
@@ -154,34 +138,100 @@ AudioWaveforms(
   ),
 ),
 ```
-
-6. Show duration of the waveform
+5. Show duration of the waveform
 ```dart
 AudioWaveforms(
  waveStyle: WaveStyle(showDurationLabel: true),
 ),
 ```
-7. Change frequency of wave update and normalise according to need and platform
+6. Change frequency of wave update and normalise according to need and platform
 ```dart
-late final WaveController waveController;
-
+late final RecorderController recorderController;
   @override
   void initState() {
     super.initState();
-    waveController = WaveController()
+    recorderController = RecorderController()
       ..updateFrequency = const Duration(milliseconds: 100)
       ..normalizationFactor = Platform.isAndroid ? 60 : 40;
   }
 ```
-8. Using different types of encoders and sample rate
+7. Using different types of encoders and sample rate
 ```dart
-late final WaveController waveController;
-
+late final RecorderController waveController;
   @override
   void initState() {
     super.initState();
-    waveController = WaveController()
-      ..encoder = Encoder.aac
+    recorderController = RecorderController()
+      ..androidEncoder = AndroidEncoder.aac
+      ..androidOutputFormat = AndroidOutputFormat.mpeg4
+      ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
       ..sampleRate = 16000;
   }
 ```
+
+### Player
+
+## Usage
+1. Initialise PlayerController
+```dart
+late PlayerController playerController;
+@override
+void initState() {
+  super.initState();
+  playerController = PlayerController();
+}
+```
+2. Prepare player
+```dart
+await playerController.preparePlayer(path);
+```
+Provide the audio file path in the parameter. You can also set volume with optional parameter.
+3. Use widget in widget-tree
+```dart
+AudioFileWaveforms(
+ size: Size(MediaQuery.of(context).size.width, 100.0),
+ playerController: playerController,
+)
+```
+4. Start player
+```dart
+await playerController.startPlayer();
+```
+As default when audio ends it will be seeked to start but you can pass false let it stay at end.
+5. Pause player
+```dart
+await playerController.pausePlayer();
+```
+6. Stop player
+```dart
+await playerController.stopPlayer();
+```
+7. Disposing the playerController
+```dart
+@override
+void dispose() {
+ playerController.disposeFunc();
+ super.dispose();
+}
+```
+
+## Additional feature
+1. Set volume for the player
+```dart
+await playerController.setVolume(1.0);
+```
+2. Seek to any position
+```dart
+await playerController.seekTo(5000);
+```
+3. Get current/max duration of audio file
+```dart
+final duration = await playerController.getDuration(DurationType.max);
+```
+4. Seek using gestures
+```dart
+AudioFileWaveforms(
+ enableSeekGesture: true,
+)
+```
+Audio also can be seeked using gestures on waveforms (enabled by default).

@@ -26,7 +26,7 @@ class WaveStyle {
   ///Color line in the middle
   final Color middleLineColor;
 
-  ///Thickness of middle line
+  ///Thickness of middle line.
   final double middleLineThickness;
 
   ///Width of each wave
@@ -65,11 +65,13 @@ class WaveStyle {
   final double durationTextPadding;
 
   ///Provide gradient to waveform using this. Use shader as shown in example.
-  ///
-  ///For only two colors. offset.dx is gradient effect starts and offset.dy
-  ///is for y-axis effect.
   final Shader? gradient;
 
+  ///This is applied to each wave while generating. Use this to [scale] the waves.
+  /// Defaluts to 1.0.
+  final double scaleFactor;
+
+  ///A model class to provide style to the waveforms.
   const WaveStyle({
     this.waveColor = Colors.blueGrey,
     this.showMiddleLine = true,
@@ -95,6 +97,7 @@ class WaveStyle {
     this.durationTextPadding = 20.0,
     this.durationLinesColor = Colors.blueAccent,
     this.gradient,
+    this.scaleFactor = 1.0,
   }) : assert(waveThickness < spacing,
             "waveThickness can't be greater than spacing");
 }
