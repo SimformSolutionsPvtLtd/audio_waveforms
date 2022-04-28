@@ -51,8 +51,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     _initialiseControllers();
   }
 
-  ///After completing the recording, this also
-  ///can be passed to [playerController1] to get waveforms.
   void _getDir() async {
     tempDir = await getApplicationDocumentsDirectory();
     _preparePlayers();

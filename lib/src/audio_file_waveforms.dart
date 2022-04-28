@@ -185,7 +185,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
                   waveCap: widget.playerWaveStyle.waveCap,
                   showBottom: widget.playerWaveStyle.showBottom,
                   showTop: widget.playerWaveStyle.showTop,
-                  waveThickness: widget.playerWaveStyle.waveThickness,
+                  waveThickness:  widget.playerWaveStyle.waveThickness,
                   animValue: _animProgress,
                 ),
                 size: widget.size,

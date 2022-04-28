@@ -49,6 +49,24 @@ class RecorderController extends ChangeNotifier {
 
   bool shouldClearLabels = false;
 
+  final ValueNotifier<int> _currentScrolledDuration = ValueNotifier(0);
+
+  ///Listen to this value notifier when current time position of
+  ///recorded audio is required.
+  ///
+  /// Time position is with respect [middle line]. To get desired position,
+  /// one must scroll to that time frame to middle line.
+  ///
+  /// To use this [shouldCalculateScrolledPosition] must be enabled
+  /// (available in [AudioWaveform] widget).
+  ///
+  /// Get better idea when duration lables are enabled.
+  ///
+  /// Returned duration is in [milliseconds].
+  ValueNotifier<int> get currentScrolledDuration => _currentScrolledDuration;
+
+
+
   ///Use this to check permission and starts recording.
   ///
   ///Can be called after pausing.
@@ -234,11 +252,18 @@ class RecorderController extends ChangeNotifier {
     notifyListeners();
   }
 
+  ///[Internally] used to set scrolled position
+  ///to duration.
+  void setScrolledPostionDuration(int duration){
+    _currentScrolledDuration.value = duration;
+  }
+
   ///This function must be called to free [resources],
   ///it will also dispose the controller.
   void disposeFunc() async {
     if (_timer != null) _timer!.cancel();
     if (recorderState != RecorderState.stopped) await stop();
+    _currentScrolledDuration.dispose();
     dispose();
   }
 }

@@ -12,6 +12,7 @@ class AudioWaveforms extends StatefulWidget {
   final BoxDecoration? decoration;
   final Color? backgroundColor;
   final bool enableGesture;
+  final bool shouldCalculateScrolledPosition;
 
   const AudioWaveforms({
     Key? key,
@@ -23,6 +24,7 @@ class AudioWaveforms extends StatefulWidget {
     this.margin,
     this.decoration,
     this.backgroundColor,
+    this.shouldCalculateScrolledPosition = false,
   }) : super(key: key);
 
   @override
@@ -74,7 +76,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
           child: RepaintBoundary(
             child: CustomPaint(
               size: widget.size,
-              painter: WavePainter(
+              painter: RecorderWavePainter(
                 waveThickness: widget.waveStyle.waveThickness,
                 middleLineThickness: widget.waveStyle.middleLineThickness,
                 middleLineColor: widget.waveStyle.middleLineColor,
@@ -106,6 +108,10 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 shouldClearLabels: widget.recorderController.shouldClearLabels,
                 revertClearlabelCall:
                     widget.recorderController.revertClearlabelCall,
+                setCurrentPositionDuration:
+                    widget.recorderController.setScrolledPostionDuration,
+                shouldCalculateScrolledPosition:
+                    widget.shouldCalculateScrolledPosition,
               ),
             ),
           ),
@@ -122,9 +128,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
 
     ///left to right
     if (-_totalBackDistance.dx + _dragOffset.dx + details.delta.dx <
-            (widget.waveStyle.extendWaveform
-                ? widget.size.width
-                : widget.size.width / 2) &&
+            (widget.size.width / 2) &&
         direction > 0) {
       setState(() => _dragOffset += details.delta);
     }
@@ -135,9 +139,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 (widget.waveStyle.spacing *
                     widget.recorderController.waveData.length) +
                 details.delta.dx >
-            (widget.waveStyle.extendWaveform
-                ? widget.size.width
-                : widget.size.width / 2) &&
+            (widget.size.width / 2) &&
         direction < 0) {
       setState(() => _dragOffset += details.delta);
     }
