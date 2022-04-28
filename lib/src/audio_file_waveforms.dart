@@ -69,8 +69,8 @@ class AudioFileWaveforms extends StatefulWidget {
     this.margin,
     this.decoration,
     this.backgroundColor,
-    this.animationDuration = const Duration(milliseconds: 1000),
-    this.animationCurve = Curves.bounceOut,
+    this.animationDuration = const Duration(milliseconds: 500),
+    this.animationCurve = Curves.ease,
     this.density = 2,
     this.clipBehavior = Clip.none,
   }) : super(key: key);
@@ -102,8 +102,13 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     super.initState();
     _initialiseVariables();
     _calculateWaveform().whenComplete(() {
+      animationController.forward();
       animation.addListener(() {
-        _animProgress = animation.value;
+        if (mounted) {
+          setState(() {
+            _animProgress = animation.value;
+          });
+        }
       });
     });
     animationController = AnimationController(
@@ -112,13 +117,6 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     );
     animation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
         parent: animationController, curve: widget.animationCurve));
-
-    widget.playerController.addListener(() {
-      if (widget.playerController.playerState == PlayerState.playing) {
-        animationController.forward();
-        widget.playerController.removeListener(() {});
-      }
-    });
     PlatformStreams.instance.durationStream.listen((event) {
       if (widget.playerController.playerKey == event.playerKey) {
         _seekProgress.value = event.duration;
@@ -187,7 +185,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
                   waveCap: widget.playerWaveStyle.waveCap,
                   showBottom: widget.playerWaveStyle.showBottom,
                   showTop: widget.playerWaveStyle.showTop,
-                  waveThickness:  widget.playerWaveStyle.waveThickness,
+                  waveThickness: widget.playerWaveStyle.waveThickness,
                   animValue: _animProgress,
                 ),
                 size: widget.size,

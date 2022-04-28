@@ -1,10 +1,12 @@
+import 'dart:io';
+
 import 'package:audio_waveforms_example/chat_bubble.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:flutter/services.dart';
 
 import 'package:path_provider/path_provider.dart';
-import 'dart:ui' as ui show Gradient;
 
 void main() => runApp(const MyApp());
 
@@ -30,51 +32,118 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
   late final RecorderController recorderController;
-  late final PlayerController playerController;
+  late final PlayerController playerController1;
+  late final PlayerController playerController2;
+  late final PlayerController playerController3;
+  late final PlayerController playerController4;
+  late final PlayerController playerController5;
+  late final PlayerController playerController6;
+
   String? path;
   String? musicFile;
-  bool isPlaying = false;
   bool isRecording = false;
+  late Directory tempDir;
 
   @override
   void initState() {
     super.initState();
+    _getDir();
+    _initialiseControllers();
+  }
+
+  ///After completing the recording, this also
+  ///can be passed to [playerController1] to get waveforms.
+  void _getDir() async {
+    tempDir = await getApplicationDocumentsDirectory();
+    _preparePlayers();
+    path = "${tempDir.path}/music.aac";
+  }
+
+  Future<ByteData> _loadAsset(String path) async {
+    return await rootBundle.load(path);
+  }
+
+  void _initialiseControllers(){
     recorderController = RecorderController()
       ..androidEncoder = AndroidEncoder.aac
       ..androidOutputFormat = AndroidOutputFormat.mpeg4
       ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
       ..sampleRate = 16000;
-    playerController = PlayerController()
+    playerController1 = PlayerController()
       ..addListener(() {
         if (mounted) setState(() {});
       });
-    _getDir();
-    _pickFile();
+    playerController2 = PlayerController()
+      ..addListener(() {
+        if (mounted) setState(() {});
+      });
+    playerController3 = PlayerController()
+      ..addListener(() {
+        if (mounted) setState(() {});
+      });
+    playerController4 = PlayerController()
+      ..addListener(() {
+        if (mounted) setState(() {});
+      });
+    playerController5 = PlayerController()
+      ..addListener(() {
+        if (mounted) setState(() {});
+      });
+    playerController6 = PlayerController()
+      ..addListener(() {
+        if (mounted) setState(() {});
+      });
   }
 
-  ///After completing the recording, this also
-  ///can be passed to [playerController] to get waveforms.
-  void _getDir() async {
-    final dir = await getApplicationDocumentsDirectory();
-    path = "${dir.path}/music.aac";
+  void _preparePlayers() async {
+    ///audio-1
+    final file1 = File('${tempDir.path}/audio1.mp3');
+    await file1.writeAsBytes(
+        (await _loadAsset('assets/audios/audio1.mp3')).buffer.asUint8List());
+    playerController1.preparePlayer(file1.path);
+
+    ///audio-2
+    final file2 = File('${tempDir.path}/audio2.mp3');
+    await file2.writeAsBytes(
+        (await _loadAsset('assets/audios/audio2.mp3')).buffer.asUint8List());
+    playerController2.preparePlayer(file2.path);
+
+    ///audio-3
+    final file3 = File('${tempDir.path}/audio3.mp3');
+    await file3.writeAsBytes(
+        (await _loadAsset('assets/audios/audio3.mp3')).buffer.asUint8List());
+    playerController3.preparePlayer(file3.path);
+
+    ///audio-4
+    final file4 = File('${tempDir.path}/audio4.mp3');
+    await file4.writeAsBytes(
+        (await _loadAsset('assets/audios/audio4.mp3')).buffer.asUint8List());
+    playerController4.preparePlayer(file4.path);
   }
 
   void _pickFile() async {
-    await Future.delayed(const Duration(seconds: 3)).whenComplete(() async {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-      if (result != null) {
-        musicFile = result.files.single.path;
-        await playerController.preparePlayer(musicFile!);
-      } else {
-        print("File not picked");
-      }
-    });
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    if (result != null) {
+      musicFile = result.files.single.path;
+      await playerController6.preparePlayer(musicFile!);
+    } else {
+      print("File not picked");
+    }
+  }
+
+  void _disposeControllers() {
+    recorderController.disposeFunc();
+    playerController1.stopAllPlayers();
+    playerController2.disposeFunc();
+    playerController3.disposeFunc();
+    playerController4.disposeFunc();
+    playerController5.disposeFunc();
+    playerController6.disposeFunc();
   }
 
   @override
   void dispose() {
-    recorderController.disposeFunc();
-    playerController.stopAllPlayers();
+    _disposeControllers();
     super.dispose();
   }
 
@@ -85,8 +154,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.detached) {
-      recorderController.disposeFunc();
-      playerController.disposeFunc();
+      _disposeControllers();
     }
     super.didChangeAppLifecycleState(state);
   }
@@ -97,24 +165,70 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       backgroundColor: const Color(0xFF252331),
       appBar: AppBar(
         backgroundColor: const Color(0xFF252331),
-        elevation: 0,
-        title: const Text('Jonathan'),
+        elevation: 1,
         centerTitle: true,
+        shadowColor: Colors.grey,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/images/logo.png',
+              scale: 1.5,
+            ),
+            const SizedBox(width: 10),
+            const Text('Simform'),
+          ],
+        ),
       ),
       body: SafeArea(
         child: Column(
           children: [
-            const ChatBubble(text: 'Hey', isSender: true),
-            const ChatBubble(text: 'What\'s up?'),
-            const ChatBubble(text: 'Can you share that audio?', isSender: true),
-            const ChatBubble(text: 'sure'),
-            if (playerController.playerState != PlayerState.stopped) ...[
+            const SizedBox(height: 20),
+            if (playerController1.playerState != PlayerState.stopped) ...[
               WaveBubble(
-                playerController: playerController,
-                isPlaying: playerController.playerState == PlayerState.playing,
-                onTap: _playOrPlausePlayer,
+                playerController: playerController1,
+                isPlaying: playerController1.playerState == PlayerState.playing,
+                onTap: () => _playOrPlausePlayer(playerController1),
               ),
-              const ChatBubble(text: 'That was cool!', isSender: true),
+            ],
+            if (playerController2.playerState != PlayerState.stopped) ...[
+              WaveBubble(
+                playerController: playerController2,
+                isPlaying: playerController2.playerState == PlayerState.playing,
+                onTap: () => _playOrPlausePlayer(playerController2),
+                isSender: true,
+              ),
+            ],
+            if (playerController3.playerState != PlayerState.stopped) ...[
+              WaveBubble(
+                playerController: playerController3,
+                isPlaying: playerController3.playerState == PlayerState.playing,
+                onTap: () => _playOrPlausePlayer(playerController3),
+              ),
+            ],
+            if (playerController4.playerState != PlayerState.stopped) ...[
+              WaveBubble(
+                playerController: playerController4,
+                isPlaying: playerController4.playerState == PlayerState.playing,
+                onTap: () => _playOrPlausePlayer(playerController4),
+                isSender: true,
+              ),
+            ],
+            if (playerController5.playerState != PlayerState.stopped) ...[
+              WaveBubble(
+                playerController: playerController5,
+                isPlaying: playerController5.playerState == PlayerState.playing,
+                onTap: () => _playOrPlausePlayer(playerController5),
+                isSender: true,
+              ),
+            ],
+            if (playerController6.playerState != PlayerState.stopped) ...[
+              WaveBubble(
+                playerController: playerController6,
+                isPlaying: playerController6.playerState == PlayerState.playing,
+                onTap: () => _playOrPlausePlayer(playerController6),
+                isSender: true,
+              ),
             ],
             const Spacer(),
             Row(
@@ -126,15 +240,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                           enableGesture: true,
                           size: Size(MediaQuery.of(context).size.width / 2, 50),
                           recorderController: recorderController,
-                          waveStyle: WaveStyle(
+                          waveStyle: const WaveStyle(
                             waveColor: Colors.white,
                             extendWaveform: true,
                             showMiddleLine: false,
-                            gradient: ui.Gradient.linear(
-                              const Offset(70, 50),
-                              Offset(MediaQuery.of(context).size.width / 2, 0),
-                              [Colors.red, Colors.green],
-                            ),
                           ),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12.0),
@@ -152,11 +261,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                           ),
                           padding: const EdgeInsets.only(left: 18),
                           margin: const EdgeInsets.symmetric(horizontal: 15),
-                          child: const TextField(
+                          child: TextField(
+                            readOnly: true,
                             decoration: InputDecoration(
                               hintText: "Type Something...",
-                              hintStyle: TextStyle(color: Colors.white54),
+                              hintStyle: const TextStyle(color: Colors.white54),
+                              contentPadding: const EdgeInsets.only(top: 16),
                               border: InputBorder.none,
+                              suffixIcon: IconButton(
+                                onPressed: _pickFile,
+                                icon: Icon(Icons.adaptive.share),
+                                color: Colors.white54,
+                              ),
                             ),
                           ),
                         ),
@@ -177,22 +293,22 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
           ],
         ),
       ),
     );
   }
 
-  void _playOrPlausePlayer() async {
-    playerController.playerState == PlayerState.playing
-        ? await playerController.pausePlayer()
-        : await playerController.startPlayer(false);
+  void _playOrPlausePlayer(PlayerController controller) async {
+    controller.playerState == PlayerState.playing
+        ? await controller.pausePlayer()
+        : await controller.startPlayer(false);
   }
 
   void _startOrStopRecording() async {
     if (isRecording) {
-      await recorderController.stop(false);
+      final path = await recorderController.stop(false);
+      if (path != null) playerController5.preparePlayer(path);
     } else {
       await recorderController.record(path);
     }
