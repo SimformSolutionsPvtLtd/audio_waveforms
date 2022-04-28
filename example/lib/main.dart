@@ -42,7 +42,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   String? path;
   String? musicFile;
   bool isRecording = false;
-  late Directory tempDir;
+  late Directory appDirectory;
 
   @override
   void initState() {
@@ -52,9 +52,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   void _getDir() async {
-    tempDir = await getApplicationDocumentsDirectory();
+    appDirectory = await getApplicationDocumentsDirectory();
     _preparePlayers();
-    path = "${tempDir.path}/music.aac";
+    path = "${appDirectory.path}/music.aac";
   }
 
   Future<ByteData> _loadAsset(String path) async {
@@ -95,25 +95,25 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
   void _preparePlayers() async {
     ///audio-1
-    final file1 = File('${tempDir.path}/audio1.mp3');
+    final file1 = File('${appDirectory.path}/audio1.mp3');
     await file1.writeAsBytes(
         (await _loadAsset('assets/audios/audio1.mp3')).buffer.asUint8List());
     playerController1.preparePlayer(file1.path);
 
     ///audio-2
-    final file2 = File('${tempDir.path}/audio2.mp3');
+    final file2 = File('${appDirectory.path}/audio2.mp3');
     await file2.writeAsBytes(
         (await _loadAsset('assets/audios/audio2.mp3')).buffer.asUint8List());
     playerController2.preparePlayer(file2.path);
 
     ///audio-3
-    final file3 = File('${tempDir.path}/audio3.mp3');
+    final file3 = File('${appDirectory.path}/audio3.mp3');
     await file3.writeAsBytes(
         (await _loadAsset('assets/audios/audio3.mp3')).buffer.asUint8List());
     playerController3.preparePlayer(file3.path);
 
     ///audio-4
-    final file4 = File('${tempDir.path}/audio4.mp3');
+    final file4 = File('${appDirectory.path}/audio4.mp3');
     await file4.writeAsBytes(
         (await _loadAsset('assets/audios/audio4.mp3')).buffer.asUint8List());
     playerController4.preparePlayer(file4.path);
