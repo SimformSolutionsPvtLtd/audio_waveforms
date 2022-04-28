@@ -32,6 +32,9 @@ class PlayerController extends ChangeNotifier {
   String get playerKey => _playerKey.toString();
 
   PlayerController() {
+    if (!PlatformStreams.instance.isInitialised) {
+      PlatformStreams.instance.init();
+    }
     AudioWaveformsInterface.instance.setMethodCallHandler();
   }
 
@@ -149,24 +152,26 @@ class PlayerController extends ChangeNotifier {
     }
   }
 
-  ///Calling this will stop the player and it will dispose player in native
-  ///It will also dispose the the controller.
+  ///Calling this will stop the player, it will dispose player in native and
+  ///also dispose the the controller.
   ///
   ///As there is common stream for every players stream
   /// will be still active without any events.
   /// To dispose it call [stopAllPlayers].
+  ///
+  /// Only calling disposeFunc() will not stop the stream
+  /// calling [stopAllPlayers] is still [required]
   void disposeFunc() async {
     if (playerState != PlayerState.stopped) await stopPlayer();
     dispose();
   }
 
-  ///This method is to dispose [multiple] players all at once.
+  ///This method is to free all players [resources] all at once.
   ///
-  /// This method is required to call only [once] from any one of the [PlayerController]s.
+  /// This method is required to call only [once] from any
+  /// one of the [PlayerController]s.
   ///
-  /// Call this only when [truely] initialising a new [PlayerController] is not required.
-  ///
-  /// Note -: this method will close stream and dispose all the players but
+  /// Note -:this method will close stream and free  resources taken by players but
   /// it will only dispose controller who's stopAllPlayers method was called
   /// calling [disposeFunc] is still required for every other [PlayerController]
   void stopAllPlayers() async {
