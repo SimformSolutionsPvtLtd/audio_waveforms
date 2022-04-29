@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 
 ///Referenced from https://stackoverflow.com/questions/38744579/show-waveform-of-audio
 class FileWaveformsPainter extends CustomPainter {
-  List<double> waveformData;
-  List<double> waveformXPostion;
+  List<Offset> waveform;
   double waveThickness;
   double density;
   double currentSeekPostion;
-  bool showSeekLine;
+  bool showSeeker;
   double scaleFactor;
   Color seekLineColor;
   Shader? liveWaveGradient;
@@ -21,10 +20,11 @@ class FileWaveformsPainter extends CustomPainter {
   double audioProgress;
 
   FileWaveformsPainter({
+    required this.waveform,
     required this.waveThickness,
     required this.density,
     required this.currentSeekPostion,
-    required this.showSeekLine,
+    required this.showSeeker,
     required this.scaleFactor,
     required this.seekLineColor,
     required this.seekLineThickness,
@@ -33,8 +33,6 @@ class FileWaveformsPainter extends CustomPainter {
     required this.visualizerHeight,
     required this.waveCap,
     required this.liveWaveColor,
-    required this.waveformData,
-    required this.waveformXPostion,
     required this.denseness,
     required this.audioProgress,
     this.liveWaveGradient,
@@ -50,72 +48,58 @@ class FileWaveformsPainter extends CustomPainter {
   Paint liveWavePaint;
   Paint seeklinePaint;
 
-  double _seekerXPosition = 0.0;
-
   @override
   void paint(Canvas canvas, Size size) {
     _drawLiveWave(size, canvas);
+    if (showSeeker) _drawSeekLine(size, canvas);
   }
 
   @override
   bool shouldRepaint(FileWaveformsPainter oldDelegate) => true;
 
-  //TODO: fix seek line
   void _drawSeekLine(Size size, Canvas canvas) {
-    if (audioProgress == 1.0) {
-      canvas.drawLine(
-        Offset(_seekerXPosition + liveWavePaint.strokeWidth * 3, 0),
-        Offset(_seekerXPosition + liveWavePaint.strokeWidth * 3, size.height),
-        seeklinePaint,
-      );
-    } else {
-      canvas.drawLine(
-        Offset(
-            waveformXPostion.last * audioProgress + liveWavePaint.strokeWidth,
-            0),
-        Offset(
-            waveformXPostion.last * audioProgress + liveWavePaint.strokeWidth,
-            size.height),
-        seeklinePaint,
-      );
-    }
+    var progress = waveform.last.dx * audioProgress;
+    canvas.drawLine(
+      Offset(progress + liveWavePaint.strokeWidth * 2, 0),
+      Offset(progress + liveWavePaint.strokeWidth * 2, size.height),
+      seeklinePaint,
+    );
   }
 
   void _drawLiveWave(Size size, Canvas canvas) {
     if (liveWaveGradient != null) liveWavePaint.shader = liveWaveGradient;
-    for (int i = 0; i < waveformData.length; i++) {
+    for (int i = 0; i < waveform.length; i++) {
       int x = i * _dp(3);
       if (x < size.width) {
         if (x < denseness && x + _dp(2) < denseness) {
-          _seekerXPosition = x.toDouble();
           if (showBottom) {
             canvas.drawLine(
-                Offset(waveformXPostion[i], size.height / 2),
-                Offset(waveformXPostion[i],
-                    size.height / 2 + waveformData[i] * scaleFactor),
+                Offset(waveform[i].dx, size.height / 2),
+                Offset(waveform[i].dx,
+                    size.height / 2 + waveform[i].dy * scaleFactor),
                 liveWavePaint);
           }
           if (showTop) {
             canvas.drawLine(
-                Offset(waveformXPostion[i], size.height / 2),
-                Offset(waveformXPostion[i],
-                    size.height / 2 + (-waveformData[i] * scaleFactor)),
+                Offset(waveform[i].dx, size.height / 2),
+                Offset(waveform[i].dx,
+                    size.height / 2 + (-waveform[i].dy * scaleFactor)),
                 liveWavePaint);
           }
         } else {
           if (x < denseness) {
             if (showTop) {
               canvas.drawLine(
-                  Offset(waveformXPostion[i], size.height / 2),
-                  Offset(waveformXPostion[i],
-                      size.height / 2 + (-waveformData[i] * scaleFactor)),
+                  Offset(waveform[i].dx, size.height / 2),
+                  Offset(waveform[i].dx,
+                      size.height / 2 + (-waveform[i].dy * scaleFactor)),
                   liveWavePaint);
             }
             if (showBottom) {
               canvas.drawLine(
-                  Offset(waveformXPostion[i], size.height / 2),
-                  Offset(waveformXPostion[i],
-                      size.height / 2 + waveformData[i] * scaleFactor),
+                  Offset(waveform[i].dx, size.height / 2),
+                  Offset(waveform[i].dx,
+                      size.height / 2 + waveform[i].dy * scaleFactor),
                   liveWavePaint);
             }
           }
@@ -131,8 +115,7 @@ class FileWaveformsPainter extends CustomPainter {
 }
 
 class FixedWavePainter extends CustomPainter {
-  List<double> waveformData;
-  List<double> waveformXPostion;
+  List<Offset> waveform;
   bool showTop;
   bool showBottom;
   double animValue;
@@ -143,8 +126,7 @@ class FixedWavePainter extends CustomPainter {
   Shader? fixedWaveGradient;
 
   FixedWavePainter({
-    required this.waveformData,
-    required this.waveformXPostion,
+    required this.waveform,
     required this.showTop,
     required this.showBottom,
     required this.animValue,
@@ -171,28 +153,28 @@ class FixedWavePainter extends CustomPainter {
   void _drawFixedWave(Size size, Canvas canvas) {
     if (fixedWaveGradient != null) wavePaint.shader = fixedWaveGradient;
 
-    for (int i = 0; i < waveformData.length; i++) {
+    for (int i = 0; i < waveform.length; i++) {
       if (showTop) {
         canvas.drawLine(
-            Offset(waveformXPostion[i], size.height / 2),
+            Offset(waveform[i].dx, size.height / 2),
             Offset(
-                waveformXPostion[i],
+                waveform[i].dx,
                 size.height / 2 +
-                    ((waveformData[i] * animValue) == 0
+                    ((waveform[i].dy * animValue) == 0
                             ? 1
-                            : (waveformData[i] * animValue)) *
+                            : (waveform[i].dy * animValue)) *
                         scaleFactor),
             wavePaint);
       }
       if (showBottom) {
         canvas.drawLine(
-            Offset(waveformXPostion[i], size.height / 2),
+            Offset(waveform[i].dx, size.height / 2),
             Offset(
-                waveformXPostion[i],
+                waveform[i].dx,
                 size.height / 2 +
-                    -((waveformData[i] * animValue) == 0
+                    -((waveform[i].dy * animValue) == 0
                             ? 1
-                            : (waveformData[i] * animValue)) *
+                            : (waveform[i].dy * animValue)) *
                         scaleFactor),
             wavePaint);
       }

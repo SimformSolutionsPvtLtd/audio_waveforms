@@ -4,6 +4,7 @@ import 'package:audio_waveforms/src/base/platform_streams.dart';
 import 'package:audio_waveforms/src/base/player_wave_style.dart';
 import 'package:audio_waveforms/src/painters/player_wave_painter.dart';
 import 'package:flutter/material.dart';
+
 import '../audio_waveforms.dart';
 import 'base/constants.dart';
 
@@ -85,7 +86,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   late Animation<double> animation;
   double _animProgress = 0.0;
   final ValueNotifier<int> _seekProgress = ValueNotifier(0);
-  bool showSeekLine = false;
+  bool showSeeker = false;
   late List<int> _waveData;
   late EdgeInsets? margin;
   late EdgeInsets? padding;
@@ -136,8 +137,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   double _denseness = 0.0;
   double _audioProgress = 0.0;
 
-  final List<double> _waveformData = [];
-  final List<double> _waveformXPositions = [];
+  final List<Offset> _waveform = [];
 
   @override
   Widget build(BuildContext context) {
@@ -158,9 +158,10 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
               return CustomPaint(
                 isComplex: true,
                 foregroundPainter: FileWaveformsPainter(
+                  waveform: _waveform,
                   density: widget.density,
                   currentSeekPostion: _currentSeekPositon,
-                  showSeekLine: showSeekLine,
+                  showSeeker: showSeeker,
                   scaleFactor: widget.playerWaveStyle.scaleFactor,
                   seekLineColor: widget.playerWaveStyle.seekLineColor,
                   liveWaveGradient: widget.playerWaveStyle.liveWaveGradient,
@@ -171,14 +172,11 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
                   visualizerHeight: widget.playerWaveStyle.visualizerHeight,
                   waveCap: widget.playerWaveStyle.waveCap,
                   liveWaveColor: widget.playerWaveStyle.liveWaveColor,
-                  waveformData: _waveformData,
-                  waveformXPostion: _waveformXPositions,
                   denseness: _denseness,
                   audioProgress: _audioProgress,
                 ),
                 painter: FixedWavePainter(
-                  waveformData: _waveformData,
-                  waveformXPostion: _waveformXPositions,
+                  waveform: _waveform,
                   waveColor: widget.playerWaveStyle.fixedWaveColor,
                   fixedWaveGradient: widget.playerWaveStyle.fixedWavegradient,
                   scaleFactor: widget.playerWaveStyle.scaleFactor,
@@ -220,7 +218,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   ///gets updated it doesn't re assign them to same values.
   void _initialiseVariables() {
     _waveData = widget.playerController.bufferData?.toList() ?? [];
-    showSeekLine = false;
+    showSeeker = widget.playerWaveStyle.showSeeker;
     margin = widget.margin;
     padding = widget.padding;
     decoration = widget.decoration;
@@ -279,8 +277,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
             _dp(widget.playerWaveStyle.visualizerHeight).toDouble();
         if (x < widget.size.width) {
           if (x > _denseness && x + _dp(2) > _denseness) {
-            _waveformXPositions.add((barNum * _dp(3)).toDouble());
-            _waveformData.add(top - bottom);
+            _waveform.add(Offset((barNum * _dp(3)).toDouble(), top - bottom));
           }
         }
         barNum++;
@@ -297,11 +294,11 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   ///calculates densness according to width and seek progress
   void _updatePlayerPercent(Size size) {
     _audioProgress = _scrubberProgress();
-    _denseness = (size.width * _audioProgress).ceilToDouble();
+    _denseness = (_waveform.last.dx * _audioProgress).ceilToDouble();
     if (_denseness < 0) {
       _denseness = 0;
-    } else if (_denseness > size.width) {
-      _denseness = size.width;
+    } else if (_denseness > _waveform.last.dx) {
+      _denseness = _waveform.last.dx;
     }
   }
 

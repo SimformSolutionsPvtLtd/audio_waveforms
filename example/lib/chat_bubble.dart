@@ -87,6 +87,7 @@ class WaveBubble extends StatelessWidget {
               density: 1.5,
               playerWaveStyle: const PlayerWaveStyle(
                 scaleFactor: 0.8,
+                showBottom: false,
                 fixedWaveColor: Colors.white30,
                 liveWaveColor: Colors.white,
                 waveCap: StrokeCap.butt,

@@ -15,6 +15,7 @@ struct Constants {
     static let encoder = "encoder"
     static let sampleRate = "sampleRate"
     static let fileNameFormat = "YY-MM-dd-HH-mm-ss"
+    static let bitRate = "bitRate"
 
     static let kAudioFormatMPEG4AAC = 1
     static let kAudioFormatMPEGLayer1 = 2

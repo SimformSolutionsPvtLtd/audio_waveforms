@@ -1,5 +1,7 @@
-import '/src/base/label.dart';
+import 'package:audio_waveforms/src/base/wave.dart';
 import 'package:flutter/material.dart';
+
+import '/src/base/label.dart';
 import '../base/utils.dart';
 
 ///This will paint the waveform
@@ -45,6 +47,9 @@ class WavePainter extends CustomPainter {
   final Shader? gradient;
   final bool shouldClearLabels;
   final VoidCallback revertClearlabelCall;
+  final Function(int) addUpperAnimatedWaves;
+  final List<Wave> animatedWaves;
+
   WavePainter({
     required this.waveData,
     required this.waveColor,
@@ -74,6 +79,8 @@ class WavePainter extends CustomPainter {
     required this.gradient,
     required this.shouldClearLabels,
     required this.revertClearlabelCall,
+    required this.addUpperAnimatedWaves,
+    required this.animatedWaves,
   })  : _wavePaint = Paint()
           ..color = waveColor
           ..strokeWidth = waveThickness
@@ -90,7 +97,7 @@ class WavePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if(shouldClearLabels){
+    if (shouldClearLabels) {
       _labels.clear();
       revertClearlabelCall();
     }
@@ -122,9 +129,7 @@ class WavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(WavePainter oldDelegate) {
-    return true;
-  }
+  bool shouldRepaint(WavePainter oldDelegate) => true;
 
   void _drawTextInRange(Canvas canvas, int i, Size size) {
     if (_labels.isNotEmpty) {
@@ -181,6 +186,13 @@ class WavePainter extends CustomPainter {
   }
 
   void _drawUpperWave(Canvas canvas, Size size, int i) {
+    if (animatedWaves.isEmpty) {
+      addUpperAnimatedWaves(i);
+    } else {
+      if (animatedWaves.isNotEmpty && i >= animatedWaves.length - 1) {
+        addUpperAnimatedWaves(i);
+      }
+    }
     canvas.drawLine(
         Offset(
             -totalBackDistance.dx +
@@ -193,7 +205,9 @@ class WavePainter extends CustomPainter {
                 dragOffset.dx +
                 (spacing * i) -
                 initialPosition,
-            -waveData[i] + size.height - bottomPadding),
+            (-waveData[i] * animatedWaves[i].animation.value) +
+                size.height -
+                bottomPadding),
         _wavePaint);
   }
 
@@ -210,7 +224,9 @@ class WavePainter extends CustomPainter {
                 dragOffset.dx +
                 (spacing * i) -
                 initialPosition,
-            waveData[i] + size.height - bottomPadding),
+            (waveData[i] * animatedWaves[i].animation.value) +
+                size.height -
+                bottomPadding),
         _wavePaint);
   }
 

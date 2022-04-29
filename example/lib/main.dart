@@ -1,11 +1,10 @@
 import 'dart:io';
 
+import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:audio_waveforms_example/chat_bubble.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/services.dart';
-
 import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(const MyApp());
@@ -63,7 +62,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     return await rootBundle.load(path);
   }
 
-  void _initialiseControllers(){
+  void _initialiseControllers() {
     recorderController = RecorderController()
       ..androidEncoder = AndroidEncoder.aac
       ..androidOutputFormat = AndroidOutputFormat.mpeg4
@@ -238,7 +237,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   child: isRecording
                       ? AudioWaveforms(
                           enableGesture: true,
-                          size: Size(MediaQuery.of(context).size.width / 2, 50),
+                          size: Size(MediaQuery.of(context).size.width / 2, 80),
                           recorderController: recorderController,
                           waveStyle: const WaveStyle(
                             waveColor: Colors.white,
@@ -307,7 +306,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
   void _startOrStopRecording() async {
     if (isRecording) {
-      final path = await recorderController.stop(false);
+      final path = await recorderController.stop();
       if (path != null) playerController5.preparePlayer(path);
     } else {
       await recorderController.record(path);

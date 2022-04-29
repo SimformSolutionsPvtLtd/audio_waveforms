@@ -7,12 +7,13 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var hasPermission: Bool = false
     public var meteringLevels: [Float]?
     
-    public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ fileNameFormat: String){
+    public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ fileNameFormat: String, _ bitRate: Int?){
         let settings = [
             AVFormatIDKey: getEncoder(encoder ?? 0),
             AVSampleRateKey: sampleRate ?? 16000,
             AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
+            AVEncoderBitRateKey: bitRate ?? 24000
         ]
         let options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetooth]
         if (path == nil) {

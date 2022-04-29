@@ -8,8 +8,7 @@ class PlayerWaveStyle {
   final Color liveWaveColor;
 
   ///Whether to show seeker or not
-  //TODO: fix seek line
-  // final bool showSeeker;
+  final bool showSeeker;
 
   ///Whether to show upper wave or not defaults to true
   final bool showTop;
@@ -43,14 +42,21 @@ class PlayerWaveStyle {
   ///This gradient is applied to waves which idicates currenly played part.
   final Shader? liveWaveGradient;
 
-  ///Constant height the wave bar. Height is also dependent on scaleFactor and density.
+  ///Constant height of the wave bar. Height is also dependent
+  /// on scaleFactor and density.
   final double visualizerHeight;
+
+  ///Normally, waveform is drawn from center of the provided
+  ///`size.height`. But still if slight vertical position change
+  ///is required then
+  final double positionalPadding;
 
   const PlayerWaveStyle({
     this.fixedWaveColor = Colors.white,
     this.liveWaveColor = Colors.deepOrange,
     this.showTop = true,
     this.showBottom = true,
+    this.showSeeker = false,
     this.waveCap = StrokeCap.round,
     this.seekLineColor = Colors.orange,
     this.seekLineThickness = 3.0,
@@ -60,5 +66,6 @@ class PlayerWaveStyle {
     this.scaleFactor = 1.0,
     this.liveWaveGradient,
     this.visualizerHeight = 28.0,
+    this.positionalPadding = 0.0,
   });
 }

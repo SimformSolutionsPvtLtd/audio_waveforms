@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 extension DurationExtension on Duration {
   ///converts duration to HH:MM:SS format
   String toHHMMSS() => toString().split('.').first.padLeft(8, "0");
@@ -88,6 +90,7 @@ enum PlayerState {
 
   ///When player is playing the audio file
   playing,
+
   ///When player is paused.
   paused,
 
@@ -106,3 +109,5 @@ enum DurationType {
   ///Default
   max
 }
+
+typedef OffsetFunction = Function(Offset, Offset);

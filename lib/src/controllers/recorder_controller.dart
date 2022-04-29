@@ -17,11 +17,15 @@ class RecorderController extends ChangeNotifier {
 
   late IosEncoder iosEncoder = IosEncoder.kAudioFormatMPEG4AAC;
 
+  ///Use this to update sampleRate. Defaults to 16000
   late int sampleRate = 16000;
 
   ///Db we get from native is too high so in Android it the value is subtracted
   ///and in IOS value added
   late double normalizationFactor = Platform.isAndroid ? 60 : 40;
+
+  ///Use this update bit rate. Defaults to 24000
+  late int bitRate = 24000;
 
   ///Current list of decibels(different values for each platform)
   List<double> get waveData => _waveData;
@@ -87,6 +91,7 @@ class RecorderController extends ChangeNotifier {
           _isRecording = await AudioWaveformsInterface.instance.record(
               Platform.isIOS ? iosEncoder.index : androidEncoder.index,
               sampleRate,
+              bitRate,
               path);
           if (_isRecording) {
             _recorderState = RecorderState.recording;
@@ -106,7 +111,12 @@ class RecorderController extends ChangeNotifier {
   ///This method is only required for Android platform
   Future<void> _initRecorder(String? path) async {
     final initialized = await AudioWaveformsInterface.instance.initRecorder(
-        path, androidEncoder.index, androidOutputFormat.index, sampleRate);
+      path: path,
+      encoder: androidEncoder.index,
+      outputFormat: androidOutputFormat.index,
+      sampleRate: sampleRate,
+      bitRate: bitRate,
+    );
     if (initialized) {
       _recorderState = RecorderState.initialized;
     } else {

@@ -18,6 +18,7 @@ object Constants {
     const val outputFormat = "outputFormat"
     const val sampleRate = "sampleRate"
     const val fileNameFormat = "dd-MM-yy-hh-mm-ss"
+    const val bitRate = "bitRate"
 
 
     /** encoder */

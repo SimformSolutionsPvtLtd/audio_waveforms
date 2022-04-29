@@ -1,7 +1,9 @@
+import 'package:audio_waveforms/src/base/wave.dart';
 import 'package:flutter/material.dart';
+
 import '/audio_waveforms.dart';
-import 'painters/recorder_wave_painter.dart';
 import 'base/wave_clipper.dart';
+import 'painters/recorder_wave_painter.dart';
 
 class AudioWaveforms extends StatefulWidget {
   final Size size;
@@ -12,6 +14,8 @@ class AudioWaveforms extends StatefulWidget {
   final BoxDecoration? decoration;
   final Color? backgroundColor;
   final bool enableGesture;
+  final Duration waveAnimationDuration;
+  final Curve waveAnimationCurve;
 
   const AudioWaveforms({
     Key? key,
@@ -19,6 +23,8 @@ class AudioWaveforms extends StatefulWidget {
     required this.recorderController,
     this.waveStyle = const WaveStyle(),
     this.enableGesture = false,
+    this.waveAnimationDuration = const Duration(milliseconds: 300),
+    this.waveAnimationCurve = Curves.easeIn,
     this.padding,
     this.margin,
     this.decoration,
@@ -29,7 +35,8 @@ class AudioWaveforms extends StatefulWidget {
   _AudioWaveformsState createState() => _AudioWaveformsState();
 }
 
-class _AudioWaveformsState extends State<AudioWaveforms> {
+class _AudioWaveformsState extends State<AudioWaveforms>
+    with TickerProviderStateMixin {
   bool _isScrolled = false;
 
   Offset _totalBackDistance = Offset.zero;
@@ -37,6 +44,8 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
 
   double _initialOffsetPosition = 0.0;
   double _initialPosition = 0.0;
+
+  final List<Wave> _waves = [];
 
   @override
   void initState() {
@@ -49,7 +58,18 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   @override
   void dispose() {
     widget.recorderController.removeListener(() {});
+    _disposeControllers();
     super.dispose();
+  }
+
+  void _disposeControllers() {
+    for (var i = _waves.length - 1; i >= 0; i--) {
+      if (_waves[i].isDisposed) {
+        break;
+      }
+      _waves[i].animationController.dispose();
+      _waves[i].animation.removeListener(() {});
+    }
   }
 
   @override
@@ -106,6 +126,8 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 shouldClearLabels: widget.recorderController.shouldClearLabels,
                 revertClearlabelCall:
                     widget.recorderController.revertClearlabelCall,
+                addUpperAnimatedWaves: _addAnimatedWave,
+                animatedWaves: _waves,
               ),
             ),
           ),
@@ -168,5 +190,44 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
     WidgetsBinding.instance?.addPostFrameCallback((_) {
       setState(() {});
     });
+  }
+
+  void _addAnimatedWave(int i) {
+    if (_waves.isEmpty) {
+      _addWave();
+    } else {
+      if (_waves.length > i) {
+        _addWave();
+      }
+      _waves[i].animationController.forward();
+      _waves[i].animation.addListener(() {
+        if (mounted) setState(() {});
+      });
+      _waves[i].animationController.addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          _waves[i].animationController.dispose();
+          _waves[i].animation.removeListener(() {});
+          _waves[i].isDisposed = true;
+        }
+      });
+    }
+  }
+
+  void _addWave() {
+    var controller = AnimationController(
+      vsync: this,
+      duration: widget.waveAnimationDuration,
+    );
+    _waves.add(
+      Wave(
+        animationController: controller,
+        animation: Tween(begin: 0.0, end: 1.0).animate(
+          CurvedAnimation(
+            parent: controller,
+            curve: widget.waveAnimationCurve,
+          ),
+        ),
+      ),
+    );
   }
 }
