@@ -175,15 +175,25 @@ class FixedWavePainter extends CustomPainter {
       if (showTop) {
         canvas.drawLine(
             Offset(waveformXPostion[i], size.height / 2),
-            Offset(waveformXPostion[i],
-                size.height / 2 + (waveformData[i] * animValue) * scaleFactor),
+            Offset(
+                waveformXPostion[i],
+                size.height / 2 +
+                    ((waveformData[i] * animValue) == 0
+                            ? 1
+                            : (waveformData[i] * animValue)) *
+                        scaleFactor),
             wavePaint);
       }
       if (showBottom) {
         canvas.drawLine(
             Offset(waveformXPostion[i], size.height / 2),
-            Offset(waveformXPostion[i],
-                size.height / 2 + -(waveformData[i] * animValue) * scaleFactor),
+            Offset(
+                waveformXPostion[i],
+                size.height / 2 +
+                    -((waveformData[i] * animValue) == 0
+                            ? 1
+                            : (waveformData[i] * animValue)) *
+                        scaleFactor),
             wavePaint);
       }
     }

@@ -8,11 +8,18 @@ class PlatformStreams {
 
   static PlatformStreams instance = PlatformStreams._();
 
+  bool isInitialised = false;
+
+  void init() {
+    _durationStreamController =
+        StreamController<CurrentDurationIndentifier>.broadcast();
+    isInitialised = true;
+  }
+
   Stream<CurrentDurationIndentifier> get durationStream =>
       _durationStreamController.stream;
 
-  final StreamController<CurrentDurationIndentifier> _durationStreamController =
-      StreamController<CurrentDurationIndentifier>.broadcast();
+  late StreamController<CurrentDurationIndentifier> _durationStreamController;
 
   void addDurationEvent(CurrentDurationIndentifier event) {
     _durationStreamController.add(event);
@@ -20,5 +27,6 @@ class PlatformStreams {
 
   void dispose() async {
     await _durationStreamController.close();
+    isInitialised = false;
   }
 }

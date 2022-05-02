@@ -45,7 +45,7 @@ platform :ios, '10.0'
 dependencies:
     audio_waveforms: <latest-version>
 ```
-*Get the latest version in the 'Installing' tab on [pub.dev](https://pub.dev/packages/audiowaveforms)*
+*Get the latest version in the 'Installing' tab on [pub.dev](https://pub.dev/packages/audio_waveforms)*
 
 2.  Import the package.
 ```dart
@@ -54,7 +54,7 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 
 ## Usage
 
-1. Initialise WaveController
+1. Initialise RecorderController
 ```dart
 late final RecorderController recorderController;
 
@@ -88,7 +88,7 @@ final path = await recorderController.stop();
 ```
 Calling this will save the recording at provided path and it will return path to that file.
 
-6. Disposing WaveController
+6. Disposing RecorderController
 ```dart
 @override
 void dispose() {
@@ -157,7 +157,7 @@ late final RecorderController recorderController;
 ```
 7. Using different types of encoders and sample rate
 ```dart
-late final RecorderController waveController;
+late final RecorderController recorderController;
   @override
   void initState() {
     super.initState();
@@ -168,6 +168,12 @@ late final RecorderController waveController;
       ..sampleRate = 16000;
   }
 ```
+8. Listening scrolled duration position
+```dart
+recorderController.currentScrolledDuration.addListener((duration){});
+```
+To use this `shouldCalculateScrolledPosition` flag needs to be enabled. Duration is
+in milliseconds.
 
 ### Player
 
@@ -186,6 +192,7 @@ void initState() {
 await playerController.preparePlayer(path);
 ```
 Provide the audio file path in the parameter. You can also set volume with optional parameter.
+
 3. Use widget in widget-tree
 ```dart
 AudioFileWaveforms(
@@ -198,6 +205,7 @@ AudioFileWaveforms(
 await playerController.startPlayer();
 ```
 As default when audio ends it will be seeked to start but you can pass false let it stay at end.
+
 5. Pause player
 ```dart
 await playerController.pausePlayer();

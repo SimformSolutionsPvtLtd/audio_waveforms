@@ -6,14 +6,14 @@ import '../base/utils.dart';
 ///
 ///Addtional Information to play around
 ///
-///this gives location of first wave from right to left
+///this gives location of first wave from right to left when scrolling
 ///
 ///-totalBackDistance.dx + dragOffset.dx + (spacing * i)
 ///
-///this gives location of first wave from left to right
+///this gives location of first wave from left to right when scrolling
 ///
 ///-totalBackDistance.dx + dragOffset.dx
-class WavePainter extends CustomPainter {
+class RecorderWavePainter extends CustomPainter {
   final List<double> waveData;
   final Color waveColor;
   final bool showMiddleLine;
@@ -45,7 +45,10 @@ class WavePainter extends CustomPainter {
   final Shader? gradient;
   final bool shouldClearLabels;
   final VoidCallback revertClearlabelCall;
-  WavePainter({
+  final Function(int) setCurrentPositionDuration;
+  final bool shouldCalculateScrolledPosition;
+
+  RecorderWavePainter({
     required this.waveData,
     required this.waveColor,
     required this.showMiddleLine,
@@ -74,6 +77,8 @@ class WavePainter extends CustomPainter {
     required this.gradient,
     required this.shouldClearLabels,
     required this.revertClearlabelCall,
+    required this.setCurrentPositionDuration,
+    required this.shouldCalculateScrolledPosition,
   })  : _wavePaint = Paint()
           ..color = waveColor
           ..strokeWidth = waveThickness
@@ -90,7 +95,7 @@ class WavePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if(shouldClearLabels){
+    if (shouldClearLabels) {
       _labels.clear();
       revertClearlabelCall();
     }
@@ -119,12 +124,13 @@ class WavePainter extends CustomPainter {
 
     ///middle line
     if (showMiddleLine) _drawMiddleLine(canvas, size);
+
+    ///calculates scrolled position with respect to duration
+    if (shouldCalculateScrolledPosition) _setScrolledDuration(size);
   }
 
   @override
-  bool shouldRepaint(WavePainter oldDelegate) {
-    return true;
-  }
+  bool shouldRepaint(RecorderWavePainter oldDelegate) => true;
 
   void _drawTextInRange(Canvas canvas, int i, Size size) {
     if (_labels.isNotEmpty) {
@@ -216,5 +222,14 @@ class WavePainter extends CustomPainter {
 
   void _waveGradient() {
     _wavePaint.shader = gradient;
+  }
+
+  void _setScrolledDuration(Size size) {
+    setCurrentPositionDuration(
+        (((-totalBackDistance.dx + dragOffset.dx - (size.width / 2)) /
+                    (spacing * updateFrequecy)) *
+                1000)
+            .abs()
+            .toInt());
   }
 }

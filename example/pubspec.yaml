@@ -26,7 +26,7 @@ dependencies:
     # the parent directory to use the current plugin's version.
     path: ../
   path_provider: ^2.0.9
-  file_picker: ^4.5.1
+  file_picker: ^4.4.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -42,9 +42,6 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^1.0.0
-dependency_overrides:
-  # file_picker depends on this version
-  win32: ^2.3.7
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -58,9 +55,12 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+   - assets/images/logo.png
+   - assets/audios/audio1.mp3
+   - assets/audios/audio2.mp3
+   - assets/audios/audio3.mp3
+   - assets/audios/audio4.mp3
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

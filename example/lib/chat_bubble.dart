@@ -58,42 +58,43 @@ class WaveBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 20, bottom: 10, right: 20),
-      child: Row(
-        children: [
-          if (isSender) ...[
-            const Spacer(),
+    return Align(
+      alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        padding: EdgeInsets.only(
+          bottom: 6,
+          right: isSender ? 0 : 10,
+          top: 6,
+        ),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: isSender ? const Color(0xFF276bfd) : const Color(0xFF343145),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             IconButton(
               onPressed: onTap,
               icon: Icon(isPlaying ? Icons.stop : Icons.play_arrow),
               color: Colors.white,
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
             ),
+            AudioFileWaveforms(
+              size: Size(MediaQuery.of(context).size.width / 2, 70),
+              playerController: playerController,
+              density: 1.5,
+              playerWaveStyle: const PlayerWaveStyle(
+                scaleFactor: 0.8,
+                fixedWaveColor: Colors.white30,
+                liveWaveColor: Colors.white,
+                waveCap: StrokeCap.butt,
+              ),
+            ),
+            if (isSender) const SizedBox(width: 10),
           ],
-          AudioFileWaveforms(
-            size: Size(MediaQuery.of(context).size.width / 2, 70),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: const Color(0xFF343145),
-            ),
-            padding:
-                const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            clipBehavior: Clip.hardEdge,
-            playerController: playerController,
-            density: 1.5,
-            playerWaveStyle: const PlayerWaveStyle(
-              scaleFactor: 0.8,
-              fixedWaveColor: Colors.white,
-              liveWaveColor: Colors.deepPurpleAccent,
-            ),
-          ),
-          if (!isSender)
-            IconButton(
-              onPressed: onTap,
-              icon: Icon(isPlaying ? Icons.stop : Icons.play_arrow),
-              color: Colors.white,
-            ),
-        ],
+        ),
       ),
     );
   }
