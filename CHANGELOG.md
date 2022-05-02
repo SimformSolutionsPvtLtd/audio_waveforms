@@ -1,4 +1,8 @@
-## [0.1.0] - 26 April, 2022 [Unreleased]
+## [0.1.1] - 28 April, 2022
+
+* Get current time with respect to scroll
+
+## [0.1.0] - 26 April, 2022
 
 * Added functionality to play audio file and generate waveform from it.
 * Breaking: Renamed WaveController to RecorderController
@@ -7,7 +11,7 @@
 when `callReset` flag in `stop()` is set to false.
 * Updated example app
 
-## [0.0.4] - 11 April, 2022 [Unreleased]
+## [0.0.4] - 11 April, 2022
 
 * Separated encoder input for android and ios better support
 
