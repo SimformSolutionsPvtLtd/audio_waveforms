@@ -65,8 +65,6 @@ class RecorderController extends ChangeNotifier {
   /// Returned duration is in [milliseconds].
   ValueNotifier<int> get currentScrolledDuration => _currentScrolledDuration;
 
-
-
   ///Use this to check permission and starts recording.
   ///
   ///Can be called after pausing.
@@ -254,7 +252,7 @@ class RecorderController extends ChangeNotifier {
 
   ///[Internally] used to set scrolled position
   ///to duration.
-  void setScrolledPostionDuration(int duration){
+  void setScrolledPostionDuration(int duration) {
     _currentScrolledDuration.value = duration;
   }
 

@@ -3,6 +3,7 @@
 class CurrentDurationIndentifier {
   ///Unique key associated with any [player].
   String playerKey;
+
   ///current duration associated with that [key].
   int duration;
 
