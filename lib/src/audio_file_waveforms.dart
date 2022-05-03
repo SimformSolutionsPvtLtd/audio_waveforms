@@ -1,9 +1,9 @@
 import 'dart:math';
 
 import 'package:audio_waveforms/src/base/platform_streams.dart';
-import 'package:audio_waveforms/src/base/player_wave_style.dart';
 import 'package:audio_waveforms/src/painters/player_wave_painter.dart';
 import 'package:flutter/material.dart';
+
 import '../audio_waveforms.dart';
 import 'base/constants.dart';
 

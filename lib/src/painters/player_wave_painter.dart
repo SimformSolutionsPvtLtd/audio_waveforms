@@ -50,7 +50,7 @@ class FileWaveformsPainter extends CustomPainter {
   Paint liveWavePaint;
   Paint seeklinePaint;
 
-  double _seekerXPosition = 0.0;
+  // double _seekerXPosition = 0.0;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -61,25 +61,25 @@ class FileWaveformsPainter extends CustomPainter {
   bool shouldRepaint(FileWaveformsPainter oldDelegate) => true;
 
   //TODO: fix seek line
-  void _drawSeekLine(Size size, Canvas canvas) {
-    if (audioProgress == 1.0) {
-      canvas.drawLine(
-        Offset(_seekerXPosition + liveWavePaint.strokeWidth * 3, 0),
-        Offset(_seekerXPosition + liveWavePaint.strokeWidth * 3, size.height),
-        seeklinePaint,
-      );
-    } else {
-      canvas.drawLine(
-        Offset(
-            waveformXPostion.last * audioProgress + liveWavePaint.strokeWidth,
-            0),
-        Offset(
-            waveformXPostion.last * audioProgress + liveWavePaint.strokeWidth,
-            size.height),
-        seeklinePaint,
-      );
-    }
-  }
+  // void _drawSeekLine(Size size, Canvas canvas) {
+  //   if (audioProgress == 1.0) {
+  //     canvas.drawLine(
+  //       Offset(_seekerXPosition + liveWavePaint.strokeWidth * 3, 0),
+  //       Offset(_seekerXPosition + liveWavePaint.strokeWidth * 3, size.height),
+  //       seeklinePaint,
+  //     );
+  //   } else {
+  //     canvas.drawLine(
+  //       Offset(
+  //           waveformXPostion.last * audioProgress + liveWavePaint.strokeWidth,
+  //           0),
+  //       Offset(
+  //           waveformXPostion.last * audioProgress + liveWavePaint.strokeWidth,
+  //           size.height),
+  //       seeklinePaint,
+  //     );
+  //   }
+  // }
 
   void _drawLiveWave(Size size, Canvas canvas) {
     if (liveWaveGradient != null) liveWavePaint.shader = liveWaveGradient;
@@ -87,7 +87,7 @@ class FileWaveformsPainter extends CustomPainter {
       int x = i * _dp(3);
       if (x < size.width) {
         if (x < denseness && x + _dp(2) < denseness) {
-          _seekerXPosition = x.toDouble();
+          //_seekerXPosition = x.toDouble();
           if (showBottom) {
             canvas.drawLine(
                 Offset(waveformXPostion[i], size.height / 2),

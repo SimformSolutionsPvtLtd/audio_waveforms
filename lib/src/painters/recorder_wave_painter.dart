@@ -1,5 +1,6 @@
-import '/src/base/label.dart';
 import 'package:flutter/material.dart';
+
+import '/src/base/label.dart';
 import '../base/utils.dart';
 
 ///This will paint the waveform

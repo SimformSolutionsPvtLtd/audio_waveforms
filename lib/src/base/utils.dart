@@ -88,6 +88,7 @@ enum PlayerState {
 
   ///When player is playing the audio file
   playing,
+
   ///When player is paused.
   paused,
 

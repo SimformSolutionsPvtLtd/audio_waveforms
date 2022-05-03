@@ -61,7 +61,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     return await rootBundle.load(path);
   }
 
-  void _initialiseControllers(){
+  void _initialiseControllers() {
     recorderController = RecorderController()
       ..androidEncoder = AndroidEncoder.aac
       ..androidOutputFormat = AndroidOutputFormat.mpeg4
