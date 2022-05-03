@@ -18,6 +18,7 @@ class FileWaveformsPainter extends CustomPainter {
   Color liveWaveColor;
   double denseness;
   double audioProgress;
+  double positionalPadding;
 
   FileWaveformsPainter({
     required this.waveform,
@@ -35,6 +36,7 @@ class FileWaveformsPainter extends CustomPainter {
     required this.liveWaveColor,
     required this.denseness,
     required this.audioProgress,
+    required this.positionalPadding,
     this.liveWaveGradient,
   })  : liveWavePaint = Paint()
           ..color = liveWaveColor
@@ -74,16 +76,21 @@ class FileWaveformsPainter extends CustomPainter {
         if (x < denseness && x + _dp(2) < denseness) {
           if (showBottom) {
             canvas.drawLine(
-                Offset(waveform[i].dx, size.height / 2),
-                Offset(waveform[i].dx,
-                    size.height / 2 + waveform[i].dy * scaleFactor),
+                Offset(waveform[i].dx, size.height / 2 + positionalPadding),
+                Offset(
+                    waveform[i].dx,
+                    size.height / 2 +
+                        waveform[i].dy * scaleFactor +
+                        positionalPadding),
                 liveWavePaint);
           }
           if (showTop) {
             canvas.drawLine(
                 Offset(waveform[i].dx, size.height / 2),
-                Offset(waveform[i].dx,
-                    size.height / 2 + (-waveform[i].dy * scaleFactor)),
+                Offset(
+                    waveform[i].dx,
+                    size.height / 2 +
+                        (-waveform[i].dy * scaleFactor + positionalPadding)),
                 liveWavePaint);
           }
         } else {
@@ -91,15 +98,20 @@ class FileWaveformsPainter extends CustomPainter {
             if (showTop) {
               canvas.drawLine(
                   Offset(waveform[i].dx, size.height / 2),
-                  Offset(waveform[i].dx,
-                      size.height / 2 + (-waveform[i].dy * scaleFactor)),
+                  Offset(
+                      waveform[i].dx,
+                      size.height / 2 +
+                          (-waveform[i].dy * scaleFactor + positionalPadding)),
                   liveWavePaint);
             }
             if (showBottom) {
               canvas.drawLine(
                   Offset(waveform[i].dx, size.height / 2),
-                  Offset(waveform[i].dx,
-                      size.height / 2 + waveform[i].dy * scaleFactor),
+                  Offset(
+                      waveform[i].dx,
+                      size.height / 2 +
+                          waveform[i].dy * scaleFactor +
+                          positionalPadding),
                   liveWavePaint);
             }
           }
@@ -124,6 +136,7 @@ class FixedWavePainter extends CustomPainter {
   StrokeCap waveCap;
   double waveThickness;
   Shader? fixedWaveGradient;
+  double positionalPadding;
 
   FixedWavePainter({
     required this.waveform,
@@ -134,6 +147,7 @@ class FixedWavePainter extends CustomPainter {
     required this.waveColor,
     required this.waveCap,
     required this.waveThickness,
+    required this.positionalPadding,
     this.fixedWaveGradient,
   }) : wavePaint = Paint()
           ..color = waveColor
@@ -156,26 +170,28 @@ class FixedWavePainter extends CustomPainter {
     for (int i = 0; i < waveform.length; i++) {
       if (showTop) {
         canvas.drawLine(
-            Offset(waveform[i].dx, size.height / 2),
+            Offset(waveform[i].dx, size.height / 2 + positionalPadding),
             Offset(
                 waveform[i].dx,
                 size.height / 2 +
                     ((waveform[i].dy * animValue) == 0
                             ? 1
                             : (waveform[i].dy * animValue)) *
-                        scaleFactor),
+                        scaleFactor +
+                    positionalPadding),
             wavePaint);
       }
       if (showBottom) {
         canvas.drawLine(
-            Offset(waveform[i].dx, size.height / 2),
+            Offset(waveform[i].dx, size.height / 2 + positionalPadding),
             Offset(
                 waveform[i].dx,
                 size.height / 2 +
                     -((waveform[i].dy * animValue) == 0
                             ? 1
                             : (waveform[i].dy * animValue)) *
-                        scaleFactor),
+                        scaleFactor +
+                    positionalPadding),
             wavePaint);
       }
     }

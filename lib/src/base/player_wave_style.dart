@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+///A model class to provide style to waveforms.
 class PlayerWaveStyle {
   ///Color of the [wave] which is behind the live wave.
   final Color fixedWaveColor;
@@ -47,8 +48,13 @@ class PlayerWaveStyle {
   final double visualizerHeight;
 
   ///Normally, waveform is drawn from center of the provided
-  ///`size.height`. But still if slight vertical position change
-  ///is required then
+  ///`size.height`. But if still [vertical] position change
+  ///is required then use this.
+  ///
+  /// Giving +ve(positive) value will push waveforms [downwards] and -ve(negative)
+  /// value will push waveforms [upwards].
+  ///
+  /// Default value is 0.0
   final double positionalPadding;
 
   const PlayerWaveStyle({
