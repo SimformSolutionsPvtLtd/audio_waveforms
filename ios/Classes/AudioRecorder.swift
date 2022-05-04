@@ -54,6 +54,11 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
         result(false)
     }
     
+    public func resumeRecording(_ result: @escaping FlutterResult) {
+        audioRecorder?.record()
+        result(true)
+    }
+    
     public func getDecibel(_ result: @escaping FlutterResult) {
         audioRecorder?.updateMeters()
         let amp = audioRecorder?.averagePower(forChannel: 0) ?? 0.0
