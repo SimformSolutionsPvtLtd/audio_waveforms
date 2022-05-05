@@ -29,6 +29,8 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         case Constants.pauseRecording:
             audioRecorder.pauseRecording(result)
             break
+        case Constants.resumeRecording:
+            audioRecorder.resumeRecording(result)
         case Constants.stopRecording:
             audioRecorder.stopRecording(result)
             break

@@ -1,3 +1,7 @@
+## [0.1.2] - 4 May, 2022
+
+* Fixed ios resume recording issue
+
 ## [0.1.1] - 28 April, 2022
 
 * Get current time with respect to scroll

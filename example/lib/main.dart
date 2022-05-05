@@ -1,11 +1,10 @@
 import 'dart:io';
 
+import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:audio_waveforms_example/chat_bubble.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/services.dart';
-
 import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(const MyApp());
@@ -306,7 +305,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void _startOrStopRecording() async {
     if (isRecording) {
       final path = await recorderController.stop(false);
-      if (path != null) playerController5.preparePlayer(path);
+      if (path != null) await playerController5.preparePlayer(path);
     } else {
       await recorderController.record(path);
     }

@@ -1,5 +1,6 @@
-import 'dart:io' show Platform;
 import 'dart:async';
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 
 import '/src/base/utils.dart';
@@ -68,6 +69,8 @@ class RecorderController extends ChangeNotifier {
   ///Use this to check permission and starts recording.
   ///
   ///Can be called after pausing.
+  ///after pausing it's not required to pass path again to again start recording.
+  ///
   ///If called after stopping the recording, it will re-initialize.
   ///
   ///Path parameter is optional and if not provided current Datetime will be
@@ -84,10 +87,7 @@ class RecorderController extends ChangeNotifier {
         if (Platform.isAndroid && _recorderState == RecorderState.stopped) {
           await _initRecorder(path);
         }
-        if (Platform.isIOS) {
-          _recorderState = RecorderState.initialized;
-        }
-        if (_recorderState == RecorderState.paused && Platform.isAndroid) {
+        if (_recorderState == RecorderState.paused) {
           _isRecording = await AudioWaveformsInterface.instance.resume();
           if (_isRecording) {
             _startTimer();
@@ -98,7 +98,9 @@ class RecorderController extends ChangeNotifier {
           notifyListeners();
           return;
         }
-
+        if (Platform.isIOS) {
+          _recorderState = RecorderState.initialized;
+        }
         if (_recorderState == RecorderState.initialized) {
           _isRecording = await AudioWaveformsInterface.instance.record(
               Platform.isIOS ? iosEncoder.index : androidEncoder.index,
