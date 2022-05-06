@@ -4,13 +4,12 @@ import UIKit
 public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     
     final var audioRecorder = AudioRecorder()
-    var audioPlayer : AudioPlayer?
+    var audioPlayers = [String: AudioPlayer]()
     var flutterChannel: FlutterMethodChannel
     
     init(registrar: FlutterPluginRegistrar, flutterChannel: FlutterMethodChannel) {
         self.flutterChannel = flutterChannel
         super.init()
-        self.audioPlayer = AudioPlayer(plugin: self)
     }
     
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -42,49 +41,88 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
             break
         case Constants.preparePlayer:
             let key = args?[Constants.playerKey] as? String
-            
-            audioPlayer?.preparePlayer(path: args?[Constants.path] as? String, volume: args?[Constants.volume] as? Double,key: key,result: result)
+            if(key != nil){
+                initPlayer(playerKey: key!)
+                audioPlayers[key!]?.preparePlayer(path: args?[Constants.path] as? String, volume: args?[Constants.volume] as? Double,result: result)
+            } else {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Can not prepare player", details: "Player key is null"))
+            }
             break
         case Constants.startPlayer:
             let key = args?[Constants.playerKey] as? String
-            let seekToStart = args?[Constants.seekToStart] as? Bool
-            audioPlayer?.startPlyer(key: key, result: result, seekToStart:seekToStart)
+            let finishMode = args?[Constants.finishMode] as? Int
+            if(key != nil){
+                audioPlayers[key!]?.startPlyer(result: result,finishMode: finishMode)
+            } else {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Can not start player", details: "Player key is null"))
+            }
             break
         case Constants.pausePlayer:
             let key = args?[Constants.playerKey] as? String
-            audioPlayer?.pausePlayer(key: key, result: result)
+            if(key != nil){
+                audioPlayers[key!]?.pausePlayer(result: result)
+            } else {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Can not pause player", details: "Player key is null"))
+            }
             break
         case Constants.stopPlayer:
             let key = args?[Constants.playerKey] as? String
-            audioPlayer?.stopPlayer(key: key,result: result)
+            if(key != nil){
+                audioPlayers[key!]?.stopPlayer(result: result)
+            } else {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Can not stop player", details: "Player key is null"))
+            }
             break
         case Constants.seekTo:
             let key = args?[Constants.playerKey] as? String
-            audioPlayer?.seekTo(key: key,args?[Constants.progress] as? Int,result)
+            if(key != nil){
+                audioPlayers[key!]?.seekTo(args?[Constants.progress] as? Int,result)
+            } else {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Can not seek to postion", details: "Player key is null"))
+            }
         case Constants.setVolume:
             let key = args?[Constants.playerKey] as? String
-            audioPlayer?.setVolume(key: key,args?[Constants.volume] as? Double,result)
+            if(key != nil){
+                audioPlayers[key!]?.setVolume(args?[Constants.volume] as? Double,result)
+            } else {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Can not set volume", details: "Player key is null"))
+            }
         case Constants.getDuration:
             let type = args?[Constants.durationType] as? Int
             let key = args?[Constants.playerKey] as? String
-            do{
-                if(type == 0){
-                    try audioPlayer?.getDuration(key: key,DurationType.Current,result)
-                } else {
-                    try audioPlayer?.getDuration(key: key, DurationType.Max,result)
+            if(key != nil){
+                do{
+                    if(type == 0){
+                        try audioPlayers[key!]?.getDuration(DurationType.Current,result)
+                    } else {
+                        try audioPlayers[key!]?.getDuration( DurationType.Max,result)
+                    }
+                } catch{
+                    result(FlutterError(code: "", message: "Failed to get duration", details: nil))
                 }
-            } catch{
-                result(FlutterError(code: "", message: "Failed to get duration", details: nil))
+            } else {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Can not get duration", details: "Player key is null"))
             }
         case Constants.stopAllPlayers:
-            audioPlayer?.stopAllPlayers(result)
+            for (playerKey,_) in audioPlayers{
+                audioPlayers[playerKey]?.stopPlayer(result: result)
+                audioPlayers[playerKey] = nil
+            }
+            result(true)
         default:
             result(FlutterMethodNotImplemented)
             break
         }
     }
     
-    func onCurrentDuration(duration: Int,key: String){
-        flutterChannel.invokeMethod(Constants.onCurrentDuration, arguments: [Constants.current : duration,Constants.playerKey: key])
+    func initPlayer(playerKey: String) {
+        if audioPlayers[playerKey] == nil {
+            let newPlayer = AudioPlayer(plugin: self,playerKey: playerKey)
+            audioPlayers[playerKey] = newPlayer
+        }
+    }
+    
+    func onCurrentDuration(duration: Int, playerKey: String){
+        flutterChannel.invokeMethod(Constants.onCurrentDuration, arguments: [Constants.current : duration, Constants.playerKey : playerKey])
     }
 }

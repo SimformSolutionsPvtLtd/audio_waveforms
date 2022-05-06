@@ -4,139 +4,111 @@ import AVKit
 
 class AudioPlayer : NSObject, AVAudioPlayerDelegate {
     private var seekToStart = true
-    private var timers : [String:Timer] = [:]
-    private var audioPlayers: [String:AVAudioPlayer] = [:]
+    private var stopWhenCompleted = false
+    private var timer: Timer?
+    private var player: AVAudioPlayer?
+    private var finishMode: FinishMode = FinishMode.stop
     var plugin : SwiftAudioWaveformsPlugin
-    init(plugin : SwiftAudioWaveformsPlugin){
+    var playerKey :String
+    init(plugin : SwiftAudioWaveformsPlugin,playerKey : String){
         self.plugin = plugin
+        self.playerKey = playerKey
     }
     
     
-    func preparePlayer(path: String?,volume: Double?,key: String?,result:  @escaping FlutterResult){
-        if(key != nil){
-            let playerExists = audioPlayers[key!] != nil
-            if(!(path ?? "").isEmpty){
-                let audioUrl = URL.init(fileURLWithPath: path!)
-                if(playerExists){
-                    result(true)
-                }else{
-                    let player = try! AVAudioPlayer(contentsOf: audioUrl)
-                    audioPlayers.updateValue(player, forKey: key!)
-                    player.prepareToPlay()
-                    player.volume = Float(volume ?? 1.0)
-                    result(true)
-                }
-            }else {
-                result(FlutterError(code: Constants.audioWaveforms, message: "Audio file path can't be empty or null", details: nil))
-            }
+    func preparePlayer(path: String?,volume: Double?,result:  @escaping FlutterResult){
+        if(!(path ?? "").isEmpty){
+            let audioUrl = URL.init(fileURLWithPath: path!)
+            player = try! AVAudioPlayer(contentsOf: audioUrl)
+            player?.prepareToPlay()
+            player?.volume = Float(volume ?? 1.0)
+            result(true)
         }else {
-            result(FlutterError(code: Constants.audioWaveforms, message: "Can not prepare player", details: "Player key is null"))
-        }
-    }
-    
-    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer,
-                                     successfully flag: Bool){
-        if(seekToStart){
-            player.currentTime = 0
-        } else {
-            player.currentTime = player.duration
-        }
-    }
-    
-    func startPlyer(key: String?,result:  @escaping FlutterResult,seekToStart:Bool?){
-        self.seekToStart = seekToStart ?? true
-        if(key != nil){
-            audioPlayers[key!]?.play()
-            audioPlayers[key!]?.delegate = self
-            startListening(key: key!)
-            result(true)
-        }
-        else {
-            result(FlutterError(code: Constants.audioWaveforms, message: "Can not start player", details: "Player key is null"))        }
-    }
-    
-    func pausePlayer(key: String?,result:  @escaping FlutterResult){
-        if(key != nil){
-            stopListening(key: key!)
-            audioPlayers[key!]?.pause()
-            result(true)
-        }
-        else {
-            result(FlutterError(code: Constants.audioWaveforms, message: "Can not pause player", details: "Player key is null"))
-        }
-    }
-    
-    func stopPlayer(key: String?,result:  @escaping FlutterResult){
-        if(key != nil){
-            stopListening(key: key!)
-            audioPlayers[key!]?.stop()
-            audioPlayers[key!] = nil
-            timers.removeValue(forKey: key!)
-            result(true)
-        }
-        else {
-            result(FlutterError(code: Constants.audioWaveforms, message: "Can not stop player", details: "Player key is null"))
-        }
-    }
-    
-    
-    func getDuration(key: String?,_ type:DurationType,_ result:  @escaping FlutterResult) throws {
-        if(key != nil){
-            if type == .Current {
-                let ms = (audioPlayers[key!]?.currentTime ?? 0) * 1000
-                result(Int(ms))
-            }else{
-                let ms = (audioPlayers[key!]?.duration ?? 0) * 1000
-                result(Int(ms))
-            }
-        }else{
-            result(FlutterError(code: Constants.audioWaveforms, message: "Can not get duration", details: "Player key is null"))
-        }
-    }
-    
-    func setVolume(key: String?,_ volume: Double?,_ result : @escaping FlutterResult) {
-        if(key != nil){
-            audioPlayers[key!]?.volume = Float(volume ?? 1.0)
-            result(true)
-        }
-        else{
-            result(FlutterError(code: Constants.audioWaveforms, message: "Can not set volume", details: "Player key is null"))
-        }
-    }
-    
-    func seekTo(key: String?,_ time: Int?,_ result : @escaping FlutterResult) {
-        if(key != nil){
-            audioPlayers[key!]?.currentTime = Double(time!/1000)
-            result(true)
-        }else{
-            result(FlutterError(code: Constants.audioWaveforms, message: "Can not seek to provided duration", details: "Player key is null"))
+            result(FlutterError(code: Constants.audioWaveforms, message: "Audio file path can't be empty or null", details: nil))
         }
         
     }
     
-    func startListening(key: String){
-        timers[key] = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true, block: {_ in
-            let ms = (self.audioPlayers[key]?.currentTime ?? 0) * 1000
-            self.plugin.onCurrentDuration(duration: Int(ms),key: key)
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer,
+                                     successfully flag: Bool){
+        var finishType = 2
+        switch self.finishMode {
+        case .loop:
+            self.player?.currentTime = 0
+            self.player?.play()
+            finishType = 0
+        case .pause:
+            self.player?.pause()
+            stopListening()
+            finishType = 1
+        case .stop:
+            self.player?.stop()
+            stopListening()
+            self.player = nil
+            finishType = 2
+        }
+        plugin.flutterChannel.invokeMethod(Constants.onDidFinishPlayingAudio, arguments: [Constants.finishType : finishType, Constants.playerKey: playerKey])
+        
+    }
+    
+    func startPlyer(result:  @escaping FlutterResult,finishMode: Int?){
+        if(finishMode != nil && finishMode == 0){
+            self.finishMode = FinishMode.loop
+        } else if(finishMode != nil && finishMode == 1){
+            self.finishMode = FinishMode.pause
+        } else {
+            self.finishMode = FinishMode.stop
+        }
+        player?.play()
+        player?.delegate = self
+        startListening()
+        result(true)
+    }
+    
+    func pausePlayer(result:  @escaping FlutterResult){
+        stopListening()
+        player?.pause()
+        result(true)
+    }
+    
+    func stopPlayer(result:  @escaping FlutterResult){
+        stopListening()
+        player?.stop()
+        player = nil
+        timer = nil
+        result(true)
+    }
+    
+    
+    func getDuration(_ type:DurationType,_ result:  @escaping FlutterResult) throws {
+        if type == .Current {
+            let ms = (player?.currentTime ?? 0) * 1000
+            result(Int(ms))
+        }else{
+            let ms = (player?.duration ?? 0) * 1000
+            result(Int(ms))
+        }
+    }
+    
+    func setVolume(_ volume: Double?,_ result : @escaping FlutterResult) {
+        player?.volume = Float(volume ?? 1.0)
+        result(true)
+    }
+    
+    func seekTo(_ time: Int?,_ result : @escaping FlutterResult) {
+        player?.currentTime = Double(time!/1000)
+        result(true)
+    }
+    
+    func startListening(){
+        timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true, block: {_ in
+            let ms = (self.player?.currentTime ?? 0) * 1000
+            self.plugin.onCurrentDuration(duration: Int(ms),playerKey: self.playerKey)
         })
     }
     
-    func stopListening(key:String){
-        if(timers[key] != nil){
-            timers[key]!.invalidate()
-            timers[key] = nil
-        }
-    }
-    
-    func stopAllPlayers(_ result : @escaping FlutterResult){
-        for (key,_) in audioPlayers{
-            audioPlayers[key]?.stop()
-            audioPlayers[key] = nil
-        }
-        for (key,_) in timers{
-            timers[key]?.invalidate()
-            timers[key] = nil
-        }
-        result(true)
+    func stopListening(){
+        timer?.invalidate()
+        timer = nil
     }
 }

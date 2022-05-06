@@ -1,32 +1,57 @@
 import 'dart:async';
 
-import 'package:audio_waveforms/src/base/current_duration_identifier.dart';
+import 'package:audio_waveforms/src/base/player_indentifier.dart';
+import 'package:audio_waveforms/src/base/utils.dart';
+
+import '../../audio_waveforms.dart';
 
 ///This class should be used for any type of native streams.
 class PlatformStreams {
   PlatformStreams._();
+
+  ///This holds all the newly created [PlayerController] instances and
+  ///the key to identify. it is a [Unique] key created along with
+  ///PlayerController.
+  final Map<String, PlayerController> playerControllerFactory = {};
 
   static PlatformStreams instance = PlatformStreams._();
 
   bool isInitialised = false;
 
   void init() {
-    _durationStreamController =
-        StreamController<CurrentDurationIndentifier>.broadcast();
+    _currentDurationController =
+        StreamController<PlayerIdentifier<int>>.broadcast();
+    _playerStateController =
+        StreamController<PlayerIdentifier<PlayerState>>.broadcast();
+    AudioWaveformsInterface.instance.setMethodCallHandler();
     isInitialised = true;
   }
 
-  Stream<CurrentDurationIndentifier> get durationStream =>
-      _durationStreamController.stream;
+  Stream<PlayerIdentifier<int>> get onDurationChanged =>
+      _currentDurationController.stream;
 
-  late StreamController<CurrentDurationIndentifier> _durationStreamController;
+  Stream<PlayerIdentifier<PlayerState>> get onPlayerStateChanged =>
+      _playerStateController.stream;
 
-  void addDurationEvent(CurrentDurationIndentifier event) {
-    _durationStreamController.add(event);
+  late StreamController<PlayerIdentifier<int>> _currentDurationController;
+  late StreamController<PlayerIdentifier<PlayerState>> _playerStateController;
+
+  void addCurrentDurationEvent(PlayerIdentifier<int> playerIdentifier) {
+    if (!_currentDurationController.isClosed) {
+      _currentDurationController.add(playerIdentifier);
+    }
+  }
+
+  void addPlayerStateEvent(PlayerIdentifier<PlayerState> playerIdentifier) {
+    if (!_playerStateController.isClosed) {
+      _playerStateController.add(playerIdentifier);
+    }
   }
 
   void dispose() async {
-    await _durationStreamController.close();
+    await _currentDurationController.close();
+    await _playerStateController.close();
+    AudioWaveformsInterface.instance.removeMethodCallHandeler();
     isInitialised = false;
   }
 }

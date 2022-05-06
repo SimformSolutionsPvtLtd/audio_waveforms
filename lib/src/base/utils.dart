@@ -1,3 +1,5 @@
+import 'package:audio_waveforms/src/base/player_indentifier.dart';
+
 extension DurationExtension on Duration {
   ///converts duration to HH:MM:SS format
   String toHHMMSS() => toString().split('.').first.padLeft(8, "0");
@@ -106,4 +108,26 @@ enum DurationType {
 
   ///Default
   max
+}
+
+///This extention filter playerKey from the stream and provides
+///only necessary generic type.
+extension FilterForPlayer<T> on Stream<PlayerIdentifier<T>> {
+  Stream<T> filter(String playerKey) {
+    return where((identifier) => identifier.playerKey == playerKey)
+        .map((identifier) => identifier.type);
+  }
+}
+
+///This enum is used to change behaviour of player
+///when audio is finished playing.
+enum FinishMode {
+  ///Loops the audio.
+  loop,
+
+  ///Pause the audio, playing again will start from [0] milliseconds.
+  pause,
+
+  ///Stops player and disposes it(a PlayerController won't be disposed).
+  stop
 }

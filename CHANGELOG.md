@@ -1,6 +1,13 @@
-## [0.1.2] - 4 May, 2022
+## [0.1.2] - 11 May, 2022
 
 * Fixed ios resume recording issue
+* Fixed player state not getting update when playing is finished by providing PlayerState stream.
+* Added current duration stream for PlayerController.
+* Breaking: Replaced `seekToStart` parameter from `startPlayer()` with `FinishMode` enum for
+better controls when audio is finished
+* Breaking: Renamed `disposeFunc()` to simpler `dispose()` for both controllers
+* Internal native restructure.
+* Minor documentation update
 
 ## [0.1.1] - 28 April, 2022
 

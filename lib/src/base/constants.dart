@@ -33,6 +33,9 @@ class Constants {
   static const String current = "current";
   static const String onCurrentDuration = "onCurrentDuration";
   static const String stopAllPlayers = "stopAllPlayers";
+  static const String onDidFinishPlayingAudio = "onDidFinishPlayingAudio";
+  static const String finishtype = "finishType";
+  static const String finishMode = "finishMode";
 
   static const int byteSize = 8;
 }
