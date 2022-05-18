@@ -37,7 +37,7 @@ object Constants {
 
     /** common */
     const val amr_nb = 4
-    const val amr_wb= 5
+    const val amr_wb = 5
 
     const val preparePlayer = "preparePlayer"
     const val startPlayer = "startPlayer"
@@ -54,4 +54,13 @@ object Constants {
     const val current = "current"
     const val onCurrentDuration = "onCurrentDuration"
     const val stopAllPlayers = "stopAllPlayers"
+    const val onDidFinishPlayingAudio = "onDidFinishPlayingAudio"
+    const val finishMode = "finishMode"
+    const val finishType = "finishType"
+}
+
+enum class FinishMode(val value:Int) {
+    Loop(0),
+    Pause(1),
+    Stop(2)
 }

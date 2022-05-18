@@ -117,9 +117,9 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     );
     animation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
         parent: animationController, curve: widget.animationCurve));
-    PlatformStreams.instance.durationStream.listen((event) {
+    PlatformStreams.instance.onDurationChanged.listen((event) {
       if (widget.playerController.playerKey == event.playerKey) {
-        _seekProgress.value = event.duration;
+        _seekProgress.value = event.type;
         _updatePlayerPercent(widget.size);
       }
     });

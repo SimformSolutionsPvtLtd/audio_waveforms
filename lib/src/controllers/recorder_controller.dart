@@ -4,7 +4,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 
 import '/src/base/utils.dart';
-import '../base/audio_waveforms_interface.dart';
+import 'player_controller.dart';
 
 class RecorderController extends ChangeNotifier {
   final List<double> _waveData = [];
@@ -260,10 +260,11 @@ class RecorderController extends ChangeNotifier {
 
   ///This function must be called to free [resources],
   ///it will also dispose the controller.
-  void disposeFunc() async {
+  @override
+  void dispose() async {
     if (_timer != null) _timer!.cancel();
     if (recorderState != RecorderState.stopped) await stop();
     _currentScrolledDuration.dispose();
-    dispose();
+    super.dispose();
   }
 }

@@ -1,10 +1,4 @@
-import 'dart:async';
-import 'dart:io';
-import 'package:audio_waveforms/src/base/current_duration_identifier.dart';
-import 'package:audio_waveforms/src/base/platform_streams.dart';
-
-import '/src/base/constants.dart';
-import 'package:flutter/services.dart';
+part of '../controllers/player_controller.dart';
 
 class AudioWaveformsInterface {
   AudioWaveformsInterface._();
@@ -89,11 +83,11 @@ class AudioWaveformsInterface {
     return result ?? false;
   }
 
-  ///platfomr call to start player
-  Future<bool> startPlayer(String key, bool seekToStart) async {
+  ///platform call to start player
+  Future<bool> startPlayer(String key, FinishMode finishMode) async {
     var result = await _methodChannel.invokeMethod(Constants.startPlayer, {
       Constants.playerKey: key,
-      Constants.seekToStart: seekToStart,
+      Constants.finishMode: finishMode.index,
     });
     return result ?? false;
   }
@@ -149,10 +143,30 @@ class AudioWaveformsInterface {
           var duration = call.arguments[Constants.current];
           var key = call.arguments[Constants.playerKey];
           if (duration.runtimeType == int) {
-            var indentifier = CurrentDurationIndentifier(key, duration);
-            PlatformStreams.instance.addDurationEvent(indentifier);
+            var indentifier = PlayerIdentifier<int>(key, duration);
+            PlatformStreams.instance.addCurrentDurationEvent(indentifier);
           }
+          break;
+        case Constants.onDidFinishPlayingAudio:
+          var key = call.arguments[Constants.playerKey];
+          var playerState = (call.arguments[Constants.finishtype] is int) &&
+                  call.arguments[Constants.finishtype] == 0
+              ? PlayerState.playing
+              : call.arguments[Constants.finishtype] == 1
+                  ? PlayerState.paused
+                  : PlayerState.stopped;
+          var indentifier = PlayerIdentifier<PlayerState>(key, playerState);
+          PlatformStreams.instance.addPlayerStateEvent(indentifier);
+          if (PlatformStreams.instance.playerControllerFactory[key] != null) {
+            PlatformStreams.instance.playerControllerFactory[key]
+                ?._playerState = playerState;
+          }
+          break;
       }
     });
+  }
+
+  void removeMethodCallHandeler() {
+    _methodChannel.setMethodCallHandler(null);
   }
 }

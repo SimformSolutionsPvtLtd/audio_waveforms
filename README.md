@@ -6,11 +6,10 @@ Use this plugin to generate waveforms while recording audio in any file formats 
 by given encoders or from audio files. We can use gestures to scroll through the waveforms or seek to
 any position while playing audio and also style waveforms.
 
-
-### Recorder
-
 ## Preview
 <a href="https://raw.githubusercontent.com/SimformSolutionsPvtLtd/audio_waveforms/main/preview/demo.gif"><img src="https://raw.githubusercontent.com/SimformSolutionsPvtLtd/audio_waveforms/main/preview/demo.gif" width="390px;" height="700px;"/></a>
+
+### Recorder
 
 ## Platform specific configuration
 
@@ -57,7 +56,6 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 1. Initialise RecorderController
 ```dart
 late final RecorderController recorderController;
-
 @override
 void initState() {
   super.initState();
@@ -76,7 +74,7 @@ AudioWaveforms(
 await recorderController.record();
 ```
 You can provide file name with extension and full path in path parameter of record function. If
-not provided .aac is default extension and dateTime will be file name.
+not provided .aac is the default extension and dateTime will be the file name.
 
 4. Pause recording
 ```dart
@@ -92,7 +90,7 @@ Calling this will save the recording at provided path and it will return path to
 ```dart
 @override
 void dispose() {
- recorderController.disposeFunc();
+ recorderController.dispose();
  super.dispose();
 }
 ```
@@ -104,13 +102,13 @@ AudioWaveforms(
  enableGesture: true,
 ),
 ```
-By enabling gestures, you can scroll through waveform in recording state or paused state
+By enabling gestures, you can scroll through waveform in recording state or paused state.
 
 2. Refreshing the wave to initial position after scrolling
 ```dart
 recorderController.refresh();
 ```
-Once scrolled waveform will stop updating position with newly added wave while recording so we can
+Once scrolled waveform will stop updating position with newly added waves while recording so we can
 use this to get waves updating again. It can also be used in paused/stopped state.
 
 3. Changing style of the waves
@@ -218,7 +216,7 @@ await playerController.stopPlayer();
 ```dart
 @override
 void dispose() {
- playerController.disposeFunc();
+ playerController.dispose();
  super.dispose();
 }
 ```
@@ -243,3 +241,19 @@ AudioFileWaveforms(
 )
 ```
 Audio also can be seeked using gestures on waveforms (enabled by default).
+5. Ending audio with different modes
+```dart
+await playerController.startPlayer(finishMode: FinishMode.stop);
+```
+Using `FinishMode.stop` will stop the player, `FinishMode.pause` will pause the player and
+`FinishMode.loop` will loop the player.
+
+6. Listening to player state changes
+```dart
+playerController.onPlayerStateChanged.listen((state) {});
+```
+7. Listening to current duration
+```dart
+playerController.onCurrentDurationChanged.listen((duration) {});
+```
+Duration is in milliseconds.

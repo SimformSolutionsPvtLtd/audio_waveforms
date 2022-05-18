@@ -42,9 +42,17 @@ struct Constants {
     static let getDuration = "getDuration"
     static let durationType = "durationType"
     static let preparePlayer = "preparePlayer"
-    static let seekToStart = "seekToStart"
     static let onCurrentDuration = "onCurrentDuration"
     static let current = "current"
     static let playerKey = "playerKey"
     static let stopAllPlayers = "stopAllPlayers"
+    static let onDidFinishPlayingAudio = "onDidFinishPlayingAudio"
+    static let finishMode = "finishMode"
+    static let finishType = "finishType"
+}
+
+enum FinishMode : Int{
+    case loop = 0
+    case pause = 1
+    case stop = 2
 }

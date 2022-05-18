@@ -129,13 +129,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   void _disposeControllers() {
-    recorderController.disposeFunc();
+    recorderController.dispose();
     playerController1.stopAllPlayers();
-    playerController2.disposeFunc();
-    playerController3.disposeFunc();
-    playerController4.disposeFunc();
-    playerController5.disposeFunc();
-    playerController6.disposeFunc();
+    playerController2.dispose();
+    playerController3.dispose();
+    playerController4.dispose();
+    playerController5.dispose();
+    playerController6.dispose();
   }
 
   @override
@@ -299,7 +299,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void _playOrPlausePlayer(PlayerController controller) async {
     controller.playerState == PlayerState.playing
         ? await controller.pausePlayer()
-        : await controller.startPlayer(false);
+        : await controller.startPlayer();
   }
 
   void _startOrStopRecording() async {
