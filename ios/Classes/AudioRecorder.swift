@@ -7,8 +7,9 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var hasPermission: Bool = false
     public var meteringLevels: [Float]?
     
-    public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ fileNameFormat: String){
+    public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ bitRate : Int?,_ fileNameFormat: String){
         let settings = [
+            AVEncoderBitRateKey: bitRate ?? 65536,
             AVFormatIDKey: getEncoder(encoder ?? 0),
             AVSampleRateKey: sampleRate ?? 16000,
             AVNumberOfChannelsKey: 1,

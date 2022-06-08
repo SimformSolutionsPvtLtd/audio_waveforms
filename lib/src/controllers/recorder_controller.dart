@@ -107,6 +107,7 @@ class RecorderController extends ChangeNotifier {
           _isRecording = await AudioWaveformsInterface.instance.record(
               Platform.isIOS ? iosEncoder.index : androidEncoder.index,
               sampleRate,
+              bitRate,
               path);
           if (_isRecording) {
             _recorderState = RecorderState.recording;
