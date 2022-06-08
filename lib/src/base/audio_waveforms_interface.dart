@@ -24,8 +24,8 @@ class AudioWaveformsInterface {
 
   ///platform call to initialise the recorder.
   ///This method is only required for Android platform
-  Future<bool> initRecorder(
-      String? path, int encoder, int outputFormat, int sampleRate) async {
+  Future<bool> initRecorder(String? path, int encoder, int outputFormat,
+      int sampleRate, int bitRate) async {
     final initialized = await _methodChannel.invokeMethod(
       Constants.initRecorder,
       {
@@ -33,6 +33,7 @@ class AudioWaveformsInterface {
         Constants.outputFormat: outputFormat,
         Constants.encoder: encoder,
         Constants.sampleRate: sampleRate,
+        Constants.bitRate: bitRate,
       },
     );
     return initialized ?? false;

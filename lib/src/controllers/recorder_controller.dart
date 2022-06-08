@@ -20,6 +20,8 @@ class RecorderController extends ChangeNotifier {
 
   late int sampleRate = 16000;
 
+  late int bitRate = 65536;
+
   ///Db we get from native is too high so in Android it the value is subtracted
   ///and in IOS value added
   late double normalizationFactor = Platform.isAndroid ? 60 : 40;
@@ -124,7 +126,11 @@ class RecorderController extends ChangeNotifier {
   ///This method is only required for Android platform
   Future<void> _initRecorder(String? path) async {
     final initialized = await AudioWaveformsInterface.instance.initRecorder(
-        path, androidEncoder.index, androidOutputFormat.index, sampleRate);
+        path,
+        androidEncoder.index,
+        androidOutputFormat.index,
+        sampleRate,
+        bitRate);
     if (initialized) {
       _recorderState = RecorderState.initialized;
     } else {
