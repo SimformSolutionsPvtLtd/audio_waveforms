@@ -1,3 +1,8 @@
+## [0.1.3] - 22 Jun, 2022
+
+* Fixed (Class 'AudioRecorder' is not abstract and does not implement abstract member public abstract fun onRequestPermissionsResult(p0: Int, p1: Array<(out) String!>, p2: IntArray): Boolean defined in io.flutter.plugin.common.PluginRegistry.RequestPermissionsResultListener) for Android.
+* Added bitRate feature for Android (Default to 64kbps).
+
 ## [0.1.2] - 11 May, 2022
 
 * Fixed ios resume recording issue
