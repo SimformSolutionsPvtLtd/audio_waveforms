@@ -96,7 +96,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
-        permissions: Array<out String>?,
+        permissions: Array<out String>,
         grantResults: IntArray
     ): Boolean {
         return if (requestCode == RECORD_AUDIO_REQUEST_CODE) {
