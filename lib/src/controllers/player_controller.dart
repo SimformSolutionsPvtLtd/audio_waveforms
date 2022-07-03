@@ -64,6 +64,7 @@ class PlayerController extends ChangeNotifier {
     if (await file.exists()) {
       var bytes = await file.readAsBytes();
       _bufferData = bytes;
+
       if (_bufferData != null) {
         setPlayerState(PlayerState.readingComplete);
       } else {

@@ -181,14 +181,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            if (playerController1.playerState != PlayerState.stopped) ...[
+            if (true) ...[
               WaveBubble(
                 playerController: playerController1,
                 isPlaying: playerController1.playerState == PlayerState.playing,
                 onTap: () => _playOrPlausePlayer(playerController1),
               ),
             ],
-            if (playerController2.playerState != PlayerState.stopped) ...[
+            if (true) ...[
               WaveBubble(
                 playerController: playerController2,
                 isPlaying: playerController2.playerState == PlayerState.playing,
@@ -196,14 +196,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 isSender: true,
               ),
             ],
-            if (playerController3.playerState != PlayerState.stopped) ...[
+            if (true) ...[
               WaveBubble(
                 playerController: playerController3,
                 isPlaying: playerController3.playerState == PlayerState.playing,
                 onTap: () => _playOrPlausePlayer(playerController3),
               ),
             ],
-            if (playerController4.playerState != PlayerState.stopped) ...[
+            if (true) ...[
               WaveBubble(
                 playerController: playerController4,
                 isPlaying: playerController4.playerState == PlayerState.playing,
@@ -211,7 +211,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 isSender: true,
               ),
             ],
-            if (playerController5.playerState != PlayerState.stopped) ...[
+            if (true) ...[
               WaveBubble(
                 playerController: playerController5,
                 isPlaying: playerController5.playerState == PlayerState.playing,
@@ -219,7 +219,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 isSender: true,
               ),
             ],
-            if (playerController6.playerState != PlayerState.stopped) ...[
+            if (true) ...[
               WaveBubble(
                 playerController: playerController6,
                 isPlaying: playerController6.playerState == PlayerState.playing,

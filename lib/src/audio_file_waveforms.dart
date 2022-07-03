@@ -99,6 +99,22 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
 
   @override
   void initState() {
+    final stream = widget.playerController.onPlayerStateChanged;
+    stream.listen((event) {
+      if (event == PlayerState.initialized) {
+        _initialiseVariables();
+        _calculateWaveform().whenComplete(() {
+          animationController.forward();
+          animation.addListener(() {
+            if (mounted) {
+              setState(() {
+                _animProgress = animation.value;
+              });
+            }
+          });
+        });
+      }
+    });
     super.initState();
     _initialiseVariables();
     _calculateWaveform().whenComplete(() {
