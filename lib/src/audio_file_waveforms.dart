@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:audio_waveforms/src/base/platform_streams.dart';
@@ -96,11 +97,38 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   late double? density;
   late Clip? clipBehavior;
   late PlayerWaveStyle? playerWaveStyle;
+  StreamSubscription? _streamSubscription;
 
   @override
   void initState() {
+    super.initState();
+    _initialiseVariables();
+
+    animationController = AnimationController(
+      vsync: this,
+      duration: widget.animationDuration,
+    );
+    animation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+        parent: animationController, curve: widget.animationCurve));
+    PlatformStreams.instance.onDurationChanged.listen((event) {
+      if (widget.playerController.playerKey == event.playerKey) {
+        _seekProgress.value = event.type;
+        _updatePlayerPercent(widget.size);
+      }
+    });
+    _calculateWaveform().whenComplete(() {
+      animationController.forward();
+      animation.addListener(() {
+        if (mounted) {
+          setState(() {
+            _animProgress = animation.value;
+          });
+        }
+      });
+    });
+
     final stream = widget.playerController.onPlayerStateChanged;
-    stream.listen((event) {
+    final _streamSubscription = stream.listen((event) {
       if (event == PlayerState.initialized) {
         _initialiseVariables();
         _calculateWaveform().whenComplete(() {
@@ -115,36 +143,13 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
         });
       }
     });
-    super.initState();
-    _initialiseVariables();
-    _calculateWaveform().whenComplete(() {
-      animationController.forward();
-      animation.addListener(() {
-        if (mounted) {
-          setState(() {
-            _animProgress = animation.value;
-          });
-        }
-      });
-    });
-    animationController = AnimationController(
-      vsync: this,
-      duration: widget.animationDuration,
-    );
-    animation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-        parent: animationController, curve: widget.animationCurve));
-    PlatformStreams.instance.onDurationChanged.listen((event) {
-      if (widget.playerController.playerKey == event.playerKey) {
-        _seekProgress.value = event.type;
-        _updatePlayerPercent(widget.size);
-      }
-    });
   }
 
   @override
   void dispose() {
     animation.removeListener(() {});
     animationController.dispose();
+    _streamSubscription?.cancel();
     super.dispose();
   }
 
