@@ -102,10 +102,7 @@ class RecorderController extends ChangeNotifier {
           _recorderState = RecorderState.initialized;
         }
         if (_recorderState == RecorderState.initialized) {
-          _isRecording = await AudioWaveformsInterface.instance.record(
-              Platform.isIOS ? iosEncoder.index : androidEncoder.index,
-              sampleRate,
-              path);
+          _isRecording = await AudioWaveformsInterface.instance.record(Platform.isIOS ? iosEncoder.index : androidEncoder.index, sampleRate, path);
           if (_isRecording) {
             _recorderState = RecorderState.recording;
             _startTimer();
@@ -123,8 +120,7 @@ class RecorderController extends ChangeNotifier {
 
   ///This method is only required for Android platform
   Future<void> _initRecorder(String? path) async {
-    final initialized = await AudioWaveformsInterface.instance.initRecorder(
-        path, androidEncoder.index, androidOutputFormat.index, sampleRate);
+    final initialized = await AudioWaveformsInterface.instance.initRecorder(path, androidEncoder.index, androidOutputFormat.index, sampleRate);
     if (initialized) {
       _recorderState = RecorderState.initialized;
     } else {
@@ -168,8 +164,7 @@ class RecorderController extends ChangeNotifier {
   ///Also clears waveform and resets to initial state. This behaviour can be changed,
   ///pass false and it will not clear waves.
   Future<String?> stop([bool callReset = true]) async {
-    if (_recorderState == RecorderState.recording ||
-        _recorderState == RecorderState.paused) {
+    if (_recorderState == RecorderState.recording || _recorderState == RecorderState.paused) {
       final path = await AudioWaveformsInterface.instance.stop();
       if (path != null) {
         _isRecording = false;
@@ -196,15 +191,14 @@ class RecorderController extends ChangeNotifier {
 
   ///sets [shouldClearLabels] flag to false
   void revertClearlabelCall() {
-    WidgetsBinding.instance?.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       shouldClearLabels = false;
       notifyListeners();
     });
   }
 
   ///gets decibels from native
-  Future<double?> _getDecibel() async =>
-      await AudioWaveformsInterface.instance.getDecibel();
+  Future<double?> _getDecibel() async => await AudioWaveformsInterface.instance.getDecibel();
 
   ///gets decibel by every defined frequency
   void _startTimer() {

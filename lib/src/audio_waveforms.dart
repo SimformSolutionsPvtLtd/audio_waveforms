@@ -62,17 +62,10 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
       color: widget.backgroundColor,
       decoration: widget.decoration,
       child: GestureDetector(
-        onHorizontalDragUpdate:
-            widget.enableGesture ? _handleHorizontalDragUpdate : null,
-        onHorizontalDragStart:
-            widget.enableGesture ? _handleHorizontalDragStart : null,
+        onHorizontalDragUpdate: widget.enableGesture ? _handleHorizontalDragUpdate : null,
+        onHorizontalDragStart: widget.enableGesture ? _handleHorizontalDragStart : null,
         child: ClipPath(
-          clipper: WaveClipper(!widget.waveStyle.showDurationLabel
-              ? 0.0
-              : widget.waveStyle.extraClipperHeight ??
-                  (widget.waveStyle.durationLinesHeight +
-                      (widget.waveStyle.durationStyle.fontSize ??
-                          widget.waveStyle.durationLinesHeight))),
+          clipper: WaveClipper(!widget.waveStyle.showDurationLabel ? 0.0 : widget.waveStyle.extraClipperHeight ?? (widget.waveStyle.durationLinesHeight + (widget.waveStyle.durationStyle.fontSize ?? widget.waveStyle.durationLinesHeight))),
           child: RepaintBoundary(
             child: CustomPaint(
               size: widget.size,
@@ -82,8 +75,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 middleLineColor: widget.waveStyle.middleLineColor,
                 waveData: widget.recorderController.waveData,
                 callPushback: widget.recorderController.shouldRefresh,
-                bottomPadding:
-                    widget.waveStyle.bottomPadding ?? widget.size.height / 2,
+                bottomPadding: widget.waveStyle.bottomPadding ?? widget.size.height / 2,
                 spacing: widget.waveStyle.spacing,
                 waveCap: widget.waveStyle.waveCap,
                 showBottom: widget.waveStyle.showBottom,
@@ -99,19 +91,15 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 showDurationLabel: widget.waveStyle.showDurationLabel,
                 durationLinesColor: widget.waveStyle.durationLinesColor,
                 durationStyle: widget.waveStyle.durationStyle,
-                updateFrequecy: const Duration(seconds: 1).inMilliseconds /
-                    widget.recorderController.updateFrequency.inMilliseconds,
+                updateFrequecy: const Duration(seconds: 1).inMilliseconds / widget.recorderController.updateFrequency.inMilliseconds,
                 durationTextPadding: widget.waveStyle.durationTextPadding,
                 durationLinesHeight: widget.waveStyle.durationLinesHeight,
                 labelSpacing: widget.waveStyle.labelSpacing,
                 gradient: widget.waveStyle.gradient,
                 shouldClearLabels: widget.recorderController.shouldClearLabels,
-                revertClearlabelCall:
-                    widget.recorderController.revertClearlabelCall,
-                setCurrentPositionDuration:
-                    widget.recorderController.setScrolledPostionDuration,
-                shouldCalculateScrolledPosition:
-                    widget.shouldCalculateScrolledPosition,
+                revertClearlabelCall: widget.recorderController.revertClearlabelCall,
+                setCurrentPositionDuration: widget.recorderController.setScrolledPostionDuration,
+                shouldCalculateScrolledPosition: widget.shouldCalculateScrolledPosition,
               ),
             ),
           ),
@@ -127,20 +115,12 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
     _isScrolled = true;
 
     ///left to right
-    if (-_totalBackDistance.dx + _dragOffset.dx + details.delta.dx <
-            (widget.size.width / 2) &&
-        direction > 0) {
+    if (-_totalBackDistance.dx + _dragOffset.dx + details.delta.dx < (widget.size.width / 2) && direction > 0) {
       setState(() => _dragOffset += details.delta);
     }
 
     ///right to left
-    else if (-_totalBackDistance.dx +
-                _dragOffset.dx +
-                (widget.waveStyle.spacing *
-                    widget.recorderController.waveData.length) +
-                details.delta.dx >
-            (widget.size.width / 2) &&
-        direction < 0) {
+    else if (-_totalBackDistance.dx + _dragOffset.dx + (widget.waveStyle.spacing * widget.recorderController.waveData.length) + details.delta.dx > (widget.size.width / 2) && direction < 0) {
       setState(() => _dragOffset += details.delta);
     }
   }
@@ -156,18 +136,14 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   ///This will also handle refreshing the wave after scrolled
   void _pushBackWave() {
     if (_isScrolled) {
-      _initialPosition =
-          widget.waveStyle.spacing * widget.recorderController.waveData.length -
-              widget.size.width / 2;
-      _totalBackDistance =
-          _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);
+      _initialPosition = widget.waveStyle.spacing * widget.recorderController.waveData.length - widget.size.width / 2;
+      _totalBackDistance = _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);
       _isScrolled = false;
     } else {
       _initialPosition = 0.0;
-      _totalBackDistance =
-          _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);
+      _totalBackDistance = _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);
     }
-    WidgetsBinding.instance?.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {});
     });
   }
