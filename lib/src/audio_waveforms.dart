@@ -167,7 +167,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
       _totalBackDistance =
           _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);
     }
-    WidgetsBinding.instance?.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {});
     });
   }

@@ -124,7 +124,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       musicFile = result.files.single.path;
       await playerController6.preparePlayer(musicFile!);
     } else {
-      print("File not picked");
+      debugPrint("File not picked");
     }
   }
 
@@ -299,7 +299,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void _playOrPlausePlayer(PlayerController controller) async {
     controller.playerState == PlayerState.playing
         ? await controller.pausePlayer()
-        : await controller.startPlayer();
+        : await controller.startPlayer(finishMode: FinishMode.loop);
   }
 
   void _startOrStopRecording() async {
