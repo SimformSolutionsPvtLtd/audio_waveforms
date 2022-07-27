@@ -206,4 +206,7 @@ class PlayerController extends ChangeNotifier {
   bool operator ==(Object other) {
     return other is PlayerController && other.playerKey == playerKey;
   }
+
+  @override
+  int get hashCode => super.hashCode;
 }

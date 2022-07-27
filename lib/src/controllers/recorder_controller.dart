@@ -196,7 +196,7 @@ class RecorderController extends ChangeNotifier {
 
   ///sets [shouldClearLabels] flag to false
   void revertClearlabelCall() {
-    WidgetsBinding.instance?.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       shouldClearLabels = false;
       notifyListeners();
     });
