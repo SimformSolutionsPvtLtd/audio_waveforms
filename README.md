@@ -168,10 +168,11 @@ late final RecorderController recorderController;
 ```
 8. Listening scrolled duration position
 ```dart
-recorderController.currentScrolledDuration.addListener((duration){});
+recorderController.currentScrolledDuration;
 ```
-To use this `shouldCalculateScrolledPosition` flag needs to be enabled. Duration is
-in milliseconds.
+It is a ValueNotifier. You can listen to any changes in current scrolled duration by using this.
+To use this `shouldCalculateScrolledPosition` flag needs to be enabled. Duration is in
+milliseconds.
 
 ### Player
 
@@ -191,7 +192,7 @@ await playerController.preparePlayer(path);
 ```
 Provide the audio file path in the parameter. You can also set volume with optional parameter.
 
-3. Use widget in widget-tree
+3. Use `AudioFileWaveforms` in widget-tree
 ```dart
 AudioFileWaveforms(
  size: Size(MediaQuery.of(context).size.width, 100.0),
@@ -241,12 +242,13 @@ AudioFileWaveforms(
 )
 ```
 Audio also can be seeked using gestures on waveforms (enabled by default).
+
 5. Ending audio with different modes
 ```dart
 await playerController.startPlayer(finishMode: FinishMode.stop);
 ```
-Using `FinishMode.stop` will stop the player, `FinishMode.pause` will pause the player and
-`FinishMode.loop` will loop the player.
+Using `FinishMode.stop` will stop the player, `FinishMode.pause` will pause the player at the end
+ and `FinishMode.loop` will loop the player.
 
 6. Listening to player state changes
 ```dart
