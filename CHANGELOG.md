@@ -1,8 +1,12 @@
+## [0.1.4] - 31 July, 2022
+
+- Fixed [#71](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/71) - Bump compileSdkVersion/gradle/kotlin to match flutter 3.0 - thanks [@yohom](https://github.com/yohom)
+- Fixed [#74](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/74) - Fixed push back distance wouldn't reset when recording again
+
 ## [0.1.3] - 26 July, 2022
 
 - Fixed [#41](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/41) & [#49](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/49) - Upgrade Package with flutter 3.0.
 - Fixed [#50](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/50) & [#57](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/57) & [#65](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/65) - android build error fixed
-
 
 ## [0.1.2] - 11 May, 2022
 

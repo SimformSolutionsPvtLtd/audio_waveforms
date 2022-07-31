@@ -98,6 +98,7 @@ class RecorderWavePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (shouldClearLabels) {
       _labels.clear();
+      pushBack();
       revertClearlabelCall();
     }
     for (var i = 0; i < waveData.length; i++) {

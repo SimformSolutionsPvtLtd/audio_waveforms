@@ -165,8 +165,12 @@ class RecorderController extends ChangeNotifier {
   ///Resources are freed after calling this and file is saved.
   ///Returns path where file is saved.
   ///
-  ///Also clears waveform and resets to initial state. This behaviour can be changed,
-  ///pass false and it will not clear waves.
+  ///Also clears waveform and resets to initial state. This behaviour can be
+  ///changed, pass false and it will not clear waves.
+  ///
+  ///When [callReset] is set to false it will require calling [reset] function
+  ///manually else it will start showing waveforms from same place where it
+  ///left of for first recording.
   Future<String?> stop([bool callReset = true]) async {
     if (_recorderState == RecorderState.recording ||
         _recorderState == RecorderState.paused) {
