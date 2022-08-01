@@ -304,6 +304,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
   void _startOrStopRecording() async {
     if (isRecording) {
+      recorderController.reset();
       final path = await recorderController.stop(false);
       if (path != null) await playerController5.preparePlayer(path);
     } else {

@@ -167,6 +167,11 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
       _totalBackDistance =
           _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);
     }
+    if(widget.recorderController.shouldClearLabels){
+      _initialOffsetPosition = 0.0;
+      _totalBackDistance = Offset.zero;
+      _dragOffset = Offset.zero;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {});
     });
