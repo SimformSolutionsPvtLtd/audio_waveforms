@@ -23,9 +23,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>This app is requires Mic permission.</string>
+	<string>This app requires Mic's permission.</string>
 	<key>NSAppleMusicUsageDescription</key>
-    <string>This app is requires to music files</string>
+    <string>This app requires permission to access the media library.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

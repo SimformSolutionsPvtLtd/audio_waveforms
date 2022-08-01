@@ -10,7 +10,7 @@ class AudioWaveformsInterface {
 
   ///platform call to start recording
   Future<bool> record(int audioFormat, int sampleRate, [String? path]) async {
-    final _isRecording = await _methodChannel.invokeMethod(
+    final isRecording = await _methodChannel.invokeMethod(
         Constants.startRecording,
         Platform.isIOS
             ? {
@@ -19,7 +19,7 @@ class AudioWaveformsInterface {
                 Constants.sampleRate: sampleRate,
               }
             : null);
-    return _isRecording ?? false;
+    return isRecording ?? false;
   }
 
   ///platform call to initialise the recorder.
@@ -40,24 +40,24 @@ class AudioWaveformsInterface {
 
   ///platform call to pause recording
   Future<bool?> pause() async {
-    final _isRecording =
+    final isRecording =
         await _methodChannel.invokeMethod(Constants.pauseRecording);
-    return _isRecording;
+    return isRecording;
   }
 
   ///platform call to stop recording
   Future<String?> stop() async {
-    final _isRecording =
+    final isRecording =
         await _methodChannel.invokeMethod(Constants.stopRecording);
-    return _isRecording;
+    return isRecording;
   }
 
   ///platform call to resume recording.
   ///This method is only required for Android platform
   Future<bool> resume() async {
-    final _isRecording =
+    final isRecording =
         await _methodChannel.invokeMethod(Constants.resumeRecording);
-    return _isRecording ?? false;
+    return isRecording ?? false;
   }
 
   ///platform call to get decibel
