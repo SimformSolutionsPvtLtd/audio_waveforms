@@ -85,6 +85,8 @@ class PlayerController extends ChangeNotifier {
   ///
   ///This behavior is set to ensure that player is only re-initialised for new audio file.
   Future<void> preparePlayer(String path, [double? volume]) async {
+    path = Uri.parse(path).path;
+
     await _readAudioFile(path);
     if ((_playerState == PlayerState.readingComplete &&
         _audioFilePath != null)) {
