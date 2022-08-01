@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '/audio_waveforms.dart';
-import 'painters/recorder_wave_painter.dart';
 import 'base/wave_clipper.dart';
+import 'painters/recorder_wave_painter.dart';
 
 class AudioWaveforms extends StatefulWidget {
   final Size size;
@@ -28,7 +29,7 @@ class AudioWaveforms extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _AudioWaveformsState createState() => _AudioWaveformsState();
+  State<AudioWaveforms> createState() => _AudioWaveformsState();
 }
 
 class _AudioWaveformsState extends State<AudioWaveforms> {
@@ -167,7 +168,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
       _totalBackDistance =
           _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);
     }
-    if(widget.recorderController.shouldClearLabels){
+    if (widget.recorderController.shouldClearLabels) {
       _initialOffsetPosition = 0.0;
       _totalBackDistance = Offset.zero;
       _dragOffset = Offset.zero;

@@ -30,7 +30,7 @@ Add RECORD_AUDIO permission in `AndroidManifest.xml`
 Add this two rows in `ios/Runner/Info.plist`
 ```
 <key>NSMicrophoneUsageDescription</key>
-<string>This app is requires Mic permission.</string>
+<string>This app requires Mic's permission.</string>
 ```
 This plugin requires ios 10.0 or higher. So add this line in `Podfile`
 ```
