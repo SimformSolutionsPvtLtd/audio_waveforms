@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform;
-
+import 'dart:math' show max;
 import 'package:flutter/material.dart';
 
 import '/src/base/utils.dart';
@@ -20,11 +20,23 @@ class RecorderController extends ChangeNotifier {
 
   late int sampleRate = 16000;
 
-  ///Db we get from native is too high so in Android it the value is subtracted
-  ///and in IOS value added
-  late double normalizationFactor = Platform.isAndroid ? 60 : 40;
+  /// The provided value will multipled after normilazation is done.
+  /// This will be helpful to scale a normalised wave.
+  ///
+  /// First wave will be always 0 as we don't data to normalise
+  /// agaist it.
+  ///
+  /// A single decibel value will be divided by current maximum
+  /// decibel value. Which will give the scale between 0.0 and 1.0.
+  ///
+  /// To draw a wave, [scaleFactor] is multiplied to it which will
+  /// ultimately become height of the wave.
+  late double scaleFactor = 15;
 
-  ///Current list of decibels(different values for each platform)
+  ///Current maximum decibel reported while recording.
+  double _maxDb = 0;
+
+  ///Current list of scaled waves
   List<double> get waveData => _waveData;
 
   RecorderState _recorderState = RecorderState.stopped;
@@ -228,16 +240,13 @@ class RecorderController extends ChangeNotifier {
 
   ///normalises the decibel
   void _normalise(double db) {
-    if (Platform.isAndroid) {
-      waveData.add(db - normalizationFactor);
+    if (_waveData.isNotEmpty) {
+      final absDb = db.abs();
+      _maxDb = max(absDb, _maxDb);
+      _waveData.add((absDb / _maxDb) * scaleFactor);
     } else {
-      if (db == 0.0) {
-        waveData.add(0);
-      } else if (db + normalizationFactor < 1) {
-        waveData.add(0);
-      } else {
-        waveData.add(db + normalizationFactor);
-      }
+      _maxDb = db;
+      _waveData.add(0);
     }
     notifyListeners();
   }

@@ -62,6 +62,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
   void _initialiseControllers() {
     recorderController = RecorderController()
+    ..scaleFactor = 15
       ..androidEncoder = AndroidEncoder.aac
       ..androidOutputFormat = AndroidOutputFormat.mpeg4
       ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC

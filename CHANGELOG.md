@@ -1,3 +1,7 @@
+## [0.1.5] - 7 Aug, 2022 (Unreleased)
+
+- Breaking: Replaced `normalizationFactor` with `scaleFactor` to scale waves.
+
 ## [0.1.4] - 1 Aug, 2022
 
 - Fixed [#71](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/71) - Bump compileSdkVersion/gradle/kotlin to match flutter 3.0 - thanks [@yohom](https://github.com/yohom)

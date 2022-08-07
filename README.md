@@ -142,7 +142,7 @@ AudioWaveforms(
  waveStyle: WaveStyle(showDurationLabel: true),
 ),
 ```
-6. Change frequency of wave update and normalise according to need and platform
+6. Change frequency of wave update and scaling the waves
 ```dart
 late final RecorderController recorderController;
   @override
@@ -150,7 +150,7 @@ late final RecorderController recorderController;
     super.initState();
     recorderController = RecorderController()
       ..updateFrequency = const Duration(milliseconds: 100)
-      ..normalizationFactor = Platform.isAndroid ? 60 : 40;
+      ..scaleFactor = 15;
   }
 ```
 7. Using different types of encoders and sample rate
