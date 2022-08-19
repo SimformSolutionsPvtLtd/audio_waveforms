@@ -35,13 +35,15 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         recorder: MediaRecorder?,
         encoder: Int,
         outputFormat: Int,
-        sampleRate: Int
+        sampleRate: Int,
+        bitRate: Int
     ) {
         recorder?.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(getOutputFormat(outputFormat))
             setAudioEncoder(getEncoder(encoder))
             setAudioSamplingRate(sampleRate)
+            setAudioEncodingBitRate(bitRate)
             setOutputFile(path)
             try {
                 recorder.prepare()

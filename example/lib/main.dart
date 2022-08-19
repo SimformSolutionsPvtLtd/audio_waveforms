@@ -65,7 +65,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       ..androidEncoder = AndroidEncoder.aac
       ..androidOutputFormat = AndroidOutputFormat.mpeg4
       ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
-      ..sampleRate = 16000;
+      ..sampleRate = 16000
+      ..bitRate = 64000;
     playerController1 = PlayerController()
       ..addListener(() {
         if (mounted) setState(() {});
@@ -306,7 +307,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     if (isRecording) {
       recorderController.reset();
       final path = await recorderController.stop(false);
-      if (path != null) await playerController5.preparePlayer(path);
+
+      if (path != null) {
+        print("Recorded file size: ${File(path).lengthSync()}");
+        await playerController5.preparePlayer(path);
+      }
     } else {
       await recorderController.record(path);
     }

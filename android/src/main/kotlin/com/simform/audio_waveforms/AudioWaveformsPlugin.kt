@@ -31,6 +31,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var encoder: Int = 0
     private var outputFormat: Int = 0
     private var sampleRate: Int = 16000
+    private var bitRate: Int = 32768
     private lateinit var applicationContext: Context
 
     //Todo: bitrate
@@ -51,7 +52,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 encoder = (call.argument(Constants.encoder) as Int?) ?: 0
                 outputFormat = (call.argument(Constants.outputFormat) as Int?) ?: 0
                 sampleRate = (call.argument(Constants.sampleRate) as Int?) ?: 16000
-                checkPathAndInitialiseRecorder(result, encoder, outputFormat, sampleRate)
+                bitRate = (call.argument(Constants.bitRate) as Int?) ?: 32768
+                checkPathAndInitialiseRecorder(result, encoder, outputFormat, sampleRate, bitRate)
             }
             Constants.startRecording -> audioRecorder.startRecorder(result, recorder)
             Constants.stopRecording -> {
@@ -153,7 +155,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         result: Result,
         encoder: Int,
         outputFormat: Int,
-        sampleRate: Int
+        sampleRate: Int,
+        bitRate: Int
     ) {
         try {
             recorder = MediaRecorder()
@@ -174,7 +177,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     recorder,
                     encoder,
                     outputFormat,
-                    sampleRate
+                    sampleRate,
+                    bitRate
                 )
             } catch (e: IOException) {
                 Log.e(Constants.LOG_TAG, "Failed to create file")
@@ -186,7 +190,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 recorder,
                 encoder,
                 outputFormat,
-                sampleRate
+                sampleRate,
+                bitRate
             )
         }
     }

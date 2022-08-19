@@ -1,3 +1,8 @@
+## [0.1.5] - 19 Aug, 2022
+
+* Added bitRate feature for Android (Default to 32kbps).
+* Added bitRate feature for IOS (Default to 32kbps) (Not Tested).
+
 ## [0.1.4] - 1 Aug, 2022
 
 - Fixed [#71](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/71) - Bump compileSdkVersion/gradle/kotlin to match flutter 3.0 - thanks [@yohom](https://github.com/yohom)
