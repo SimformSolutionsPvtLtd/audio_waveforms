@@ -101,10 +101,14 @@ class AudioPlayer : NSObject, AVAudioPlayerDelegate {
     }
     
     func startListening(){
-        timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true, block: {_ in
-            let ms = (self.player?.currentTime ?? 0) * 1000
-            self.plugin.onCurrentDuration(duration: Int(ms),playerKey: self.playerKey)
-        })
+        if #available(iOS 10.0, *) {
+            timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true, block: {_ in
+                let ms = (self.player?.currentTime ?? 0) * 1000
+                self.plugin.onCurrentDuration(duration: Int(ms),playerKey: self.playerKey)
+            })
+        } else {
+            // Fallback on earlier versions
+        }
     }
     
     func stopListening(){
