@@ -309,7 +309,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       final path = await recorderController.stop(false);
 
       if (path != null) {
-        print("Recorded file size: ${File(path).lengthSync()}");
+        debugPrint("Recorded file size: ${File(path).lengthSync()}");
         await playerController5.preparePlayer(path);
       }
     } else {

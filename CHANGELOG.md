@@ -1,7 +1,6 @@
-## [0.1.5] - 19 Aug, 2022
+## [0.1.5] - 7 Sept, 2022
 
-* Added bitRate feature for Android (Default to 32kbps).
-* Added bitRate feature for IOS (Default to 32kbps) (Not Tested).
+* Added bitRate feature for Android & IOS (Default to 64kbps).
 
 ## [0.1.4] - 1 Aug, 2022
 

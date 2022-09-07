@@ -9,7 +9,7 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     
     public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ bitRate : Int?,_ fileNameFormat: String){
         let settings = [
-            AVEncoderBitRateKey: bitRate ?? 32768,
+            AVEncoderBitRateKey: bitRate ?? 64000,
             AVFormatIDKey: getEncoder(encoder ?? 0),
             AVSampleRateKey: sampleRate ?? 16000,
             AVNumberOfChannelsKey: 1,

@@ -31,7 +31,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var encoder: Int = 0
     private var outputFormat: Int = 0
     private var sampleRate: Int = 16000
-    private var bitRate: Int = 32768
+    private var bitRate: Int = 64000
     private lateinit var applicationContext: Context
 
     //Todo: bitrate
@@ -52,7 +52,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 encoder = (call.argument(Constants.encoder) as Int?) ?: 0
                 outputFormat = (call.argument(Constants.outputFormat) as Int?) ?: 0
                 sampleRate = (call.argument(Constants.sampleRate) as Int?) ?: 16000
-                bitRate = (call.argument(Constants.bitRate) as Int?) ?: 32768
+                bitRate = (call.argument(Constants.bitRate) as Int?) ?: 64000
                 checkPathAndInitialiseRecorder(result, encoder, outputFormat, sampleRate, bitRate)
             }
             Constants.startRecording -> audioRecorder.startRecorder(result, recorder)
