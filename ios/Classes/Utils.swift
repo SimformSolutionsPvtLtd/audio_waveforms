@@ -14,6 +14,7 @@ struct Constants {
     static let path = "path"
     static let encoder = "encoder"
     static let sampleRate = "sampleRate"
+    static let bitRate = "bitRate"
     static let fileNameFormat = "YY-MM-dd-HH-mm-ss"
     static let resumeRecording = "resumeRecording"
 
