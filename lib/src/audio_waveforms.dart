@@ -108,9 +108,9 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 gradient: widget.waveStyle.gradient,
                 shouldClearLabels: widget.recorderController.shouldClearLabels,
                 revertClearlabelCall:
-                    widget.recorderController.revertClearlabelCall,
+                    widget.recorderController.revertClearLabelCall,
                 setCurrentPositionDuration:
-                    widget.recorderController.setScrolledPostionDuration,
+                    widget.recorderController.setScrolledPositionDuration,
                 shouldCalculateScrolledPosition:
                     widget.shouldCalculateScrolledPosition,
               ),

@@ -4,7 +4,7 @@ class PlayerWaveStyle {
   ///Color of the [wave] which is behind the live wave.
   final Color fixedWaveColor;
 
-  ///Color of the [live] wave which idicates currenly played part.
+  ///Color of the [live] wave which indicates currently played part.
   final Color liveWaveColor;
 
   ///Whether to show seeker or not
@@ -17,33 +17,36 @@ class PlayerWaveStyle {
   ///Whether to show bottom wave or not default to true
   final bool showBottom;
 
-  ///The kind of finish to place on the end of lines drawn
-  /// default to StrokeCap.round
+  /// The kind of finish to place on the end of lines drawn.
+  /// Default to StrokeCap.round
   final StrokeCap waveCap;
 
-  ///Color line in the middle
+  /// Color line in the middle
   final Color seekLineColor;
 
-  ///Thickness of seek line. For microphone recording this line is in the middle
+  /// Thickness of seek line. For microphone recording this line
+  /// is in the middle.
   final double seekLineThickness;
 
-  ///Width of each wave
+  /// Width of each wave
   final double waveThickness;
 
-  ///The background color of waveform box default is Black
+  /// The background color of waveform box default is Black
   final Color backgroundColor;
 
-  ///Provide gradient to waves which is behind the live wave. Use shader as shown in example.
+  /// Provide gradient to waves which is behind the live wave.
+  /// Use shader as shown in example.
   final Shader? fixedWavegradient;
 
-  ///This is applied to each wave while generating. Use this to [scale] the waves.
-  /// Defaluts to 1.0.
+  /// This is applied to each wave while generating.
+  /// Use this to [scale] the waves. Defaults to 1.0.
   final double scaleFactor;
 
-  ///This gradient is applied to waves which idicates currenly played part.
+  /// This gradient is applied to waves which indicates currently played part.
   final Shader? liveWaveGradient;
 
-  ///Constant height the wave bar. Height is also dependent on scaleFactor and density.
+  /// Constant height the wave bar. Height is also dependent on
+  /// scaleFactor and density.
   final double visualizerHeight;
 
   const PlayerWaveStyle({

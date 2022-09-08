@@ -9,8 +9,12 @@ class AudioWaveformsInterface {
       MethodChannel(Constants.methodChannelName);
 
   ///platform call to start recording
-  Future<bool> record(int audioFormat, int sampleRate, int bitRate,
-      [String? path]) async {
+  Future<bool> record({
+    required int audioFormat,
+    required int sampleRate,
+    required int bitRate,
+    String? path,
+  }) async {
     final isRecording = await _methodChannel.invokeMethod(
         Constants.startRecording,
         Platform.isIOS
@@ -24,10 +28,15 @@ class AudioWaveformsInterface {
     return isRecording ?? false;
   }
 
-  ///platform call to initialise the recorder.
-  ///This method is only required for Android platform
-  Future<bool> initRecorder(String? path, int encoder, int outputFormat,
-      int sampleRate, int bitRate) async {
+  /// Platform call to initialise the recorder.
+  /// This method is only required for Android platform.
+  Future<bool> initRecorder({
+    String? path,
+    required int encoder,
+    required int outputFormat,
+    required int sampleRate,
+    required int bitRate,
+  }) async {
     final initialized = await _methodChannel.invokeMethod(
       Constants.initRecorder,
       {

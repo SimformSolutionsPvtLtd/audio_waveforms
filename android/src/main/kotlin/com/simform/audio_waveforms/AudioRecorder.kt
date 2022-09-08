@@ -173,7 +173,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                 return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     MediaRecorder.OutputFormat.WEBM
                 } else {
-                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
+                    Log.e(LOG_TAG, "Minimum android Q is required, Setting MPEG_4 output format.")
                     MediaRecorder.OutputFormat.MPEG_4
                 }
             }
@@ -181,7 +181,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                 return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     MediaRecorder.OutputFormat.MPEG_2_TS
                 } else {
-                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
+                    Log.e(LOG_TAG, "Minimum android Q is required, Setting MPEG_4 output format.")
                     MediaRecorder.OutputFormat.MPEG_4
                 }
             }

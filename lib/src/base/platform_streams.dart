@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:audio_waveforms/src/base/player_indentifier.dart';
+import 'package:audio_waveforms/src/base/player_identifier.dart';
 
 import '../../audio_waveforms.dart';
 

@@ -186,14 +186,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               WaveBubble(
                 playerController: playerController1,
                 isPlaying: playerController1.playerState == PlayerState.playing,
-                onTap: () => _playOrPlausePlayer(playerController1),
+                onTap: () => _playOrPausePlayer(playerController1),
               ),
             ],
             if (playerController2.playerState != PlayerState.stopped) ...[
               WaveBubble(
                 playerController: playerController2,
                 isPlaying: playerController2.playerState == PlayerState.playing,
-                onTap: () => _playOrPlausePlayer(playerController2),
+                onTap: () => _playOrPausePlayer(playerController2),
                 isSender: true,
               ),
             ],
@@ -201,14 +201,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               WaveBubble(
                 playerController: playerController3,
                 isPlaying: playerController3.playerState == PlayerState.playing,
-                onTap: () => _playOrPlausePlayer(playerController3),
+                onTap: () => _playOrPausePlayer(playerController3),
               ),
             ],
             if (playerController4.playerState != PlayerState.stopped) ...[
               WaveBubble(
                 playerController: playerController4,
                 isPlaying: playerController4.playerState == PlayerState.playing,
-                onTap: () => _playOrPlausePlayer(playerController4),
+                onTap: () => _playOrPausePlayer(playerController4),
                 isSender: true,
               ),
             ],
@@ -216,7 +216,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               WaveBubble(
                 playerController: playerController5,
                 isPlaying: playerController5.playerState == PlayerState.playing,
-                onTap: () => _playOrPlausePlayer(playerController5),
+                onTap: () => _playOrPausePlayer(playerController5),
                 isSender: true,
               ),
             ],
@@ -224,72 +224,74 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               WaveBubble(
                 playerController: playerController6,
                 isPlaying: playerController6.playerState == PlayerState.playing,
-                onTap: () => _playOrPlausePlayer(playerController6),
+                onTap: () => _playOrPausePlayer(playerController6),
                 isSender: true,
               ),
             ],
             const Spacer(),
-            Row(
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: isRecording
-                      ? AudioWaveforms(
-                          enableGesture: true,
-                          size: Size(MediaQuery.of(context).size.width / 2, 50),
-                          recorderController: recorderController,
-                          waveStyle: const WaveStyle(
-                            waveColor: Colors.white,
-                            extendWaveform: true,
-                            showMiddleLine: false,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12.0),
-                            color: const Color(0xFF1E1B26),
-                          ),
-                          padding: const EdgeInsets.only(left: 18),
-                          margin: const EdgeInsets.symmetric(horizontal: 15),
-                        )
-                      : Container(
-                          width: MediaQuery.of(context).size.width / 1.7,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E1B26),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          padding: const EdgeInsets.only(left: 18),
-                          margin: const EdgeInsets.symmetric(horizontal: 15),
-                          child: TextField(
-                            readOnly: true,
-                            decoration: InputDecoration(
-                              hintText: "Type Something...",
-                              hintStyle: const TextStyle(color: Colors.white54),
-                              contentPadding: const EdgeInsets.only(top: 16),
-                              border: InputBorder.none,
-                              suffixIcon: IconButton(
-                                onPressed: _pickFile,
-                                icon: Icon(Icons.adaptive.share),
-                                color: Colors.white54,
+            SafeArea(
+              child: Row(
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: isRecording
+                        ? AudioWaveforms(
+                            enableGesture: true,
+                            size: Size(MediaQuery.of(context).size.width / 2, 50),
+                            recorderController: recorderController,
+                            waveStyle: const WaveStyle(
+                              waveColor: Colors.white,
+                              extendWaveform: true,
+                              showMiddleLine: false,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12.0),
+                              color: const Color(0xFF1E1B26),
+                            ),
+                            padding: const EdgeInsets.only(left: 18),
+                            margin: const EdgeInsets.symmetric(horizontal: 15),
+                          )
+                        : Container(
+                            width: MediaQuery.of(context).size.width / 1.7,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E1B26),
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            padding: const EdgeInsets.only(left: 18),
+                            margin: const EdgeInsets.symmetric(horizontal: 15),
+                            child: TextField(
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                hintText: "Type Something...",
+                                hintStyle: const TextStyle(color: Colors.white54),
+                                contentPadding: const EdgeInsets.only(top: 16),
+                                border: InputBorder.none,
+                                suffixIcon: IconButton(
+                                  onPressed: _pickFile,
+                                  icon: Icon(Icons.adaptive.share),
+                                  color: Colors.white54,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                ),
-                IconButton(
-                  onPressed: _refreshWave,
-                  icon: Icon(
-                    isRecording ? Icons.refresh : Icons.send,
-                    color: Colors.white,
                   ),
-                ),
-                const SizedBox(width: 16),
-                IconButton(
-                  onPressed: _startOrStopRecording,
-                  icon: Icon(isRecording ? Icons.stop : Icons.mic),
-                  color: Colors.white,
-                  iconSize: 28,
-                ),
-              ],
+                  IconButton(
+                    onPressed: _refreshWave,
+                    icon: Icon(
+                      isRecording ? Icons.refresh : Icons.send,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  IconButton(
+                    onPressed: _startOrStopRecording,
+                    icon: Icon(isRecording ? Icons.stop : Icons.mic),
+                    color: Colors.white,
+                    iconSize: 28,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -297,7 +299,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     );
   }
 
-  void _playOrPlausePlayer(PlayerController controller) async {
+  void _playOrPausePlayer(PlayerController controller) async {
     controller.playerState == PlayerState.playing
         ? await controller.pausePlayer()
         : await controller.startPlayer(finishMode: FinishMode.loop);
