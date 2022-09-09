@@ -1,3 +1,7 @@
+## 0.1.5+1
+
+- Add missing import.
+
 ## 0.1.5
 
 - Added bitRate feature for Android & IOS (Default to 64kbps) - thanks [@abhay-s-rawat](https://github.com/abhay-s-rawat).
