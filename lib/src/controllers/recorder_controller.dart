@@ -9,7 +9,7 @@ import 'player_controller.dart';
 class RecorderController extends ChangeNotifier {
   final List<double> _waveData = [];
 
-  ///At which rate waveform needs to be updated
+  /// At which rate waveform needs to be updated
   late Duration updateFrequency = const Duration(milliseconds: 100);
 
   late AndroidEncoder androidEncoder = AndroidEncoder.aac;
@@ -31,12 +31,13 @@ class RecorderController extends ChangeNotifier {
 
   RecorderState _recorderState = RecorderState.stopped;
 
-  ///Current state of the [recorder]
+  /// Provides current state of the [recorder]
   RecorderState get recorderState => _recorderState;
 
   bool _isRecording = false;
 
-  ///State of recording on/off
+  /// A boolean check for state of recording. It is true when recording
+  /// is on going otherwise false.
   bool get isRecording => _isRecording;
 
   bool _shouldRefresh = true;
@@ -47,41 +48,50 @@ class RecorderController extends ChangeNotifier {
 
   bool _hasPermission = false;
 
-  ///If we have microphone permission or not.
+  /// A boolean to check for microphone permission status. It is true when
+  /// user has provided the microphone permission otherwise false.
   bool get hasPermission => _hasPermission;
 
   bool shouldClearLabels = false;
 
   final ValueNotifier<int> _currentScrolledDuration = ValueNotifier(0);
 
-  ///Listen to this value notifier when current time position of
-  ///recorded audio is required.
+  /// A ValueNotifier which provides current position of scrolled waveform with
+  /// respect to [middle line].
   ///
-  /// Time position is with respect [middle line]. To get desired position,
-  /// one must scroll to that time frame to middle line.
-  ///
-  /// To use this [shouldCalculateScrolledPosition] must be enabled
+  /// [shouldCalculateScrolledPosition] flag must be enabled to use it
   /// (available in [AudioWaveform] widget).
   ///
-  /// Get better idea when duration lables are enabled.
+  /// For better idea how duration is reported, enable duration labels and
+  /// scroll toward middle line.
   ///
-  /// Returned duration is in [milliseconds].
+  /// Reported duration is in [milliseconds].
   ValueNotifier<int> get currentScrolledDuration => _currentScrolledDuration;
 
-  ///Use this to check permission and starts recording.
+  /// Calls platform to start recording.
   ///
-  ///Can be called after pausing.
-  ///after pausing it's not required to pass path again to again start recording.
+  /// First, it checks for microphone permission, if permission
+  /// isn't provided then function will complete with [RecorderState]
+  /// set to [stopped].
   ///
-  ///If called after stopping the recording, it will re-initialize.
+  /// [checkPermission] is used to check microphone permission. Follow
+  /// it's documentation for more info.
   ///
-  ///Path parameter is optional and if not provided current Datetime will be
-  /// file name and default extension will be .aac.
+  /// Path parameter is optional and if not provided current datetime
+  /// will be used for file name and default extension will be .aac.
   ///
-  ///If you want to provide provide with name
-  ///of the file, add full path with name and extension.
+  /// Below is the example format to save file with custom name and
+  /// extension.
   ///
-  ///eg. /dir1/dir2/file-name.mp3
+  /// eg. /dir1/dir2/file-name.mp3
+  ///
+  /// How recorder will behave for different RecorderState -:
+  ///
+  /// 1. Paused-:  If a recorder is paused, calling this function again
+  /// will start recording again where it left of.
+  ///
+  /// 2. Stopped -: If a recorder is stopped from previous recording and again
+  /// this function is called then it will re-initialise the recorder.
   Future<void> record([String? path]) async {
     if (_recorderState != RecorderState.recording) {
       await checkPermission();
@@ -105,10 +115,12 @@ class RecorderController extends ChangeNotifier {
         }
         if (_recorderState == RecorderState.initialized) {
           _isRecording = await AudioWaveformsInterface.instance.record(
-              Platform.isIOS ? iosEncoder.index : androidEncoder.index,
-              sampleRate,
-              bitRate,
-              path);
+            audioFormat:
+                Platform.isIOS ? iosEncoder.index : androidEncoder.index,
+            sampleRate: sampleRate,
+            bitRate: bitRate,
+            path: path,
+          );
           if (_isRecording) {
             _recorderState = RecorderState.recording;
             _startTimer();
@@ -124,14 +136,15 @@ class RecorderController extends ChangeNotifier {
     }
   }
 
-  ///This method is only required for Android platform
+  /// Initialises recorder for android platform.
   Future<void> _initRecorder(String? path) async {
     final initialized = await AudioWaveformsInterface.instance.initRecorder(
-        path,
-        androidEncoder.index,
-        androidOutputFormat.index,
-        sampleRate,
-        bitRate);
+      path: path,
+      encoder: androidEncoder.index,
+      outputFormat: androidOutputFormat.index,
+      sampleRate: sampleRate,
+      bitRate: bitRate,
+    );
     if (initialized) {
       _recorderState = RecorderState.initialized;
     } else {
@@ -140,11 +153,14 @@ class RecorderController extends ChangeNotifier {
     notifyListeners();
   }
 
-  ///This method can be used to check microphone permission.
-  /// Returns true if we have permission
-  ///else false.
+  /// Checks for microphone permission and return true if permission was
+  /// provided otherwise returns false.
   ///
-  /// This method is called during record().
+  /// If this is first time check for microphone permission then it
+  /// opens a platform dialog with description string which was set
+  /// during initial set up.
+  ///
+  /// This method is also called during [record].
   Future<bool> checkPermission() async {
     final result = await AudioWaveformsInterface.instance.checkPermission();
     if (result) {
@@ -154,8 +170,7 @@ class RecorderController extends ChangeNotifier {
     return _hasPermission;
   }
 
-  ///Use this to pause recording.
-  ///Can start recording again after pausing.
+  /// Pauses the current recording. Call [record] to resume recording.
   Future<void> pause() async {
     if (_recorderState == RecorderState.recording) {
       _isRecording = (await AudioWaveformsInterface.instance.pause()) ?? true;
@@ -168,20 +183,22 @@ class RecorderController extends ChangeNotifier {
     notifyListeners();
   }
 
-  ///Use this stop recording.
-  ///Resources are freed after calling this and file is saved.
-  ///Returns path where file is saved.
+  /// Stops the current recording.
   ///
-  ///Also clears waveform and resets to initial state. This behaviour can be
-  ///changed, pass false and it will not clear waves.
+  /// Resources are freed after calling this and file is saved and
+  /// returns path where file is saved and it also clears waveform and
+  /// resets to initial state. To change this behaviour, pass false to
+  /// stop function's parameter and this will effectively will not
+  /// call [reset] to clear waves.
   ///
-  ///When [callReset] is set to false it will require calling [reset] function
-  ///manually else it will start showing waveforms from same place where it
-  ///left of for first recording.
+  /// When [callReset] is set to false it will require calling [reset] function
+  /// manually else it will start showing waveforms from same place where it
+  /// left of for previous recording.
   Future<String?> stop([bool callReset = true]) async {
     if (_recorderState == RecorderState.recording ||
         _recorderState == RecorderState.paused) {
       final path = await AudioWaveformsInterface.instance.stop();
+
       if (path != null) {
         _isRecording = false;
         _timer?.cancel();
@@ -197,7 +214,8 @@ class RecorderController extends ChangeNotifier {
     return null;
   }
 
-  ///Clears WaveData and labels from the list.
+  /// Clears WaveData and labels from the list. This will effectively remove
+  /// waves and labels from the UI.
   void reset() {
     refresh();
     _waveData.clear();
@@ -205,19 +223,19 @@ class RecorderController extends ChangeNotifier {
     notifyListeners();
   }
 
-  ///sets [shouldClearLabels] flag to false
-  void revertClearlabelCall() {
+  /// Sets [shouldClearLabels] flag to false.
+  void revertClearLabelCall() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       shouldClearLabels = false;
       notifyListeners();
     });
   }
 
-  ///gets decibels from native
+  /// Gets decibels from native
   Future<double?> _getDecibel() async =>
       await AudioWaveformsInterface.instance.getDecibel();
 
-  ///gets decibel by every defined frequency
+  /// Gets decibel by every defined frequency
   void _startTimer() {
     _timer = Timer.periodic(
       updateFrequency,
@@ -233,7 +251,7 @@ class RecorderController extends ChangeNotifier {
     );
   }
 
-  ///normalises the decibel
+  /// Normalises the decibel
   void _normalise(double db) {
     if (Platform.isAndroid) {
       waveData.add(db - normalizationFactor);
@@ -249,28 +267,25 @@ class RecorderController extends ChangeNotifier {
     notifyListeners();
   }
 
-  ///Use this function to get wave to the initial state after scrolling,
-  ///whether recording is stopped or running.
+  /// Refreshes the waveform to the initial state after scrolling.
   void refresh() {
     _shouldRefresh = true;
     notifyListeners();
   }
 
-  ///This function can be used to handle the refresh state.
-  ///for most cases refresh() should be fine.
+  /// Sets [_shouldRefresh] flag with provided boolean parameter.
   void setRefresh(bool refresh) {
     _shouldRefresh = refresh;
     notifyListeners();
   }
 
-  ///[Internally] used to set scrolled position
-  ///to duration.
-  void setScrolledPostionDuration(int duration) {
+  /// A function internally used to set scrolled position to duration.
+  void setScrolledPositionDuration(int duration) {
     _currentScrolledDuration.value = duration;
   }
 
-  ///This function must be called to free [resources],
-  ///it will also dispose the controller.
+  /// Releases any resources taken by this recorder and with this
+  /// controller is also disposes.
   @override
   void dispose() async {
     if (_timer != null) _timer!.cancel();

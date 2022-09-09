@@ -8,57 +8,64 @@ import '../audio_waveforms.dart';
 import 'base/constants.dart';
 
 class AudioFileWaveforms extends StatefulWidget {
-  ///Height and width of waveform.
+  /// A size to define height and width of waveform.
   final Size size;
 
-  ///Use this control the waveform.
+  /// A PlayerController having different controls for audio player.
   final PlayerController playerController;
 
-  ///Use this to style the waveform.
+  /// A PlayerWaveStyle instance controls how waveforms should look.
   final PlayerWaveStyle playerWaveStyle;
 
-  ///Use this to give padding around waveform.
+  /// Provides padding around waveform.
   final EdgeInsets? padding;
 
-  ///Use this to give margin around waveform.
+  /// Provides margin around waveform.
   final EdgeInsets? margin;
 
-  ///Use this to decorate background of waveforms
+  /// Provides box decoration container having waveforms.
   final BoxDecoration? decoration;
 
-  ///background color of waveform. if decoration is used then use color in it.
+  /// Color which is applied in to background of the waveform.
+  /// If decoration is used then use color in it.
   final Color? backgroundColor;
 
-  ///Enable/Disable seeking using gestures. Defaults to true.
+  /// Enable/Disable seeking using gestures. Defaults to true.
   final bool enableSeekGesture;
 
-  ///Duration for animation. Defaults to 500 milliseconds.
+  /// Duration for animation. Defaults to 500 milliseconds.
   final Duration animationDuration;
 
-  ///Curve for animation. Defaults to Curves.bounceOut
+  /// Curve for animation. Defaults to Curves.bounceOut
   final Curve animationCurve;
 
-  ///Density of the display. Providing accurate density is not neccesary, if desired looking
-  ///waveforms are needed.
+  /// Density of the display. Providing accurate density is not necessary,
+  /// if desired looking waveforms are needed.
   ///
-  /// Lower the density higher number of bar and smaller in size will be in the waveform.
-  /// To scale them use [scaleFactor].
+  /// Lower the density higher number of bar and smaller in size will be
+  /// in the waveform. To scale them use scaleFactor.
+  ///
+  /// **See also** -:
+  /// * [scaleFactor]
   final double density;
 
-  ///To clip the waves.
+  /// A clipping behaviour which is applied to container having waveforms.
   final Clip clipBehavior;
 
-  ///Generate waveforms from audio file. You play those audio file using [PlayerController].
-  ///When you play the audio file, another waveform
+  /// Generate waveforms from audio file. You play those audio file using
+  /// [PlayerController].
+  ///
+  /// When you play the audio file, another waveform
   /// will drawn on top of it to show
   /// how much audio has been played and how much is left.
   ///
-  /// With seeking gesture enabled, playing audio can be seeked to any postion using
-  /// gestures.
+  /// With seeking gesture enabled, playing audio can be seeked to
+  /// any position using gestures.
   ///
   /// Waveforms are dependent on provided width. If dynamic width is provided,
   ///
-  /// eg. MediaQueary.of(context).size.width then  it may vary from device to device.
+  /// eg. MediaQuery.of(context).size.width then  it may vary from device
+  /// to device.
   const AudioFileWaveforms({
     Key? key,
     required this.size,
@@ -198,26 +205,26 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     );
   }
 
-  ///This handles continues seek gesture
+  /// This handles continues seek gesture
   void _handleScrubberSeekUpdate(DragUpdateDetails details) {
     var proportion = details.localPosition.dx / widget.size.width;
-    var seekPostion = widget.playerController.maxDuration * proportion;
-    widget.playerController.seekTo(seekPostion.toInt());
+    var seekPosition = widget.playerController.maxDuration * proportion;
+    widget.playerController.seekTo(seekPosition.toInt());
     _currentSeekPositon = details.globalPosition.dx;
     setState(() {});
   }
 
-  ///This handles tap seek gesture
+  /// This handles tap seek gesture
   void _handleScrubberSeekStart(DragStartDetails details) {
     var proportion = details.localPosition.dx / widget.size.width;
-    var seekPostion = widget.playerController.maxDuration * proportion;
-    widget.playerController.seekTo(seekPostion.toInt());
+    var seekPosition = widget.playerController.maxDuration * proportion;
+    widget.playerController.seekTo(seekPosition.toInt());
     _currentSeekPositon = details.globalPosition.dx;
     setState(() {});
   }
 
-  ///This initialises variable in [initState] so that everytime current duration
-  ///gets updated it doesn't re assign them to same values.
+  /// This initialises variable in [initState] so that everytime current duration
+  /// gets updated it doesn't re assign them to same values.
   void _initialiseVariables() {
     _waveData = widget.playerController.bufferData?.toList() ?? [];
     showSeekLine = false;
@@ -232,7 +239,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     playerWaveStyle = widget.playerWaveStyle;
   }
 
-  ///This funtion pre-calculates waveforms
+  /// This function pre-calculates waveforms
   Future<void> _calculateWaveform() async {
     double totalBarsCount = widget.size.width / _dp(3);
     if (totalBarsCount <= 0.1) return;
@@ -288,13 +295,13 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     }
   }
 
-  ///calculates values according to user provided density
+  /// calculates values according to user provided density
   int _dp(double value) {
     if (value == 0) return 0;
     return (widget.density * value).ceil();
   }
 
-  ///calculates densness according to width and seek progress
+  /// calculates denseness according to width and seek progress
   void _updatePlayerPercent(Size size) {
     _audioProgress = _scrubberProgress();
     _denseness = (size.width * _audioProgress).ceilToDouble();
@@ -305,7 +312,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     }
   }
 
-  ///This returns current progress of seek
+  /// This returns current progress of seek
   double _scrubberProgress() {
     if (widget.playerController.maxDuration == 0) return 0;
     return _seekProgress.value / widget.playerController.maxDuration;
