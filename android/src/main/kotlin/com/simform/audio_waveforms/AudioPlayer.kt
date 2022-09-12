@@ -34,12 +34,10 @@ class AudioPlayer(context: Context, channel: MethodChannel, playerKey: String) {
             player?.prepare()
             playerListener = object : Player.Listener {
                 override fun onPlayerStateChanged(isReady: Boolean, state: Int) {
-                    if (!isPlayerPrepared) {
-                        if (state == Player.STATE_READY) {
-                            player?.volume = volume ?: 1F
-                            isPlayerPrepared = true
-                            result.success(true)
-                        }
+                    if (state == Player.STATE_READY) {
+                        player?.volume = volume ?: 1F
+                        isPlayerPrepared = true
+                        result.success(true)
                     }
                     if (state == Player.STATE_ENDED) {
                         val args: MutableMap<String, Any?> = HashMap()
