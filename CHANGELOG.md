@@ -1,13 +1,12 @@
 ## 0.1.5+1
 
-- Add missing import.
+- Added missing import.
 
 ## 0.1.5
 
 - Added bitRate feature for Android & IOS (Default to 64kbps) - thanks [@abhay-s-rawat](https://github.com/abhay-s-rawat).
 - Fixed [#86](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/86) - thanks [@rlee1990](https://github.com/rlee1990)
 - Updated docs and fixed docs,variable name,function names typos
-- Removed dates from changelog(see versions tab from pub.dev to get release version dates).
 
 ## 0.1.4
 
