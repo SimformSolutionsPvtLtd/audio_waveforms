@@ -32,6 +32,7 @@ class AudioPlayer(context: Context, channel: MethodChannel, playerKey: String) {
             player = ExoPlayer.Builder(appContext).build()
             player?.addMediaItem(mediaItem)
             player?.prepare()
+            isPlayerPrepared = false
             playerListener = object : Player.Listener {
                 override fun onPlayerStateChanged(isReady: Boolean, state: Int) {
                     if (!isPlayerPrepared) {
