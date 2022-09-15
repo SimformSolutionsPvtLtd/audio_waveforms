@@ -222,7 +222,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         debugPrint(path);
       }
     } else {
-      await recorderController.record(path);
+      await recorderController.record(path: path);
     }
     setState(() {
       isRecording = !isRecording;

@@ -9,9 +9,9 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     
     public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ bitRate : Int?,_ fileNameFormat: String){
         let settings = [
-            AVEncoderBitRateKey: bitRate ?? 64000,
+            AVEncoderBitRateKey: bitRate ?? 48000,
             AVFormatIDKey: getEncoder(encoder ?? 0),
-            AVSampleRateKey: sampleRate ?? 16000,
+            AVSampleRateKey: sampleRate ?? 44100,
             AVNumberOfChannelsKey: 1,
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
@@ -62,8 +62,9 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     
     public func getDecibel(_ result: @escaping FlutterResult) {
         audioRecorder?.updateMeters()
-        let amp = audioRecorder?.averagePower(forChannel: 0) ?? 0.0
-        result(amp)
+        let amp = audioRecorder?.peakPower(forChannel: 0) ?? 0.0
+        let linear = pow(10, amp / 20);
+        result(linear)
     }
     
     public func checkHasPermission(_ result: @escaping FlutterResult){

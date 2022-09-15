@@ -176,3 +176,13 @@ extension PlayerStateExtension on PlayerState {
 
   bool get isPaused => this == PlayerState.paused;
 }
+
+extension RecorderStateExtension on RecorderState {
+  bool get isRecording => this == RecorderState.recording;
+
+  bool get isInitialized => this == RecorderState.initialized;
+
+  bool get isPaused => this == RecorderState.paused;
+
+  bool get isStopped => this == RecorderState.stopped;
+}

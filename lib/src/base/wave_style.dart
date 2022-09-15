@@ -82,8 +82,8 @@ class WaveStyle {
   /// ```dart
   final Shader? gradient;
 
-  /// This is applied to each wave while generating.
-  /// Use this to [scale] the waves. Defaults to 1.0.
+  /// Default normalised amplitude/power we have are between 0.0 and 1.0.
+  /// So scale them, [scaleFactor] can be used. Defaults to 20.0.
   final double scaleFactor;
 
   /// A model class to provide style to the waveforms.
@@ -112,7 +112,7 @@ class WaveStyle {
     this.durationTextPadding = 20.0,
     this.durationLinesColor = Colors.blueAccent,
     this.gradient,
-    this.scaleFactor = 1.0,
+    this.scaleFactor = 20.0,
   }) : assert(waveThickness < spacing,
             "waveThickness can't be greater than spacing");
 }

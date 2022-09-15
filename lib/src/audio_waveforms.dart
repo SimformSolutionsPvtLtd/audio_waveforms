@@ -113,6 +113,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                     widget.recorderController.setScrolledPositionDuration,
                 shouldCalculateScrolledPosition:
                     widget.shouldCalculateScrolledPosition,
+                scaleFactor: widget.waveStyle.scaleFactor,
               ),
             ),
           ),
