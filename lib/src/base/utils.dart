@@ -141,3 +141,6 @@ enum FinishMode {
   ///Stops player and disposes it(a PlayerController won't be disposed).
   stop
 }
+
+// TODO: remove this function if we remove support for flutter 2.x
+T? ambiguate<T>(T? object) => object;
