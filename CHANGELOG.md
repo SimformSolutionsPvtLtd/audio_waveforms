@@ -1,11 +1,12 @@
-## 0.2.0
+## 1.0.0 (Unreleased)
 
 - Reworked waveforms from audio file
   - Breaking: removed `readingComplete` PlayerState and `visualizerHeight`. With this, added `extractWaveforms` function to extract waveforms.
+  - Added `WaveformType` enum for selecting longer or shorter type of waveform.
   - Added `onCurrentExtractedWaveformData` and `onExtractionProgress` to monitor progress and currently extracted waveform data.
-
-## 0.1.6
-
+  - improved drawing of waveforms.
+  - Added function to calculate no of waveform bars which will fit in provided width and spacing.
+  - Added `scrollScale` parameter to scale waves when waves are scrolled
 - Fixed [#101](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/101) - Fixed setting volume for android throws error
 - Fixed zero duration would cause waveforms not to expand
 - Fixed `postFrameCallback` error for flutter version below 3.0.0

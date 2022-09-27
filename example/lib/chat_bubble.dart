@@ -84,12 +84,10 @@ class WaveBubble extends StatelessWidget {
             AudioFileWaveforms(
               size: Size(MediaQuery.of(context).size.width / 2, 70),
               playerController: playerController,
-              density: 1.5,
               playerWaveStyle: const PlayerWaveStyle(
-                scaleFactor: 0.8,
-                fixedWaveColor: Colors.white30,
-                liveWaveColor: Colors.white,
-                waveCap: StrokeCap.butt,
+                fixedWaveColor: Colors.white54,
+                liveWaveColor: Colors.blueAccent,
+                spacing: 6,
               ),
             ),
             if (isSender) const SizedBox(width: 10),

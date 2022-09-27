@@ -182,36 +182,28 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            if (playerController1.playerState != PlayerState.stopped) ...[
-              WaveBubble(
-                playerController: playerController1,
-                isPlaying: playerController1.playerState == PlayerState.playing,
-                onTap: () => _playOrPausePlayer(playerController1),
-              ),
-            ],
-            if (playerController2.playerState != PlayerState.stopped) ...[
-              WaveBubble(
-                playerController: playerController2,
-                isPlaying: playerController2.playerState == PlayerState.playing,
-                onTap: () => _playOrPausePlayer(playerController2),
-                isSender: true,
-              ),
-            ],
-            if (playerController3.playerState != PlayerState.stopped) ...[
-              WaveBubble(
-                playerController: playerController3,
-                isPlaying: playerController3.playerState == PlayerState.playing,
-                onTap: () => _playOrPausePlayer(playerController3),
-              ),
-            ],
-            if (playerController4.playerState != PlayerState.stopped) ...[
-              WaveBubble(
-                playerController: playerController4,
-                isPlaying: playerController4.playerState == PlayerState.playing,
-                onTap: () => _playOrPausePlayer(playerController4),
-                isSender: true,
-              ),
-            ],
+            WaveBubble(
+              playerController: playerController1,
+              isPlaying: playerController1.playerState == PlayerState.playing,
+              onTap: () => _playOrPausePlayer(playerController1),
+            ),
+            WaveBubble(
+              playerController: playerController2,
+              isPlaying: playerController2.playerState == PlayerState.playing,
+              onTap: () => _playOrPausePlayer(playerController2),
+              isSender: true,
+            ),
+            WaveBubble(
+              playerController: playerController3,
+              isPlaying: playerController3.playerState == PlayerState.playing,
+              onTap: () => _playOrPausePlayer(playerController3),
+            ),
+            WaveBubble(
+              playerController: playerController4,
+              isPlaying: playerController4.playerState == PlayerState.playing,
+              onTap: () => _playOrPausePlayer(playerController4),
+              isSender: true,
+            ),
             if (playerController5.playerState != PlayerState.stopped) ...[
               WaveBubble(
                 playerController: playerController5,
@@ -314,6 +306,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
       if (path != null) {
         debugPrint("Recorded file size: ${File(path).lengthSync()}");
+        debugPrint(path);
         await playerController5.preparePlayer(path: path);
       }
     } else {

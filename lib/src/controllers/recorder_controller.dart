@@ -285,7 +285,7 @@ class RecorderController extends ChangeNotifier {
   }
 
   /// Releases any resources taken by this recorder and with this
-  /// controller is also disposes.
+  /// controller is also disposed.
   @override
   void dispose() async {
     if (_timer != null) _timer!.cancel();
