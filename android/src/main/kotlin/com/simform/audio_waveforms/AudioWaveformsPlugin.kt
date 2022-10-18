@@ -121,10 +121,10 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 }
             }
             Constants.setVolume -> {
-                val volume = call.argument(Constants.volume) as Float?
+                val volume = call.argument(Constants.volume) as Double?
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
-                    audioPlayers[key]?.setVolume(volume, result)
+                    audioPlayers[key]?.setVolume(volume?.toFloat(), result)
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
