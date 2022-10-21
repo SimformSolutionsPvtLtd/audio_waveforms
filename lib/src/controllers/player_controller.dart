@@ -90,7 +90,6 @@ class PlayerController extends ChangeNotifier {
   /// it completes, it prepares audio player.
   ///
   Future<void> preparePlayer(String path, [double? volume]) async {
-    path = Uri.parse(path).path;
 
     await _readAudioFile(path);
     if ((_playerState == PlayerState.readingComplete &&
