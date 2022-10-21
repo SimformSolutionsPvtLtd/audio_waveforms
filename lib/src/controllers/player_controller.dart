@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
+
+// TODO: Remove when fully migrated to flutter 3.3
+import 'dart:typed_data'; //ignore: unnecessary_import
 
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:audio_waveforms/src/base/constants.dart';
