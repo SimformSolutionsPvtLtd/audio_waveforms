@@ -92,9 +92,6 @@ enum IosEncoder {
 
 /// States of audio player
 enum PlayerState {
-  /// When reading of an audio file is completed
-  readingComplete,
-
   /// When player is [initialised]
   initialized,
 
@@ -144,3 +141,20 @@ enum FinishMode {
 
 // TODO: remove this function if we remove support for flutter 2.x
 T? ambiguate<T>(T? object) => object;
+
+/// An enum to decide which type of gestures will be used.
+enum SeekGestureType {
+  /// This gesture will allow seeking with dragging and also tap.
+  /// This gesture will be more useful when there are limited number of waves
+  /// and they don't exceed the screen.
+  seekAndTap,
+
+  /// This gesture will allow seeking with only tap but now waveforms can
+  /// now be dragged on X-axis to move forward in the timeline.
+  /// This gesture will be more useful when there are greater number of waves
+  /// and they exceed the screen.
+  scrollAndTap,
+
+  /// Seek gestures are disabled.
+  none
+}

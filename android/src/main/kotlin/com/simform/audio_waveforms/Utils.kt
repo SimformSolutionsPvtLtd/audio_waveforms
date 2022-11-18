@@ -50,7 +50,6 @@ object Constants {
     const val volume = "volume"
     const val getDuration = "getDuration"
     const val durationType = "durationType"
-    const val seekToStart = "seekToStart"
     const val playerKey = "playerKey"
     const val current = "current"
     const val onCurrentDuration = "onCurrentDuration"
@@ -58,6 +57,11 @@ object Constants {
     const val onDidFinishPlayingAudio = "onDidFinishPlayingAudio"
     const val finishMode = "finishMode"
     const val finishType = "finishType"
+    const val extractWaveformData = "extractWaveformData"
+    const val noOfSamples = "noOfSamples"
+    const val onCurrentExtractedWaveformData = "onCurrentExtractedWaveformData"
+    const val waveformData = "waveformData"
+    const val onExtractionProgressUpdate = "onExtractionProgressUpdate"
 }
 
 enum class FinishMode(val value:Int) {

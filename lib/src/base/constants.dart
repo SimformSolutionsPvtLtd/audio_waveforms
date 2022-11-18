@@ -37,6 +37,11 @@ class Constants {
   static const String onDidFinishPlayingAudio = "onDidFinishPlayingAudio";
   static const String finishtype = "finishType";
   static const String finishMode = "finishMode";
+  static const String extractWaveformData = "extractWaveformData";
+  static const String noOfSamples = "noOfSamples";
+  static const String waveformData = "waveformData";
+  static const String onCurrentExtractedWaveformData =
+      "onCurrentExtractedWaveformData";
 
   static const int byteSize = 8;
 }

@@ -109,6 +109,15 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
                 audioPlayers[playerKey] = nil
             }
             result(true)
+        case Constants.extractWaveformData:
+            let key = args?[Constants.playerKey] as? String
+            let path = args?[Constants.path] as? String
+            let noOfSamples = args?[Constants.noOfSamples] as? Int
+            if(key != nil){
+                audioPlayers[key!]?.extractWaveformData(path: path, result: result,noOfSamples: noOfSamples)
+            } else {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Can not get waveform data", details: "Player key is null"))
+            }
         default:
             result(FlutterMethodNotImplemented)
             break
@@ -117,12 +126,8 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     
     func initPlayer(playerKey: String) {
         if audioPlayers[playerKey] == nil {
-            let newPlayer = AudioPlayer(plugin: self,playerKey: playerKey)
+            let newPlayer = AudioPlayer(plugin: self,playerKey: playerKey,channel: flutterChannel)
             audioPlayers[playerKey] = newPlayer
         }
-    }
-    
-    func onCurrentDuration(duration: Int, playerKey: String){
-        flutterChannel.invokeMethod(Constants.onCurrentDuration, arguments: [Constants.current : duration, Constants.playerKey : playerKey])
     }
 }

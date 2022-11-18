@@ -1,15 +1,21 @@
 package com.simform.audio_waveforms
 
 import android.content.Context
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import androidx.annotation.RequiresApi
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import io.flutter.plugin.common.MethodChannel
 import java.lang.Exception
 
-class AudioPlayer(context: Context, channel: MethodChannel, playerKey: String) {
+class AudioPlayer(
+    context: Context,
+    channel: MethodChannel,
+    playerKey: String
+) {
     private var handler: Handler = Handler(Looper.getMainLooper())
     private var runnable: Runnable? = null
     private var methodChannel = channel
@@ -19,6 +25,43 @@ class AudioPlayer(context: Context, channel: MethodChannel, playerKey: String) {
     private var isPlayerPrepared: Boolean = false
     private var finishMode = FinishMode.Stop
     private var key = playerKey
+    private var waveformExtractor: WaveformExtractor? = null
+    private var noOfSamples = 100
+
+    fun extractWaveform(
+        result: MethodChannel.Result,
+        path: String?,
+        noOfSamples: Int?,
+    ) {
+        if (path != null) {
+            this.noOfSamples = noOfSamples ?: 100
+            try {
+                waveformExtractor = WaveformExtractor(
+                    path = path,
+                    expectedPoints = this.noOfSamples,
+                    key = key,
+                    methodChannel = methodChannel,
+                    result = result,
+                    object : ExtractorCallBack {
+                        override fun onProgress(value: Float) {
+                            if (value == 1.0F) {
+                                result.success(waveformExtractor?.sampleData)
+                            }
+                        }
+                    }
+                )
+                waveformExtractor?.startDecode()
+                waveformExtractor?.stop()
+            } catch (e: Exception) {
+                result.error(
+                    Constants.LOG_TAG,
+                    "Can not extract waveform data from provided audio file path",
+                    e.toString()
+                )
+            }
+
+        }
+    }
 
     fun preparePlayer(
         result: MethodChannel.Result,

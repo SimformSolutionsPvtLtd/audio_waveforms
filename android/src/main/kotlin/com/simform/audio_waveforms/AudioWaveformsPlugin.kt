@@ -139,6 +139,16 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+            Constants.extractWaveformData -> {
+                val key = call.argument(Constants.playerKey) as String?
+                val path = call.argument(Constants.path) as String?
+                val noOfSample = call.argument(Constants.noOfSamples) as Int?
+                if (key != null) {
+                    audioPlayers[key]?.extractWaveform(result, path, noOfSample)
+                } else {
+                    result.error(Constants.LOG_TAG, "Player key can't be null", "")
+                }
+            }
             Constants.stopAllPlayers -> {
                 for ((key, _) in audioPlayers) {
                     audioPlayers[key]?.stop(result)
@@ -198,7 +208,11 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     private fun initPlayer(playerKey: String) {
         if (audioPlayers[playerKey] == null) {
-            val newPlayer = AudioPlayer(applicationContext, channel, playerKey)
+            val newPlayer = AudioPlayer(
+                context = applicationContext,
+                channel = channel,
+                playerKey = playerKey,
+            )
             audioPlayers[playerKey] = newPlayer
         }
         return

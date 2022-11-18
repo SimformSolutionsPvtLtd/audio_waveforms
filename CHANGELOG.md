@@ -1,3 +1,9 @@
+## 0.2.0
+
+- Reworked waveforms from audio file
+  - Breaking: removed `readingComplete` PlayerState and `visualizerHeight`. With this, added `extractWaveforms` function to extract waveforms.
+  - Added `onCurrentExtractedWaveformData` and `onExtractionProgress` to monitor progress and currently extracted waveform data.
+
 ## 0.1.6
 
 - Fixed [#101](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/101) - Fixed setting volume for android throws error
