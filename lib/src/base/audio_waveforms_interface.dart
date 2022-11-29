@@ -143,12 +143,26 @@ class AudioWaveformsInterface {
     return result ?? false;
   }
 
+  Future<List<double>> extractWaveformData({
+    required String key,
+    required String path,
+    required int noOfSamples,
+  }) async {
+    final result =
+        await _methodChannel.invokeMethod(Constants.extractWaveformData, {
+      Constants.playerKey: key,
+      Constants.path: path,
+      Constants.noOfSamples: noOfSamples,
+    });
+    return List<double>.from(result ?? []);
+  }
+
   Future<bool> stopAllPlayers() async {
     var result = await _methodChannel.invokeMethod(Constants.stopAllPlayers);
     return result ?? false;
   }
 
-  void setMethodCallHandler() async {
+  Future<void> setMethodCallHandler() async {
     _methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
         case Constants.onCurrentDuration:
@@ -173,6 +187,18 @@ class AudioWaveformsInterface {
             PlatformStreams.instance.playerControllerFactory[key]
                 ?._playerState = playerState;
           }
+          break;
+        case Constants.onCurrentExtractedWaveformData:
+          var key = call.arguments[Constants.playerKey];
+          var progress = call.arguments[Constants.progress];
+          var waveformData =
+              List<double>.from(call.arguments[Constants.waveformData]);
+          PlatformStreams.instance.addExtractedWaveformDataEvent(
+            PlayerIdentifier<List<double>>(key, waveformData),
+          );
+          PlatformStreams.instance.addExtractionProgress(
+            PlayerIdentifier<double>(key, progress),
+          );
           break;
       }
     });

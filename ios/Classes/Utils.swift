@@ -50,10 +50,25 @@ struct Constants {
     static let onDidFinishPlayingAudio = "onDidFinishPlayingAudio"
     static let finishMode = "finishMode"
     static let finishType = "finishType"
+    static let extractWaveformData = "extractWaveformData"
+    static let noOfSamples = "noOfSamples"
+    static let onCurrentExtractedWaveformData = "onCurrentExtractedWaveformData"
+    static let waveformData = "waveformData"
+    static let onExtractionProgressUpdate = "onExtractionProgressUpdate"
 }
 
 enum FinishMode : Int{
     case loop = 0
     case pause = 1
     case stop = 2
+}
+
+/// Creates an 2D array of floats
+public typealias FloatChannelData = [[Float]]
+
+/// Extension to fill array with zeros
+public extension RangeReplaceableCollection where Iterator.Element: ExpressibleByIntegerLiteral {
+    init(zeros count: Int) {
+        self.init(repeating: 0, count: count)
+    }
 }
