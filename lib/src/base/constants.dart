@@ -42,6 +42,4 @@ class Constants {
   static const String waveformData = "waveformData";
   static const String onCurrentExtractedWaveformData =
       "onCurrentExtractedWaveformData";
-
-  static const int byteSize = 8;
 }

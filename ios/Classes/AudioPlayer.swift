@@ -47,7 +47,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             } catch {
                 result(FlutterError(code: "", message: "Failed to prepare recording", details: nil))
             }
-            player?.settings
+            
             player?.prepareToPlay()
             player?.volume = Float(volume ?? 1.0)
             result(true)
@@ -130,7 +130,6 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         } else {
             result(false)
         }
-        
     }
 
     func startListening() {

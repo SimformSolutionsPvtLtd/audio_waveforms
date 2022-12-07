@@ -142,19 +142,27 @@ enum FinishMode {
 // TODO: remove this function if we remove support for flutter 2.x
 T? ambiguate<T>(T? object) => object;
 
-/// An enum to decide which type of gestures will be used.
-enum SeekGestureType {
-  /// This gesture will allow seeking with dragging and also tap.
-  /// This gesture will be more useful when there are limited number of waves
-  /// and they don't exceed the screen.
-  seekAndTap,
+/// An enum to decide which type of waveform to show.
+enum WaveformType {
+  /// Fits Waveform in provided width. Audio can be seeked with
+  /// tap and drag gesture.
+  ///
+  /// **Important**-: Make sure to provide number of sample according to
+  /// the width using `getSamplesForWidth` function from PlayerWaveStyle
+  /// otherwise full waveform may get cut off.
+  fitWidth,
 
-  /// This gesture will allow seeking with only tap but now waveforms can
-  /// now be dragged on X-axis to move forward in the timeline.
-  /// This gesture will be more useful when there are greater number of waves
-  /// and they exceed the screen.
-  scrollAndTap,
+  /// This waveform starts from middle. When audio progresses waveform is
+  /// pushed back and a middle line shows current progress.
+  ///
+  /// This waveform only allows seek with drag.
+  long
+}
 
-  /// Seek gestures are disabled.
-  none
+extension WaveformTypeExtension on WaveformType {
+  /// Check WaveformType is equals to fitWidth or not.
+  bool get isFitWidth => this == WaveformType.fitWidth;
+
+  /// Check WaveformType is equals to long or not.
+  bool get isLong => this == WaveformType.long;
 }

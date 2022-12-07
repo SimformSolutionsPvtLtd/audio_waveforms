@@ -11,11 +11,6 @@ import 'package:flutter/services.dart';
 part '../base/audio_waveforms_interface.dart';
 
 class PlayerController extends ChangeNotifier {
-  Uint8List? _bufferData;
-
-  /// Provides data we got after reading audio file.
-  Uint8List? get bufferData => _bufferData;
-
   final List<double> _waveformData = [];
 
   List<double> get waveformData => _waveformData;
@@ -151,8 +146,6 @@ class PlayerController extends ChangeNotifier {
       path: path,
       noOfSamples: noOfSamples,
     );
-    notifyListeners();
-
     return result;
   }
 
