@@ -49,14 +49,17 @@ class PlayerController extends ChangeNotifier {
   Stream<PlayerState> get onPlayerStateChanged =>
       PlatformStreams.instance.onPlayerStateChanged.filter(playerKey);
 
-  /// A Stream to get current duration. This stream will emit
+  /// A stream to get current duration. This stream will emit
   /// every 200 milliseconds. Emitted duration is in milliseconds.
   Stream<int> get onCurrentDurationChanged =>
       PlatformStreams.instance.onDurationChanged.filter(playerKey);
 
+  /// A stream to get current extracted waveform data. This stream will emit
+  /// list of doubles which are waveform data point.
   Stream<List<double>> get onCurrentExtractedWaveformData =>
       PlatformStreams.instance.onCurrentExtractedWaveformData.filter(playerKey);
 
+  /// A stream to get current progress of waveform extraction.
   Stream<double> get onExtractionProgress =>
       PlatformStreams.instance.onExtractionProgress.filter(playerKey);
 
