@@ -166,3 +166,13 @@ extension WaveformTypeExtension on WaveformType {
   /// Check WaveformType is equals to long or not.
   bool get isLong => this == WaveformType.long;
 }
+
+extension PlayerStateExtension on PlayerState {
+  bool get isPlaying => this == PlayerState.playing;
+
+  bool get isStopped => this == PlayerState.stopped;
+
+  bool get isInitialised => this == PlayerState.initialized;
+
+  bool get isPaused => this == PlayerState.paused;
+}
