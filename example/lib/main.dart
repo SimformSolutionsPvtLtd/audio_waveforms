@@ -47,7 +47,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
   void _getDir() async {
     appDirectory = await getApplicationDocumentsDirectory();
-    path = "${appDirectory.path}/recording.mp3";
+    path = "${appDirectory.path}/recording.m4a";
     isLoading = false;
     setState(() {});
   }
@@ -57,8 +57,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       ..androidEncoder = AndroidEncoder.aac
       ..androidOutputFormat = AndroidOutputFormat.mpeg4
       ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
-      ..sampleRate = 44100
-      ..bitRate = 48000;
+      ..sampleRate = 44100;
   }
 
   void _pickFile() async {
@@ -114,7 +113,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                           index: index + 1,
                           isSender: index.isOdd,
                           width: MediaQuery.of(context).size.width / 2,
-                          isLastWidget: !isRecordingCompleted || musicFile == null,
+                          isLastWidget:
+                              !isRecordingCompleted || musicFile == null,
                           appDirectory: appDirectory,
                         );
                       },
@@ -212,21 +212,27 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   void _startOrStopRecording() async {
-    if (isRecording) {
-      recorderController.reset();
-      final path = await recorderController.stop(false);
+    try {
+      if (isRecording) {
+        recorderController.reset();
 
-      if (path != null) {
-        isRecordingCompleted = true;
-        debugPrint("Recorded file size: ${File(path).lengthSync()}");
-        debugPrint(path);
+        final path = await recorderController.stop(false);
+
+        if (path != null) {
+          isRecordingCompleted = true;
+          debugPrint("Recorded file size: ${File(path).lengthSync()}");
+          debugPrint(path);
+        }
+      } else {
+        await recorderController.record();
       }
-    } else {
-      await recorderController.record(path: path);
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      setState(() {
+        isRecording = !isRecording;
+      });
     }
-    setState(() {
-      isRecording = !isRecording;
-    });
   }
 
   void _refreshWave() {

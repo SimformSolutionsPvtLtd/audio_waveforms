@@ -22,7 +22,6 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         result.success(recorder?.maxAmplitude?.toDouble() ?: 0.0)
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun initRecorder(
         path: String,
         result: MethodChannel.Result,
@@ -30,14 +29,16 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         encoder: Int,
         outputFormat: Int,
         sampleRate: Int,
-        bitRate: Int
+        bitRate: Int?
     ) {
         recorder?.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(getOutputFormat(outputFormat))
             setAudioEncoder(getEncoder(encoder))
             setAudioSamplingRate(sampleRate)
-            setAudioEncodingBitRate(bitRate)
+            if (bitRate != null) {
+                setAudioEncodingBitRate(bitRate)
+            }
             setOutputFile(path)
             try {
                 recorder.prepare()

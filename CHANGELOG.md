@@ -13,6 +13,7 @@
 - **BREAKING**: Replaced `normalizationFactor` with `scaleFactor`and with this fixed [#43](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/43) 
 - Updated default values for bitRate and sampleRate
 - Encoders, sample rate and bit rate can now Directly be set from `record` function.
+- Bitrate is now nullable and default audio extension is now `m4a`. 
 - Updated example app
 
 ## 0.1.5+1

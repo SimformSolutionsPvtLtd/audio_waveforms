@@ -150,7 +150,7 @@ class _WaveBubbleState extends State<WaveBubble> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (controller.playerState.isStopped)
+                  if (!controller.playerState.isStopped)
                     IconButton(
                       onPressed: () async {
                         controller.playerState.isPlaying
