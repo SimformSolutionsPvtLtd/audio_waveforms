@@ -17,7 +17,13 @@ class PlatformStreams {
 
   bool isInitialised = false;
 
+  /// Initialises native method call handlers and stream. Should be called
+  /// only once before [dispose].
   Future<void> init() async {
+    // Requires to be set before waiting for method call handler to be
+    // initialised due to race condition when using widget in ListView.builder.
+    isInitialised = true;
+
     _currentDurationController =
         StreamController<PlayerIdentifier<int>>.broadcast();
     _playerStateController =
@@ -27,7 +33,6 @@ class PlatformStreams {
     _extractionProgressController =
         StreamController<PlayerIdentifier<double>>.broadcast();
     await AudioWaveformsInterface.instance.setMethodCallHandler();
-    isInitialised = true;
   }
 
   Stream<PlayerIdentifier<int>> get onDurationChanged =>
@@ -67,7 +72,7 @@ class PlatformStreams {
     }
   }
 
-  void addExtractionProgress(PlayerIdentifier<double> progress)async{
+  void addExtractionProgress(PlayerIdentifier<double> progress) async {
     if (!_extractionProgressController.isClosed) {
       _extractionProgressController.add(progress);
     }

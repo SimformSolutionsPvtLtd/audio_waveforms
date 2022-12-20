@@ -185,8 +185,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
       child: GestureDetector(
         onHorizontalDragUpdate:
             widget.enableSeekGesture ? _handleDragGestures : null,
-        onHorizontalDragStart:
-            widget.enableSeekGesture ? _handTapGestures : null,
+        onTapUp: widget.enableSeekGesture ? _handTapGestures : null,
         onHorizontalDragEnd:
             widget.enableSeekGesture ? (_) => _handleOnDragEnd() : null,
         child: ClipPath(
@@ -274,7 +273,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     }
   }
 
-  void _handTapGestures(DragStartDetails details) {
+  void _handTapGestures(TapUpDetails details) {
     switch (widget.waveformType) {
       case WaveformType.fitWidth:
         _handleScrubberSeekStart(details);
@@ -294,7 +293,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   }
 
   /// This method handles tap seek gesture
-  void _handleScrubberSeekStart(DragStartDetails details) {
+  void _handleScrubberSeekStart(TapUpDetails details) {
     _proportion = details.localPosition.dx / widget.size.width;
     var seekPosition = widget.playerController.maxDuration * _proportion;
 
@@ -347,7 +346,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   }
 
   ///This will help-out to determine direction of the scroll
-  void _handleHorizontalDragStart(DragStartDetails details) {
+  void _handleHorizontalDragStart(TapUpDetails details) {
     _initialDragPosition = details.localPosition.dx;
   }
 
