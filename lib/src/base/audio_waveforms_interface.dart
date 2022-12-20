@@ -12,7 +12,7 @@ class AudioWaveformsInterface {
   Future<bool> record({
     required int audioFormat,
     required int sampleRate,
-    required int bitRate,
+    int? bitRate,
     String? path,
   }) async {
     final isRecording = await _methodChannel.invokeMethod(
@@ -35,7 +35,7 @@ class AudioWaveformsInterface {
     required int encoder,
     required int outputFormat,
     required int sampleRate,
-    required int bitRate,
+    int? bitRate,
   }) async {
     final initialized = await _methodChannel.invokeMethod(
       Constants.initRecorder,

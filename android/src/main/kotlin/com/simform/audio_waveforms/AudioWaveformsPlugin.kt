@@ -30,8 +30,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var path: String? = null
     private var encoder: Int = 0
     private var outputFormat: Int = 0
-    private var sampleRate: Int = 16000
-    private var bitRate: Int = 64000
+    private var sampleRate: Int = 44100
+    private var bitRate: Int? = null
     private lateinit var applicationContext: Context
 
     //Todo: bitrate
@@ -51,8 +51,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 path = call.argument(Constants.path) as String?
                 encoder = (call.argument(Constants.encoder) as Int?) ?: 0
                 outputFormat = (call.argument(Constants.outputFormat) as Int?) ?: 0
-                sampleRate = (call.argument(Constants.sampleRate) as Int?) ?: 16000
-                bitRate = (call.argument(Constants.bitRate) as Int?) ?: 64000
+                sampleRate = (call.argument(Constants.sampleRate) as Int?) ?: 44100
+                bitRate = (call.argument(Constants.bitRate) as Int?)
                 checkPathAndInitialiseRecorder(result, encoder, outputFormat, sampleRate, bitRate)
             }
             Constants.startRecording -> audioRecorder.startRecorder(result, recorder)
@@ -160,13 +160,12 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun checkPathAndInitialiseRecorder(
         result: Result,
         encoder: Int,
         outputFormat: Int,
         sampleRate: Int,
-        bitRate: Int
+        bitRate: Int?
     ) {
         try {
             recorder = MediaRecorder()
@@ -179,7 +178,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             val dateTimeInstance = SimpleDateFormat(Constants.fileNameFormat, Locale.US)
             val currentDate = dateTimeInstance.format(Date())
             try {
-                outputFile = File.createTempFile(currentDate, ".aac", outputDir)
+                outputFile = File.createTempFile(currentDate, ".m4a", outputDir)
                 path = outputFile.path
                 audioRecorder.initRecorder(
                     path!!,

@@ -9,19 +9,26 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     
     public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ bitRate : Int?,_ fileNameFormat: String){
         let settings = [
-            AVEncoderBitRateKey: bitRate ?? 48000,
             AVFormatIDKey: getEncoder(encoder ?? 0),
             AVSampleRateKey: sampleRate ?? 44100,
             AVNumberOfChannelsKey: 1,
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
+        let settingsWithBitrate = [
+                AVEncoderBitRateKey: bitRate,
+                AVFormatIDKey: getEncoder(encoder ?? 0),
+                AVSampleRateKey: sampleRate ?? 44100,
+                AVNumberOfChannelsKey: 1,
+                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        ]
+        
         let options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetooth]
         if (path == nil) {
             let directory = NSTemporaryDirectory()
             let date = Date()
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = fileNameFormat
-            let fileName = dateFormatter.string(from: date) + ".aac"
+            let fileName = dateFormatter.string(from: date) + ".m4a"
             
             self.path = NSURL.fileURL(withPathComponents: [directory, fileName])?.absoluteString
         } else {
@@ -34,7 +41,7 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             try AVAudioSession.sharedInstance().setActive(true)
             
             let url = URL(string: self.path!) ?? URL(fileURLWithPath: self.path!)
-            audioRecorder = try AVAudioRecorder(url: url, settings: settings)
+            audioRecorder = try AVAudioRecorder(url: url, settings: bitRate != nil ? settingsWithBitrate as [String : Any] : settings as [String : Any])
             audioRecorder?.delegate = self
             audioRecorder?.isMeteringEnabled = true
             audioRecorder?.record()

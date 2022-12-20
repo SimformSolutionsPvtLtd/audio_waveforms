@@ -21,10 +21,13 @@ class RecorderController extends ChangeNotifier {
 
   int sampleRate = 44100;
 
-  int bitRate = 48000;
+  int? bitRate;
 
   /// Current maximum peak power for ios and peak amplitude android.
   double _maxPeak = Platform.isIOS ? 1 : 32786.0;
+
+  /// Current min value.
+  double _currentMin = 0;
 
   /// Current list of scaled waves. For IOS, this list contains normalised
   /// peak power and for Android, this list contains normalised peak
@@ -279,7 +282,15 @@ class RecorderController extends ChangeNotifier {
   void _normalise(double peak) {
     final absDb = peak.abs();
     _maxPeak = max(absDb, _maxPeak);
-    final scaledWave = (absDb / _maxPeak);
+
+    // calculates min value
+    _currentMin = _waveData.fold(
+      0,
+      (previousValue, element) =>
+          element < previousValue ? element : previousValue,
+    );
+
+    final scaledWave = (absDb - _currentMin) / (_maxPeak - _currentMin);
     _waveData.add(scaledWave);
     notifyListeners();
   }
