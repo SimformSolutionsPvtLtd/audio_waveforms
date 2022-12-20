@@ -48,6 +48,7 @@ class RecorderWavePainter extends CustomPainter {
   final VoidCallback revertClearlabelCall;
   final Function(int) setCurrentPositionDuration;
   final bool shouldCalculateScrolledPosition;
+  final double scaleFactor;
 
   RecorderWavePainter({
     required this.waveData,
@@ -80,6 +81,7 @@ class RecorderWavePainter extends CustomPainter {
     required this.revertClearlabelCall,
     required this.setCurrentPositionDuration,
     required this.shouldCalculateScrolledPosition,
+    required this.scaleFactor,
   })  : _wavePaint = Paint()
           ..color = waveColor
           ..strokeWidth = waveThickness
@@ -201,7 +203,7 @@ class RecorderWavePainter extends CustomPainter {
                 dragOffset.dx +
                 (spacing * i) -
                 initialPosition,
-            -waveData[i] + size.height - bottomPadding),
+            -(waveData[i] * scaleFactor) + size.height - bottomPadding),
         _wavePaint);
   }
 
@@ -218,7 +220,7 @@ class RecorderWavePainter extends CustomPainter {
                 dragOffset.dx +
                 (spacing * i) -
                 initialPosition,
-            waveData[i] + size.height - bottomPadding),
+            (waveData[i] * scaleFactor) + size.height - bottomPadding),
         _wavePaint);
   }
 

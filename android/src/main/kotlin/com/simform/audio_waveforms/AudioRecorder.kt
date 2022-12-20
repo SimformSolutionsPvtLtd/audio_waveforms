@@ -12,7 +12,6 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 import java.io.IOException
 import java.lang.IllegalStateException
-import kotlin.math.log10
 
 private const val LOG_TAG = "AudioWaveforms"
 private const val RECORD_AUDIO_REQUEST_CODE = 1001
@@ -20,12 +19,7 @@ private const val RECORD_AUDIO_REQUEST_CODE = 1001
 class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
-        val db = 20 * log10((recorder?.maxAmplitude?.toDouble() ?: 0.0 / 32768.0))
-        if (db == Double.NEGATIVE_INFINITY) {
-            Log.d(LOG_TAG, "Microphone might be turned off")
-        } else {
-            result.success(db)
-        }
+        result.success(recorder?.maxAmplitude?.toDouble() ?: 0.0)
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)

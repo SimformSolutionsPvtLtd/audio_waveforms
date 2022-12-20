@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'dart:math' show max;
 
 import 'package:flutter/material.dart';
 
@@ -10,23 +11,26 @@ class RecorderController extends ChangeNotifier {
   final List<double> _waveData = [];
 
   /// At which rate waveform needs to be updated
-  late Duration updateFrequency = const Duration(milliseconds: 100);
+  Duration updateFrequency = const Duration(milliseconds: 100);
 
-  late AndroidEncoder androidEncoder = AndroidEncoder.aac;
+  AndroidEncoder androidEncoder = AndroidEncoder.aac;
 
-  late AndroidOutputFormat androidOutputFormat = AndroidOutputFormat.mpeg4;
+  AndroidOutputFormat androidOutputFormat = AndroidOutputFormat.mpeg4;
 
-  late IosEncoder iosEncoder = IosEncoder.kAudioFormatMPEG4AAC;
+  IosEncoder iosEncoder = IosEncoder.kAudioFormatMPEG4AAC;
 
-  late int sampleRate = 44100;
+  int sampleRate = 44100;
 
-  late int bitRate = 48000;
+  int bitRate = 48000;
 
-  ///Db we get from native is too high so in Android it the value is subtracted
-  ///and in IOS value added
-  late double normalizationFactor = Platform.isAndroid ? 60 : 40;
+  /// Current maximum peak power for ios and peak amplitude android.
+  double _maxPeak = Platform.isIOS ? 1 : 32786.0;
 
-  ///Current list of decibels(different values for each platform)
+  /// Current list of scaled waves. For IOS, this list contains normalised
+  /// peak power and for Android, this list contains normalised peak
+  /// amplitude.
+  ///
+  /// Values are between 0.0 to 1.0.
   List<double> get waveData => _waveData;
 
   RecorderState _recorderState = RecorderState.stopped;
@@ -92,14 +96,27 @@ class RecorderController extends ChangeNotifier {
   ///
   /// 2. Stopped -: If a recorder is stopped from previous recording and again
   /// this function is called then it will re-initialise the recorder.
-  Future<void> record([String? path]) async {
-    if (_recorderState != RecorderState.recording) {
+  Future<void> record({
+    String? path,
+    AndroidEncoder? androidEncoder,
+    AndroidOutputFormat? androidOutputFormat,
+    IosEncoder? iosEncoder,
+    int? sampleRate,
+    int? bitRate,
+  }) async {
+    if (!_recorderState.isRecording) {
       await checkPermission();
       if (_hasPermission) {
-        if (Platform.isAndroid && _recorderState == RecorderState.stopped) {
-          await _initRecorder(path);
+        if (Platform.isAndroid && _recorderState.isStopped) {
+          await _initRecorder(
+            path: path,
+            androidEncoder: androidEncoder,
+            androidOutputFormat: androidOutputFormat,
+            sampleRate: sampleRate,
+            bitRate: bitRate,
+          );
         }
-        if (_recorderState == RecorderState.paused) {
+        if (_recorderState.isPaused) {
           _isRecording = await AudioWaveformsInterface.instance.resume();
           if (_isRecording) {
             _startTimer();
@@ -113,12 +130,13 @@ class RecorderController extends ChangeNotifier {
         if (Platform.isIOS) {
           _recorderState = RecorderState.initialized;
         }
-        if (_recorderState == RecorderState.initialized) {
+        if (_recorderState.isInitialized) {
           _isRecording = await AudioWaveformsInterface.instance.record(
-            audioFormat:
-                Platform.isIOS ? iosEncoder.index : androidEncoder.index,
-            sampleRate: sampleRate,
-            bitRate: bitRate,
+            audioFormat: Platform.isIOS
+                ? iosEncoder?.index ?? this.iosEncoder.index
+                : androidEncoder?.index ?? this.androidEncoder.index,
+            sampleRate: sampleRate ?? this.sampleRate,
+            bitRate: bitRate ?? this.bitRate,
             path: path,
           );
           if (_isRecording) {
@@ -137,13 +155,20 @@ class RecorderController extends ChangeNotifier {
   }
 
   /// Initialises recorder for android platform.
-  Future<void> _initRecorder(String? path) async {
+  Future<void> _initRecorder({
+    String? path,
+    AndroidEncoder? androidEncoder,
+    AndroidOutputFormat? androidOutputFormat,
+    int? sampleRate,
+    int? bitRate,
+  }) async {
     final initialized = await AudioWaveformsInterface.instance.initRecorder(
       path: path,
-      encoder: androidEncoder.index,
-      outputFormat: androidOutputFormat.index,
-      sampleRate: sampleRate,
-      bitRate: bitRate,
+      encoder: androidEncoder?.index ?? this.androidEncoder.index,
+      outputFormat:
+          androidOutputFormat?.index ?? this.androidOutputFormat.index,
+      sampleRate: sampleRate ?? this.sampleRate,
+      bitRate: bitRate ?? this.bitRate,
     );
     if (initialized) {
       _recorderState = RecorderState.initialized;
@@ -172,7 +197,7 @@ class RecorderController extends ChangeNotifier {
 
   /// Pauses the current recording. Call [record] to resume recording.
   Future<void> pause() async {
-    if (_recorderState == RecorderState.recording) {
+    if (_recorderState.isRecording) {
       _isRecording = (await AudioWaveformsInterface.instance.pause()) ?? true;
       if (_isRecording) {
         throw "Failed to pause recording";
@@ -195,8 +220,7 @@ class RecorderController extends ChangeNotifier {
   /// manually else it will start showing waveforms from same place where it
   /// left of for previous recording.
   Future<String?> stop([bool callReset = true]) async {
-    if (_recorderState == RecorderState.recording ||
-        _recorderState == RecorderState.paused) {
+    if (_recorderState.isRecording || _recorderState.isPaused) {
       final path = await AudioWaveformsInterface.instance.stop();
 
       if (path != null) {
@@ -251,19 +275,12 @@ class RecorderController extends ChangeNotifier {
     );
   }
 
-  /// Normalises the decibel
-  void _normalise(double db) {
-    if (Platform.isAndroid) {
-      waveData.add(db - normalizationFactor);
-    } else {
-      if (db == 0.0) {
-        waveData.add(0);
-      } else if (db + normalizationFactor < 1) {
-        waveData.add(0);
-      } else {
-        waveData.add(db + normalizationFactor);
-      }
-    }
+  /// Normalises the peak power for ios and peak amplitude for android
+  void _normalise(double peak) {
+    final absDb = peak.abs();
+    _maxPeak = max(absDb, _maxPeak);
+    final scaledWave = (absDb / _maxPeak);
+    _waveData.add(scaledWave);
     notifyListeners();
   }
 
