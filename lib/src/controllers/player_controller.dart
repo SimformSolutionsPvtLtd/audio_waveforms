@@ -63,6 +63,10 @@ class PlayerController extends ChangeNotifier {
   Stream<double> get onExtractionProgress =>
       PlatformStreams.instance.onExtractionProgress.filter(playerKey);
 
+  /// A stream to get events when audio is finished playing.
+  Stream<void> get onCompletion =>
+      PlatformStreams.instance.onCompletion.filter(playerKey);
+
   PlayerController() {
     if (!PlatformStreams.instance.isInitialised) {
       PlatformStreams.instance.init();
@@ -166,7 +170,7 @@ class PlayerController extends ChangeNotifier {
     if (_playerState == PlayerState.initialized ||
         _playerState == PlayerState.paused) {
       final isStarted = await AudioWaveformsInterface.instance
-          .startPlayer(_playerKey.toString(), finishMode);
+          .startPlayer(playerKey, finishMode);
       if (isStarted) {
         _setPlayerState(PlayerState.playing);
       } else {
@@ -189,8 +193,8 @@ class PlayerController extends ChangeNotifier {
 
   /// A function to stop player. After calling this, resources are freed.
   Future<void> stopPlayer() async {
-    final isStopped = await AudioWaveformsInterface.instance
-        .stopPlayer(_playerKey.toString());
+    final isStopped =
+        await AudioWaveformsInterface.instance.stopPlayer(playerKey);
     if (isStopped) {
       _setPlayerState(PlayerState.stopped);
     }
@@ -206,7 +210,7 @@ class PlayerController extends ChangeNotifier {
   /// Default to 1.0
   Future<bool> setVolume(double volume) async {
     final result = await AudioWaveformsInterface.instance
-        .setVolume(volume, _playerKey.toString());
+        .setVolume(volume, playerKey);
     return result;
   }
 

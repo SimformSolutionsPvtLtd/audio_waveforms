@@ -32,6 +32,8 @@ class PlatformStreams {
         StreamController<PlayerIdentifier<List<double>>>.broadcast();
     _extractionProgressController =
         StreamController<PlayerIdentifier<double>>.broadcast();
+    _completionController =
+        StreamController<PlayerIdentifier<void>>.broadcast();
     await AudioWaveformsInterface.instance.setMethodCallHandler();
   }
 
@@ -47,11 +49,15 @@ class PlatformStreams {
   Stream<PlayerIdentifier<double>> get onExtractionProgress =>
       _extractionProgressController.stream;
 
+  Stream<PlayerIdentifier<void>> get onCompletion =>
+      _completionController.stream;
+
   late StreamController<PlayerIdentifier<int>> _currentDurationController;
   late StreamController<PlayerIdentifier<PlayerState>> _playerStateController;
   late StreamController<PlayerIdentifier<List<double>>>
       _extractedWaveformDataController;
   late StreamController<PlayerIdentifier<double>> _extractionProgressController;
+  late StreamController<PlayerIdentifier<void>> _completionController;
 
   void addCurrentDurationEvent(PlayerIdentifier<int> playerIdentifier) {
     if (!_currentDurationController.isClosed) {
@@ -72,9 +78,15 @@ class PlatformStreams {
     }
   }
 
-  void addExtractionProgress(PlayerIdentifier<double> progress) async {
+  void addExtractionProgress(PlayerIdentifier<double> progress) {
     if (!_extractionProgressController.isClosed) {
       _extractionProgressController.add(progress);
+    }
+  }
+
+  void addCompletionEvent(PlayerIdentifier<void> event) {
+    if (!_completionController.isClosed) {
+      _completionController.add(event);
     }
   }
 
@@ -83,7 +95,8 @@ class PlatformStreams {
     _playerStateController.close();
     _extractedWaveformDataController.close();
     _currentDurationController.close();
-    AudioWaveformsInterface.instance.removeMethodCallHandeler();
+    _completionController.close();
+    AudioWaveformsInterface.instance.removeMethodCallHandler();
     isInitialised = false;
   }
 }

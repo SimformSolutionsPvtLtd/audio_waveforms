@@ -61,7 +61,6 @@ object Constants {
     const val noOfSamples = "noOfSamples"
     const val onCurrentExtractedWaveformData = "onCurrentExtractedWaveformData"
     const val waveformData = "waveformData"
-    const val onExtractionProgressUpdate = "onExtractionProgressUpdate"
 }
 
 enum class FinishMode(val value:Int) {

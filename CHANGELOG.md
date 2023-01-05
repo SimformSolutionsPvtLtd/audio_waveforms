@@ -1,3 +1,8 @@
+## 1.0.1
+
+- Added `onCompletion` stream to get event when audio is finished playing.
+- Fixed [#145](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/145) - The visualization gets stuck incomplete.
+
 ## 1.0.0
 
 - Reworked waveforms from audio file
