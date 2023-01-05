@@ -111,6 +111,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   late Clip? clipBehavior;
   late PlayerWaveStyle? playerWaveStyle;
   late StreamSubscription<int> onCurrentDurationSubscription;
+  late StreamSubscription<void> onCompletionSubscription;
   StreamSubscription<List<double>>? onCurrentExtractedWaveformData;
 
   @override
@@ -135,6 +136,11 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
       _updatePlayerPercent(widget.size);
     });
 
+    onCompletionSubscription =
+        widget.playerController.onCompletion.listen((event) {
+      _seekProgress.value = widget.playerController.maxDuration;
+      _updatePlayerPercent(widget.size);
+    });
     if (widget.waveformData.isNotEmpty) {
       _addWaveformData(widget.waveformData);
     } else {
@@ -155,6 +161,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   void dispose() {
     onCurrentDurationSubscription.cancel();
     onCurrentExtractedWaveformData?.cancel();
+    onCompletionSubscription.cancel();
     widget.playerController.removeListener(_addWaveformDataFromController);
     _growingWaveController.dispose();
     super.dispose();

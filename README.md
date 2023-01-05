@@ -129,6 +129,7 @@ controller.onPlayerStateChanged.listen((state) {});                 // Listening
 controller.onCurrentDurationChanged.listen((duration) {});          // Listening to current duration changes
 controller.onCurrentExtractedWaveformData.listen((data) {});        // Listening to latest extraction data
 controller.onExtractionProgress.listen((progress) {});              // Listening to extraction progress
+controller.onCompletion.listen((_){});                              // Listening to audio completion
 controller.stopAllPlayer();                                         // Stop all registered audio players
 controller.dispose();                                               // Dispose controller
 ```

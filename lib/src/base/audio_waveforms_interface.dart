@@ -169,8 +169,8 @@ class AudioWaveformsInterface {
           var duration = call.arguments[Constants.current];
           var key = call.arguments[Constants.playerKey];
           if (duration.runtimeType == int) {
-            var indentifier = PlayerIdentifier<int>(key, duration);
-            PlatformStreams.instance.addCurrentDurationEvent(indentifier);
+            var identifier = PlayerIdentifier<int>(key, duration);
+            PlatformStreams.instance.addCurrentDurationEvent(identifier);
           }
           break;
         case Constants.onDidFinishPlayingAudio:
@@ -181,8 +181,10 @@ class AudioWaveformsInterface {
               : call.arguments[Constants.finishtype] == 1
                   ? PlayerState.paused
                   : PlayerState.stopped;
-          var indentifier = PlayerIdentifier<PlayerState>(key, playerState);
-          PlatformStreams.instance.addPlayerStateEvent(indentifier);
+          var stateIdentifier = PlayerIdentifier<PlayerState>(key, playerState);
+          var completionIdentifier = PlayerIdentifier<void>(key, null);
+          PlatformStreams.instance.addCompletionEvent(completionIdentifier);
+          PlatformStreams.instance.addPlayerStateEvent(stateIdentifier);
           if (PlatformStreams.instance.playerControllerFactory[key] != null) {
             PlatformStreams.instance.playerControllerFactory[key]
                 ?._playerState = playerState;
@@ -204,7 +206,7 @@ class AudioWaveformsInterface {
     });
   }
 
-  void removeMethodCallHandeler() {
+  void removeMethodCallHandler() {
     _methodChannel.setMethodCallHandler(null);
   }
 }
