@@ -147,7 +147,6 @@ class PlayerController extends ChangeNotifier {
     required String path,
     int noOfSamples = 100,
   }) async {
-    path = Uri.parse(path).path;
     final result = await AudioWaveformsInterface.instance.extractWaveformData(
       key: playerKey,
       path: path,

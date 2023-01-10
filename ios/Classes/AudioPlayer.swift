@@ -17,12 +17,16 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         self.playerKey = playerKey
         flutterChannel = channel
     }
-
+    
     func extractWaveformData(path: String?, result: @escaping FlutterResult, noOfSamples: Int?) {
         if(!(path ?? "").isEmpty) {
             do {
-                let audioUrl = URL.init(fileURLWithPath: path!)
-                waveformExtractor = try WaveformExtractor(url: audioUrl, flutterResult: result, channel: flutterChannel)
+                let audioUrl = URL.init(string: path!)
+                if(audioUrl == nil){
+                    result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise Url from provided audio file", details: "If path contains `file://` try removing it"))
+                    return
+                }
+                waveformExtractor = try WaveformExtractor(url: audioUrl!, flutterResult: result, channel: flutterChannel)
                 if(waveformExtractor != nil) {
                     let data = waveformExtractor!.extractWaveform(samplesPerPixel: noOfSamples, playerKey: playerKey)
                     waveformExtractor!.cancel()
@@ -32,31 +36,33 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
                     }
                 }
             } catch {
-                result(FlutterError(code: Constants.audioWaveforms, message: "Failded to decode audio file", details: nil))
+                result(FlutterError(code: Constants.audioWaveforms, message: "Failed to decode audio file", details: nil))
             }
         } else {
             result(FlutterError(code: Constants.audioWaveforms, message: "Audio file path can't be empty or null", details: nil))
         }
     }
-
+    
     func preparePlayer(path: String?, volume: Double?, result: @escaping FlutterResult) {
         if(!(path ?? "").isEmpty) {
-            let audioUrl = URL.init(fileURLWithPath: path!)
-            do {
-                player = try AVAudioPlayer(contentsOf: audioUrl)
-            } catch {
-                result(FlutterError(code: "", message: "Failed to prepare recording", details: nil))
+            let audioUrl = URL.init(string: path!)
+            if(audioUrl == nil){
+                result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise Url from provided audio file", details: "If path contains `file://` try removing it"))
+                return
             }
-            
+            do {
+                player = try AVAudioPlayer(contentsOf: audioUrl!)
+            } catch {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Failed to prepare player", details: nil))
+            }
             player?.prepareToPlay()
             player?.volume = Float(volume ?? 1.0)
             result(true)
         } else {
             result(FlutterError(code: Constants.audioWaveforms, message: "Audio file path can't be empty or null", details: nil))
         }
-
     }
-
+    
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer,
                                      successfully flag: Bool) {
         var finishType = 2
@@ -76,9 +82,9 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             finishType = 2
         }
         plugin.flutterChannel.invokeMethod(Constants.onDidFinishPlayingAudio, arguments: [Constants.finishType: finishType, Constants.playerKey: playerKey])
-
+        
     }
-
+    
     func startPlyer(result: @escaping FlutterResult, finishMode: Int?) {
         if(finishMode != nil && finishMode == 0) {
             self.finishMode = FinishMode.loop
@@ -92,13 +98,13 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         startListening()
         result(true)
     }
-
+    
     func pausePlayer(result: @escaping FlutterResult) {
         stopListening()
         player?.pause()
         result(true)
     }
-
+    
     func stopPlayer(result: @escaping FlutterResult) {
         stopListening()
         player?.stop()
@@ -106,8 +112,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         timer = nil
         result(true)
     }
-
-
+    
     func getDuration(_ type: DurationType, _ result: @escaping FlutterResult) throws {
         if type == .Current {
             let ms = (player?.currentTime ?? 0) * 1000
@@ -117,12 +122,12 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             result(Int(ms))
         }
     }
-
+    
     func setVolume(_ volume: Double?, _ result: @escaping FlutterResult) {
         player?.volume = Float(volume ?? 1.0)
         result(true)
     }
-
+    
     func seekTo(_ time: Int?, _ result: @escaping FlutterResult) {
         if(time != nil) {
             player?.currentTime = Double(time! / 1000)
@@ -131,7 +136,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             result(false)
         }
     }
-
+    
     func startListening() {
         if #available(iOS 10.0, *) {
             timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true, block: { _ in
@@ -142,7 +147,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             // Fallback on earlier versions
         }
     }
-
+    
     func stopListening() {
         timer?.invalidate()
         timer = nil

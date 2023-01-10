@@ -111,21 +111,24 @@ class _WaveBubbleState extends State<WaveBubble> {
     );
     // Extracting waveform separately if index is odd.
     if (widget.index?.isOdd ?? false) {
-      controller.extractWaveformData(
-        path: widget.path ?? file!.path,
-        noOfSamples: playerWaveStyle.getSamplesForWidth(widget.width ?? 200),
-      );
+      controller
+          .extractWaveformData(
+            path: widget.path ?? file!.path,
+            noOfSamples:
+                playerWaveStyle.getSamplesForWidth(widget.width ?? 200),
+          )
+          .then((waveformData) => debugPrint(waveformData.toString()));
     }
   }
 
   @override
   void dispose() {
-    super.dispose();
     playerStateSubscription.cancel();
     if (widget.isLastWidget) {
       controller.stopAllPlayers();
     }
     controller.dispose();
+    super.dispose();
   }
 
   @override
