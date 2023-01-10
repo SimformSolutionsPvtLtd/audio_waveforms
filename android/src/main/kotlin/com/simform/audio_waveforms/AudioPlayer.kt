@@ -1,10 +1,9 @@
 package com.simform.audio_waveforms
 
 import android.content.Context
-import android.os.Build
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import androidx.annotation.RequiresApi
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -35,30 +34,23 @@ class AudioPlayer(
     ) {
         if (path != null) {
             this.noOfSamples = noOfSamples ?: 100
-            try {
-                waveformExtractor = WaveformExtractor(
-                    path = path,
-                    expectedPoints = this.noOfSamples,
-                    key = key,
-                    methodChannel = methodChannel,
-                    result = result,
-                    object : ExtractorCallBack {
-                        override fun onProgress(value: Float) {
-                            if (value == 1.0F) {
-                                result.success(waveformExtractor?.sampleData)
-                            }
+            waveformExtractor = WaveformExtractor(
+                path = path,
+                expectedPoints = this.noOfSamples,
+                key = key,
+                methodChannel = methodChannel,
+                context = appContext,
+                result = result,
+                extractorCallBack = object : ExtractorCallBack {
+                    override fun onProgress(value: Float) {
+                        if (value == 1.0F) {
+                            result.success(waveformExtractor?.sampleData)
                         }
                     }
-                )
-                waveformExtractor?.startDecode()
-                waveformExtractor?.stop()
-            } catch (e: Exception) {
-                result.error(
-                    Constants.LOG_TAG,
-                    "Can not extract waveform data from provided audio file path",
-                    e.toString()
-                )
-            }
+                }
+            )
+            waveformExtractor?.startDecode()
+            waveformExtractor?.stop()
 
         }
     }
@@ -68,10 +60,9 @@ class AudioPlayer(
         path: String?,
         volume: Float?
     ) {
-
-        //TODO: meta data of song
         if (path != null) {
-            val mediaItem = MediaItem.fromUri(path)
+            val uri = Uri.parse(path)
+            val mediaItem = MediaItem.fromUri(uri)
             player = ExoPlayer.Builder(appContext).build()
             player?.addMediaItem(mediaItem)
             player?.prepare()

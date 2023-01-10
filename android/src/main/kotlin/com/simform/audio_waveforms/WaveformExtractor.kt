@@ -1,9 +1,11 @@
 package com.simform.audio_waveforms
 
+import android.content.Context
 import android.media.AudioFormat
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -19,8 +21,9 @@ class WaveformExtractor(
     private val key: String,
     private val methodChannel: MethodChannel,
     private val result: MethodChannel.Result,
-    private val extractorCallBack: ExtractorCallBack
-) {
+    private val extractorCallBack: ExtractorCallBack,
+    private val context: Context,
+    ) {
     private val handler = Handler(Looper.getMainLooper())
     private var decoder: MediaCodec? = null
     private var extractor: MediaExtractor? = null
@@ -41,7 +44,8 @@ class WaveformExtractor(
     private fun getFormat(path: String): MediaFormat? {
         val mediaExtractor = MediaExtractor()
         this.extractor = mediaExtractor
-        mediaExtractor.setDataSource(path)
+        val uri = Uri.parse(path)
+        mediaExtractor.setDataSource(context,uri,null)
         val trackCount = mediaExtractor.trackCount
         repeat(trackCount) {
             val format = mediaExtractor.getTrackFormat(it)
@@ -232,12 +236,6 @@ class WaveformExtractor(
         decoder?.release()
         extractor?.release()
         finishCount.countDown()
-    }
-
-    fun cancel() {
-        if (!started) return
-        handler.post { stop() }
-        finishCount.await()
     }
 }
 

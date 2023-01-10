@@ -220,11 +220,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
         if (path != null) {
           isRecordingCompleted = true;
-          debugPrint("Recorded file size: ${File(path).lengthSync()}");
           debugPrint(path);
+          debugPrint("Recorded file size: ${File(path).lengthSync()}");
         }
       } else {
-        await recorderController.record();
+        await recorderController.record(path: path!);
       }
     } catch (e) {
       debugPrint(e.toString());
