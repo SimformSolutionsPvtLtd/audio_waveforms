@@ -33,9 +33,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var sampleRate: Int = 44100
     private var bitRate: Int? = null
     private lateinit var applicationContext: Context
-
-    //Todo: bitrate
     private var audioPlayers = mutableMapOf<String, AudioPlayer?>()
+    private var extractors = mutableMapOf<String, WaveformExtractor?>()
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, Constants.methodChannelName)
@@ -144,7 +143,12 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 val path = call.argument(Constants.path) as String?
                 val noOfSample = call.argument(Constants.noOfSamples) as Int?
                 if (key != null) {
-                    audioPlayers[key]?.extractWaveform(result, path, noOfSample)
+                    createOrUpdateExtractor(
+                        playerKey = key,
+                        result = result,
+                        path = path,
+                        noOfSamples = noOfSample ?: 100,
+                    )
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
@@ -217,6 +221,36 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         return
     }
 
+    private fun createOrUpdateExtractor(
+        playerKey: String,
+        noOfSamples: Int,
+        path: String?,
+        result: Result,
+    ) {
+        if (path == null) {
+            result.error(Constants.LOG_TAG, "Path cant be null", "")
+            return
+        }
+        extractors[playerKey] = WaveformExtractor(
+            context = applicationContext,
+            methodChannel = channel,
+            expectedPoints = noOfSamples,
+            key = playerKey,
+            path = path,
+            result = result,
+            extractorCallBack = object : ExtractorCallBack {
+                override fun onProgress(value: Float) {
+                    if (value == 1.0F) {
+                        result.success(extractors[playerKey]?.sampleData)
+                    }
+                }
+
+            }
+        )
+        extractors[playerKey]?.startDecode()
+        extractors[playerKey]?.stop()
+    }
+
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
     }
@@ -236,6 +270,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     override fun onDetachedFromActivity() {
         recorder?.release()
         recorder = null
+        audioPlayers.clear()
+        extractors.clear()
         activity = null
     }
 }

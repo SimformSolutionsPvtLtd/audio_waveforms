@@ -5,6 +5,7 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     
     final var audioRecorder = AudioRecorder()
     var audioPlayers = [String: AudioPlayer]()
+    var extractors = [String: WaveformExtractor]()
     var flutterChannel: FlutterMethodChannel
     
     init(registrar: FlutterPluginRegistrar, flutterChannel: FlutterMethodChannel) {
@@ -12,6 +13,10 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         super.init()
     }
     
+    deinit {
+        audioPlayers.removeAll()
+        extractors.removeAll()
+    }
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: Constants.methodChannelName, binaryMessenger: registrar.messenger())
         let instance = SwiftAudioWaveformsPlugin(registrar: registrar, flutterChannel: channel)
@@ -113,8 +118,8 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
             let key = args?[Constants.playerKey] as? String
             let path = args?[Constants.path] as? String
             let noOfSamples = args?[Constants.noOfSamples] as? Int
-            if(key != nil){
-                audioPlayers[key!]?.extractWaveformData(path: path, result: result,noOfSamples: noOfSamples)
+            if(key != nil) {
+                createOrUpdateExtractor(playerKey: key!, result: result, path: path, noOfSamples: noOfSamples)
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not get waveform data", details: "Player key is null"))
             }
@@ -128,6 +133,30 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         if audioPlayers[playerKey] == nil {
             let newPlayer = AudioPlayer(plugin: self,playerKey: playerKey,channel: flutterChannel)
             audioPlayers[playerKey] = newPlayer
+        }
+    }
+    
+    func createOrUpdateExtractor(playerKey: String, result: @escaping FlutterResult,path: String?, noOfSamples: Int?) {
+        if(!(path ?? "").isEmpty) {
+            do {
+                let audioUrl = URL.init(string: path!)
+                if(audioUrl == nil){
+                    result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise Url from provided audio file", details: "If path contains `file://` try removing it"))
+                    return
+                }
+                var newExtractor = try WaveformExtractor(url: audioUrl!, flutterResult: result, channel: flutterChannel)
+                extractors[playerKey] = newExtractor
+                let data = newExtractor.extractWaveform(samplesPerPixel: noOfSamples, playerKey: playerKey)
+                newExtractor.cancel()
+                if(newExtractor.progress == 1.0) {
+                    let waveformData = newExtractor.getChannelMean(data: data!)
+                    result(waveformData)
+                }
+            } catch {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Failed to decode audio file", details: nil))
+            }
+        } else {
+            result(FlutterError(code: Constants.audioWaveforms, message: "Audio file path can't be empty or null", details: nil))
         }
     }
 }
