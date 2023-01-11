@@ -24,36 +24,6 @@ class AudioPlayer(
     private var isPlayerPrepared: Boolean = false
     private var finishMode = FinishMode.Stop
     private var key = playerKey
-    private var waveformExtractor: WaveformExtractor? = null
-    private var noOfSamples = 100
-
-    fun extractWaveform(
-        result: MethodChannel.Result,
-        path: String?,
-        noOfSamples: Int?,
-    ) {
-        if (path != null) {
-            this.noOfSamples = noOfSamples ?: 100
-            waveformExtractor = WaveformExtractor(
-                path = path,
-                expectedPoints = this.noOfSamples,
-                key = key,
-                methodChannel = methodChannel,
-                context = appContext,
-                result = result,
-                extractorCallBack = object : ExtractorCallBack {
-                    override fun onProgress(value: Float) {
-                        if (value == 1.0F) {
-                            result.success(waveformExtractor?.sampleData)
-                        }
-                    }
-                }
-            )
-            waveformExtractor?.startDecode()
-            waveformExtractor?.stop()
-
-        }
-    }
 
     fun preparePlayer(
         result: MethodChannel.Result,

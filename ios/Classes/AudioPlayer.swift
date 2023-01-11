@@ -11,36 +11,11 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     var plugin: SwiftAudioWaveformsPlugin
     var playerKey: String
     var flutterChannel: FlutterMethodChannel
-    private var waveformExtractor: WaveformExtractor?
+
     init(plugin: SwiftAudioWaveformsPlugin, playerKey: String, channel: FlutterMethodChannel) {
         self.plugin = plugin
         self.playerKey = playerKey
         flutterChannel = channel
-    }
-    
-    func extractWaveformData(path: String?, result: @escaping FlutterResult, noOfSamples: Int?) {
-        if(!(path ?? "").isEmpty) {
-            do {
-                let audioUrl = URL.init(string: path!)
-                if(audioUrl == nil){
-                    result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise Url from provided audio file", details: "If path contains `file://` try removing it"))
-                    return
-                }
-                waveformExtractor = try WaveformExtractor(url: audioUrl!, flutterResult: result, channel: flutterChannel)
-                if(waveformExtractor != nil) {
-                    let data = waveformExtractor!.extractWaveform(samplesPerPixel: noOfSamples, playerKey: playerKey)
-                    waveformExtractor!.cancel()
-                    if(waveformExtractor!.progress == 1.0) {
-                        let waveformData = waveformExtractor!.getChannelMean(data: data!)
-                        result(waveformData)
-                    }
-                }
-            } catch {
-                result(FlutterError(code: Constants.audioWaveforms, message: "Failed to decode audio file", details: nil))
-            }
-        } else {
-            result(FlutterError(code: Constants.audioWaveforms, message: "Audio file path can't be empty or null", details: nil))
-        }
     }
     
     func preparePlayer(path: String?, volume: Double?, result: @escaping FlutterResult) {

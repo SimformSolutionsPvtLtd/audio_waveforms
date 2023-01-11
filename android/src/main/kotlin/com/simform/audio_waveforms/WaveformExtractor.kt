@@ -7,8 +7,6 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import io.flutter.plugin.common.MethodChannel
 import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
@@ -23,8 +21,7 @@ class WaveformExtractor(
     private val result: MethodChannel.Result,
     private val extractorCallBack: ExtractorCallBack,
     private val context: Context,
-    ) {
-    private val handler = Handler(Looper.getMainLooper())
+) {
     private var decoder: MediaCodec? = null
     private var extractor: MediaExtractor? = null
     private var duration = 0L
@@ -45,7 +42,7 @@ class WaveformExtractor(
         val mediaExtractor = MediaExtractor()
         this.extractor = mediaExtractor
         val uri = Uri.parse(path)
-        mediaExtractor.setDataSource(context,uri,null)
+        mediaExtractor.setDataSource(context, uri, null)
         val trackCount = mediaExtractor.trackCount
         repeat(trackCount) {
             val format = mediaExtractor.getTrackFormat(it)
@@ -169,6 +166,13 @@ class WaveformExtractor(
         if (sampleCount == perSamplePoints) {
             currentProgress++
             progress = currentProgress / expectedPoints
+
+            // Discard redundant values and release resources
+            if (progress > 1.0F) {
+                stop()
+                return
+            }
+
             val rms = sqrt(sampleSum / perSamplePoints)
             sampleData.add(rms.toFloat())
             extractorCallBack.onProgress(progress)
