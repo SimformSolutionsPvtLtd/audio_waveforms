@@ -2,6 +2,9 @@
 
 - Added `onCompletion` stream to get event when audio is finished playing.
 - Fixed [#145](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/145) - The visualization gets stuck incomplete.
+- Fixed [#142](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/142) - File path with spaces doesn't show waveform
+- Fixed extractor requires audio player to be initialised.
+- Fixed infinite scroll in `WaveformType.long`.
 
 ## 1.0.0
 
