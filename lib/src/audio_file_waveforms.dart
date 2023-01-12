@@ -192,7 +192,9 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
       child: GestureDetector(
         onHorizontalDragUpdate:
             widget.enableSeekGesture ? _handleDragGestures : null,
-        onTapUp: widget.enableSeekGesture ? _handTapGestures : null,
+        onTapUp: widget.enableSeekGesture ? _handleScrubberSeekStart : null,
+        onHorizontalDragStart:
+            widget.enableSeekGesture ? _handleHorizontalDragStart : null,
         onHorizontalDragEnd:
             widget.enableSeekGesture ? (_) => _handleOnDragEnd() : null,
         child: ClipPath(
@@ -280,17 +282,6 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     }
   }
 
-  void _handTapGestures(TapUpDetails details) {
-    switch (widget.waveformType) {
-      case WaveformType.fitWidth:
-        _handleScrubberSeekStart(details);
-        break;
-      case WaveformType.long:
-        _handleHorizontalDragStart(details);
-        break;
-    }
-  }
-
   /// This method handles continues seek gesture
   void _handleScrubberSeekUpdate(DragUpdateDetails details) {
     _proportion = details.localPosition.dx / widget.size.width;
@@ -353,9 +344,8 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   }
 
   ///This will help-out to determine direction of the scroll
-  void _handleHorizontalDragStart(TapUpDetails details) {
-    _initialDragPosition = details.localPosition.dx;
-  }
+  void _handleHorizontalDragStart(DragStartDetails details) =>
+      _initialDragPosition = details.localPosition.dx;
 
   /// This initialises variable in [initState] so that everytime current duration
   /// gets updated it doesn't re assign them to same values.
