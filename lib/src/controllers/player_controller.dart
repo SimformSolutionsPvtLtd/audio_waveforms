@@ -208,8 +208,8 @@ class PlayerController extends ChangeNotifier {
   ///
   /// Default to 1.0
   Future<bool> setVolume(double volume) async {
-    final result = await AudioWaveformsInterface.instance
-        .setVolume(volume, playerKey);
+    final result =
+        await AudioWaveformsInterface.instance.setVolume(volume, playerKey);
     return result;
   }
 
