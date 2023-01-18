@@ -12,14 +12,26 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 import java.io.IOException
 import java.lang.IllegalStateException
+import kotlin.math.log10
 
 private const val LOG_TAG = "AudioWaveforms"
 private const val RECORD_AUDIO_REQUEST_CODE = 1001
 
 class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
+    private var useLegacyNormalization = false
+
     fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
-        result.success(recorder?.maxAmplitude?.toDouble() ?: 0.0)
+        if (useLegacyNormalization) {
+            val db = 20 * log10(((recorder?.maxAmplitude?.toDouble() ?: (0.0 / 32768.0))))
+            if (db == Double.NEGATIVE_INFINITY) {
+                Log.d(LOG_TAG, "Microphone might be turned off")
+            } else {
+                result.success(db)
+            }
+        } else {
+            result.success(recorder?.maxAmplitude?.toDouble() ?: 0.0)
+        }
     }
 
     fun initRecorder(
@@ -62,8 +74,9 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         }
     }
 
-    fun startRecorder(result: MethodChannel.Result, recorder: MediaRecorder?) {
+    fun startRecorder(result: MethodChannel.Result, recorder: MediaRecorder?, useLegacy: Boolean) {
         try {
+            useLegacyNormalization = useLegacy
             recorder?.start()
             result.success(true)
         } catch (e: IllegalStateException) {
@@ -137,14 +150,8 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                     MediaRecorder.AudioEncoder.AAC
                 }
             }
-            Constants.vorbis -> {
-                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    MediaRecorder.AudioEncoder.VORBIS
-                } else {
-                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
-                    MediaRecorder.AudioEncoder.AAC
-                }
-            }
+            Constants.vorbis -> return MediaRecorder.AudioEncoder.VORBIS
+
             else -> return MediaRecorder.AudioEncoder.AAC
         }
     }
@@ -164,14 +171,8 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
             Constants.amr_wb -> return MediaRecorder.OutputFormat.AMR_WB
             Constants.amr_nb -> return MediaRecorder.OutputFormat.AMR_NB
-            Constants.webm -> {
-                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    MediaRecorder.OutputFormat.WEBM
-                } else {
-                    Log.e(LOG_TAG, "Minimum android Q is required, Setting MPEG_4 output format.")
-                    MediaRecorder.OutputFormat.MPEG_4
-                }
-            }
+            Constants.webm ->
+                return MediaRecorder.OutputFormat.WEBM
             Constants.mpeg_2_ts -> {
                 return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     MediaRecorder.OutputFormat.MPEG_2_TS

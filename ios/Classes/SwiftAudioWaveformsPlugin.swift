@@ -28,7 +28,7 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         switch call.method {
         case Constants.startRecording:
             audioRecorder.startRecording(result,  args?[Constants.path] as? String,
-                                         args?[Constants.encoder] as? Int, args?[Constants.sampleRate] as? Int, args?[Constants.bitRate] as? Int,Constants.fileNameFormat)
+                                         args?[Constants.encoder] as? Int, args?[Constants.sampleRate] as? Int, args?[Constants.bitRate] as? Int,Constants.fileNameFormat, args?[Constants.useLegacyNormalization] as? Bool)
             break
         case Constants.pauseRecording:
             audioRecorder.pauseRecording(result)

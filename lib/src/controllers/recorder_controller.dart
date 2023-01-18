@@ -23,6 +23,13 @@ class RecorderController extends ChangeNotifier {
 
   int? bitRate;
 
+  /// **Important**: This is legacy normalizationFactor which was removed
+  /// in 1.0.0 release. Only use this if you are using legacy normalization.
+  ///
+  /// Db we get from native is too high so in Android it the value is
+  /// subtracted and in IOS value added
+  double normalizationFactor = Platform.isAndroid ? 60 : 40;
+
   /// Current maximum peak power for ios and peak amplitude android.
   double _maxPeak = Platform.isIOS ? 1 : 32786.0;
 
@@ -61,7 +68,17 @@ class RecorderController extends ChangeNotifier {
 
   bool shouldClearLabels = false;
 
+  bool _useLegacyNormalization = false;
+
   final ValueNotifier<int> _currentScrolledDuration = ValueNotifier(0);
+
+  /// A class having controls for recording audio and other useful handlers.
+  ///
+  /// Use [useLegacyNormalization] parameter to use normalization before
+  /// 1.0.0 release.
+  RecorderController({bool useLegacyNormalization = false}) {
+    _useLegacyNormalization = useLegacyNormalization;
+  }
 
   /// A ValueNotifier which provides current position of scrolled waveform with
   /// respect to [middle line].
@@ -85,7 +102,7 @@ class RecorderController extends ChangeNotifier {
   /// it's documentation for more info.
   ///
   /// Path parameter is optional and if not provided current datetime
-  /// will be used for file name and default extension will be .aac.
+  /// will be used for file name and default extension will be .m4a.
   ///
   /// Below is the example format to save file with custom name and
   /// extension.
@@ -141,6 +158,7 @@ class RecorderController extends ChangeNotifier {
             sampleRate: sampleRate ?? this.sampleRate,
             bitRate: bitRate ?? this.bitRate,
             path: path,
+            useLegacyNormalization: _useLegacyNormalization,
           );
           if (_isRecording) {
             _recorderState = RecorderState.recording;
@@ -272,10 +290,31 @@ class RecorderController extends ChangeNotifier {
           _recorderState = RecorderState.stopped;
           throw "Failed to get sound level";
         }
-        _normalise(db);
+        if (_useLegacyNormalization) {
+          _normaliseLegacy(db);
+        } else {
+          _normalise(db);
+        }
         notifyListeners();
       },
     );
+  }
+
+  /// This is normalization is used before 1.0.0 release. From user
+  /// feedback we have brought it back util we find better way to normalise
+  /// db.
+  void _normaliseLegacy(double peak) {
+    if (Platform.isAndroid) {
+      waveData.add(peak - normalizationFactor);
+    } else {
+      if (peak == 0.0) {
+        waveData.add(0);
+      } else if (peak + normalizationFactor < 1) {
+        waveData.add(0);
+      } else {
+        waveData.add(peak + normalizationFactor);
+      }
+    }
   }
 
   /// Normalises the peak power for ios and peak amplitude for android
