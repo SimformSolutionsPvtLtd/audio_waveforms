@@ -28,7 +28,7 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> with WidgetsBindingObserver {
+class _HomeState extends State<Home> {
   late final RecorderController recorderController;
 
   String? path;
@@ -53,7 +53,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   void _initialiseControllers() {
-    recorderController = RecorderController()
+    recorderController = RecorderController(useLegacyNormalization: true)
       ..androidEncoder = AndroidEncoder.aac
       ..androidOutputFormat = AndroidOutputFormat.mpeg4
       ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
@@ -113,8 +113,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                           index: index + 1,
                           isSender: index.isOdd,
                           width: MediaQuery.of(context).size.width / 2,
-                          isLastWidget:
-                              !isRecordingCompleted || musicFile == null,
                           appDirectory: appDirectory,
                         );
                       },
@@ -124,14 +122,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                     WaveBubble(
                       path: path,
                       isSender: true,
-                      isLastWidget: isRecordingCompleted && musicFile == null,
                       appDirectory: appDirectory,
                     ),
                   if (musicFile != null)
                     WaveBubble(
                       path: musicFile,
                       isSender: true,
-                      isLastWidget: true,
                       appDirectory: appDirectory,
                     ),
                   SafeArea(

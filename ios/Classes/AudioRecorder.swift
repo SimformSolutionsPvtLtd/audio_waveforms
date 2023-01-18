@@ -5,9 +5,10 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var audioRecorder: AVAudioRecorder?
     var path: String?
     var hasPermission: Bool = false
-    public var meteringLevels: [Float]?
+    var useLegacyNormalization: Bool = false
     
-    public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ bitRate : Int?,_ fileNameFormat: String){
+    public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ bitRate : Int?,_ fileNameFormat: String, _ useLegacy: Bool?){
+        useLegacyNormalization = useLegacy ?? false
         let settings = [
             AVFormatIDKey: getEncoder(encoder ?? 0),
             AVSampleRateKey: sampleRate ?? 44100,
@@ -15,11 +16,11 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
         let settingsWithBitrate = [
-                AVEncoderBitRateKey: bitRate,
-                AVFormatIDKey: getEncoder(encoder ?? 0),
-                AVSampleRateKey: sampleRate ?? 44100,
-                AVNumberOfChannelsKey: 1,
-                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            AVEncoderBitRateKey: bitRate,
+            AVFormatIDKey: getEncoder(encoder ?? 0),
+            AVSampleRateKey: sampleRate ?? 44100,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
         
         let options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetooth]
@@ -69,9 +70,14 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     
     public func getDecibel(_ result: @escaping FlutterResult) {
         audioRecorder?.updateMeters()
-        let amp = audioRecorder?.peakPower(forChannel: 0) ?? 0.0
-        let linear = pow(10, amp / 20);
-        result(linear)
+        if(useLegacyNormalization){
+            let amp = audioRecorder?.averagePower(forChannel: 0) ?? 0.0
+            result(amp)
+        } else {
+            let amp = audioRecorder?.peakPower(forChannel: 0) ?? 0.0
+            let linear = pow(10, amp / 20);
+            result(linear)
+        }
     }
     
     public func checkHasPermission(_ result: @escaping FlutterResult){

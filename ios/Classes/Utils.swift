@@ -55,6 +55,7 @@ struct Constants {
     static let onCurrentExtractedWaveformData = "onCurrentExtractedWaveformData"
     static let waveformData = "waveformData"
     static let onExtractionProgressUpdate = "onExtractionProgressUpdate"
+    static let useLegacyNormalization = "useLegacyNormalization"
 }
 
 enum FinishMode : Int{

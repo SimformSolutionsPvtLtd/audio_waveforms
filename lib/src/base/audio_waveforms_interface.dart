@@ -14,17 +14,22 @@ class AudioWaveformsInterface {
     required int sampleRate,
     int? bitRate,
     String? path,
+    bool useLegacyNormalization = false,
   }) async {
     final isRecording = await _methodChannel.invokeMethod(
-        Constants.startRecording,
-        Platform.isIOS
-            ? {
-                Constants.path: path,
-                Constants.encoder: audioFormat,
-                Constants.sampleRate: sampleRate,
-                Constants.bitRate: bitRate,
-              }
-            : null);
+      Constants.startRecording,
+      Platform.isIOS
+          ? {
+              Constants.path: path,
+              Constants.encoder: audioFormat,
+              Constants.sampleRate: sampleRate,
+              Constants.bitRate: bitRate,
+              Constants.useLegacyNormalization: useLegacyNormalization,
+            }
+          : {
+              Constants.useLegacyNormalization: useLegacyNormalization,
+            },
+    );
     return isRecording ?? false;
   }
 

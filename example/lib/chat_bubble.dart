@@ -53,7 +53,6 @@ class WaveBubble extends StatefulWidget {
   final int? index;
   final String? path;
   final double? width;
-  final bool isLastWidget;
   final Directory appDirectory;
 
   const WaveBubble({
@@ -63,7 +62,6 @@ class WaveBubble extends StatefulWidget {
     this.index,
     this.isSender = false,
     this.path,
-    this.isLastWidget = false,
   }) : super(key: key);
 
   @override
@@ -124,9 +122,6 @@ class _WaveBubbleState extends State<WaveBubble> {
   @override
   void dispose() {
     playerStateSubscription.cancel();
-    if (widget.isLastWidget) {
-      controller.stopAllPlayers();
-    }
     controller.dispose();
     super.dispose();
   }

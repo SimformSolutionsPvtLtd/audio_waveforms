@@ -239,31 +239,27 @@ class PlayerController extends ChangeNotifier {
   /// Release any resources taken by this controller. Disposing this
   /// will stop the player and release resources from native.
   ///
-  /// As there is common stream for every players, stream
-  /// will be still active without any events.
-  /// To dispose it call [stopAllPlayers] before calling this function.
+  /// If this is last remaining controller then it will also dispose
+  /// the platform stream. They can be re-initialised by initialising a
+  /// new controller.
   @override
   void dispose() async {
     if (playerState != PlayerState.stopped) await stopPlayer();
     PlatformStreams.instance.playerControllerFactory.remove(this);
+    if (PlatformStreams.instance.playerControllerFactory.length == 1) {
+      PlatformStreams.instance.dispose();
+    }
     super.dispose();
   }
 
   /// This method is to free all players [resources] all at once.
   ///
-  /// This method is required to call only [once] from any
-  /// one of the PlayerController(s).
-  ///
-  /// Make sure to call this function before last remaining PlayerController.
-  ///
   /// This method will close the stream and free resources taken by all
-  /// players but it will only dispose this controller. So make sure free
-  /// other PlayerController's resources.
+  /// players. This method will not dispose controller.
   void stopAllPlayers() async {
     PlatformStreams.instance.dispose();
     await AudioWaveformsInterface.instance.stopAllPlayers();
     PlatformStreams.instance.playerControllerFactory.remove(this);
-    super.dispose();
   }
 
   /// Sets [_shouldRefresh] flag with provided boolean parameter.
