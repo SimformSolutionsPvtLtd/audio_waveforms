@@ -62,6 +62,7 @@ object Constants {
     const val onCurrentExtractedWaveformData = "onCurrentExtractedWaveformData"
     const val waveformData = "waveformData"
     const val useLegacyNormalization = "useLegacyNormalization"
+    const val releaseMetaDataRetriever = "releaseMetaDataRetriever"
 }
 
 enum class FinishMode(val value:Int) {

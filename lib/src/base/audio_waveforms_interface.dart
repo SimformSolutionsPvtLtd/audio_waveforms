@@ -63,10 +63,10 @@ class AudioWaveformsInterface {
   }
 
   ///platform call to stop recording
-  Future<String?> stop() async {
-    final isRecording =
+  Future<List<String?>?> stop() async {
+    final audioInfo =
         await _methodChannel.invokeMethod(Constants.stopRecording);
-    return isRecording;
+    return List.from(audioInfo ?? []);
   }
 
   ///platform call to resume recording.
@@ -88,6 +88,10 @@ class AudioWaveformsInterface {
     var hasPermission =
         await _methodChannel.invokeMethod(Constants.checkPermission);
     return hasPermission ?? false;
+  }
+
+  Future<void> releaseMetaDataRetriever() async {
+    await _methodChannel.invokeMethod(Constants.releaseMetaDataRetriever);
   }
 
   ///platform call to prepare player

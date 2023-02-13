@@ -70,7 +70,36 @@ class RecorderController extends ChangeNotifier {
 
   bool _useLegacyNormalization = false;
 
+  /// Provides currently recorded audio duration. Use [onCurrentDuration]
+  /// stream to get latest events duration.
+  Duration elapsedDuration = Duration.zero;
+
+  /// Provides duration of recorded audio file when recording has been stopped.
+  /// Until recording has been stopped, this duration will be
+  /// zero(Duration.zero). Also, once new recording is started this duration
+  /// will be reset to zero.
+  Duration recordedDuration = Duration.zero;
+
+  Timer? _recorderTimer;
+
   final ValueNotifier<int> _currentScrolledDuration = ValueNotifier(0);
+
+  final StreamController<Duration> _currentDurationController =
+      StreamController.broadcast();
+
+  /// A stream to get current duration of currently recording audio file.
+  /// Events are emitted every 50 milliseconds which means current duration is
+  /// accurate to 50 milliseconds. To get Fully accurate duration use
+  /// [recordedDuration] after stopping the recording.
+  Stream<Duration> get onCurrentDuration => _currentDurationController.stream;
+
+  final StreamController<RecorderState> _recorderStateController =
+      StreamController.broadcast();
+
+  /// A Stream to monitor change in RecorderState. Events are emitted whenever
+  /// there is change in the RecorderState.
+  Stream<RecorderState> get onRecorderStateChanged =>
+      _recorderStateController.stream;
 
   /// A class having controls for recording audio and other useful handlers.
   ///
@@ -140,7 +169,7 @@ class RecorderController extends ChangeNotifier {
           _isRecording = await AudioWaveformsInterface.instance.resume();
           if (_isRecording) {
             _startTimer();
-            _recorderState = RecorderState.recording;
+            _setRecorderState(RecorderState.recording);
           } else {
             throw "Failed to resume recording";
           }
@@ -148,7 +177,7 @@ class RecorderController extends ChangeNotifier {
           return;
         }
         if (Platform.isIOS) {
-          _recorderState = RecorderState.initialized;
+          _setRecorderState(RecorderState.initialized);
         }
         if (_recorderState.isInitialized) {
           _isRecording = await AudioWaveformsInterface.instance.record(
@@ -161,7 +190,7 @@ class RecorderController extends ChangeNotifier {
             useLegacyNormalization: _useLegacyNormalization,
           );
           if (_isRecording) {
-            _recorderState = RecorderState.recording;
+            _setRecorderState(RecorderState.recording);
             _startTimer();
           } else {
             throw "Failed to start recording";
@@ -169,7 +198,7 @@ class RecorderController extends ChangeNotifier {
           notifyListeners();
         }
       } else {
-        _recorderState = RecorderState.stopped;
+        _setRecorderState(RecorderState.stopped);
         notifyListeners();
       }
     }
@@ -192,7 +221,7 @@ class RecorderController extends ChangeNotifier {
       bitRate: bitRate ?? this.bitRate,
     );
     if (initialized) {
-      _recorderState = RecorderState.initialized;
+      _setRecorderState(RecorderState.initialized);
     } else {
       throw "Failed to initialize recorder";
     }
@@ -223,8 +252,9 @@ class RecorderController extends ChangeNotifier {
       if (_isRecording) {
         throw "Failed to pause recording";
       }
+      _recorderTimer?.cancel();
       _timer?.cancel();
-      _recorderState = RecorderState.paused;
+      _setRecorderState(RecorderState.paused);
     }
     notifyListeners();
   }
@@ -242,14 +272,21 @@ class RecorderController extends ChangeNotifier {
   /// left of for previous recording.
   Future<String?> stop([bool callReset = true]) async {
     if (_recorderState.isRecording || _recorderState.isPaused) {
-      final path = await AudioWaveformsInterface.instance.stop();
-
-      if (path != null) {
+      final audioInfo = await AudioWaveformsInterface.instance.stop();
+      if (audioInfo != null) {
         _isRecording = false;
         _timer?.cancel();
-        _recorderState = RecorderState.stopped;
+        _recorderTimer?.cancel();
+        if (audioInfo[1] != null) {
+          var duration = int.tryParse(audioInfo[1]!);
+          if (duration != null) {
+            recordedDuration = Duration(milliseconds: duration);
+          }
+        }
+        elapsedDuration = Duration.zero;
+        _setRecorderState(RecorderState.stopped);
         if (callReset) reset();
-        return path;
+        return audioInfo[0];
       } else {
         throw "Failed stop recording";
       }
@@ -282,6 +319,13 @@ class RecorderController extends ChangeNotifier {
 
   /// Gets decibel by every defined frequency
   void _startTimer() {
+    recordedDuration = Duration.zero;
+    const duration = Duration(milliseconds: 50);
+    _recorderTimer = Timer.periodic(duration, (_) {
+      elapsedDuration += duration;
+      _currentDurationController.add(elapsedDuration);
+    });
+
     _timer = Timer.periodic(
       updateFrequency,
       (timer) async {
@@ -351,13 +395,30 @@ class RecorderController extends ChangeNotifier {
     _currentScrolledDuration.value = duration;
   }
 
+  void _setRecorderState(RecorderState state) {
+    _recorderStateController.add(state);
+    _recorderState = state;
+  }
+
+  /// This function is to release resources taken by android native
+  /// MetaDataRetriever.
+  void _release() {
+    AudioWaveformsInterface.instance.releaseMetaDataRetriever();
+  }
+
   /// Releases any resources taken by this recorder and with this
   /// controller is also disposed.
   @override
   void dispose() async {
-    if (_timer != null) _timer!.cancel();
     if (recorderState != RecorderState.stopped) await stop();
+    if (Platform.isAndroid) _release();
     _currentScrolledDuration.dispose();
+    _currentDurationController.close();
+    _recorderStateController.close();
+    _recorderTimer?.cancel();
+    _timer?.cancel();
+    _timer = null;
+    _recorderTimer = null;
     super.dispose();
   }
 }
