@@ -53,7 +53,7 @@ class _HomeState extends State<Home> {
   }
 
   void _initialiseControllers() {
-    recorderController = RecorderController(useLegacyNormalization: true)
+    recorderController = RecorderController()
       ..androidEncoder = AndroidEncoder.aac
       ..androidOutputFormat = AndroidOutputFormat.mpeg4
       ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC

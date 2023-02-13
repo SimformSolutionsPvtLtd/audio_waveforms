@@ -3,6 +3,8 @@ package com.simform.audio_waveforms
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.media.MediaMetadataRetriever
+import android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
@@ -20,6 +22,8 @@ private const val RECORD_AUDIO_REQUEST_CODE = 1001
 class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     private var useLegacyNormalization = false
+    private var mediaMetadataRetriever = MediaMetadataRetriever()
+    private var audioInfoArrayList = ArrayList<String>()
 
     fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
         if (useLegacyNormalization) {
@@ -68,10 +72,23 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                 reset()
                 release()
             }
-            result.success(path)
+            val duration = getDuration(path)
+            audioInfoArrayList.add(path)
+            audioInfoArrayList.add(duration)
+            result.success(audioInfoArrayList)
         } catch (e: IllegalStateException) {
             Log.e(LOG_TAG, "Failed to stop recording")
         }
+    }
+
+    private fun getDuration(path: String): String {
+        mediaMetadataRetriever.setDataSource(path)
+        val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION)
+        return duration ?: "-1"
+    }
+
+    fun releaseMetaDataRetriever(){
+        mediaMetadataRetriever.release()
     }
 
     fun startRecorder(result: MethodChannel.Result, recorder: MediaRecorder?, useLegacy: Boolean) {

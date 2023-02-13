@@ -1,7 +1,9 @@
 ## 1.0.2 (Unreleased)
 
 - Now, calling `stopAllPlayers` is not mandatory for disposing streams and it will also not dispose controller. With last remaining player they will be disposed (Streams can be re-initialised by creating a new PlayerController).
-- Added legacy normalization with this fixed [#144](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/144). 
+- Added legacy normalization with this fixed [#144](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/144).
+- Added `onRecorderStateChanged` stream to monitor Recorder state changes.
+- Added `onCurrentDuration` stream to get latest recorded audio duration
 
 ## 1.0.1
 

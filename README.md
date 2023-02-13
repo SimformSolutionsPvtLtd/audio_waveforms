@@ -99,6 +99,9 @@ controller.androidOutputFormat = AndroidOutputFormat.mpeg4;      // Changing and
 controller.iosEncoder = IosEncoder.kAudioFormatMPEG4AAC;         // Changing ios encoder
 controller.sampleRate = 44100;                                   // Updating sample rate
 controller.bitRate = 48000;                                      // Updating bitrate
+controller.onRecorderStateChanged.listen((state){});             // Listening to recorder state changes
+controller.onCurrentDuration.listen((duration){});               // Listening to current duration updates
+controller.recordedDuration;                                     // Get recorded audio duration 
 controller.currentScrolledDuration;                              // Current duration position notifier
 ```
 
