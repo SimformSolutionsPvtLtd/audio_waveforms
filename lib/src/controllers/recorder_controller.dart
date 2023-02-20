@@ -96,10 +96,19 @@ class RecorderController extends ChangeNotifier {
   final StreamController<RecorderState> _recorderStateController =
       StreamController.broadcast();
 
+  final StreamController<Duration> _recordedFileDurationController =
+      StreamController.broadcast();
+
   /// A Stream to monitor change in RecorderState. Events are emitted whenever
   /// there is change in the RecorderState.
   Stream<RecorderState> get onRecorderStateChanged =>
       _recorderStateController.stream;
+
+  /// A stream to get duration of recording when audio recorder has
+  /// been stopped. Events are only emitted if platform could extract the
+  /// duration of audio file when recording is ended.
+  Stream<Duration> get onRecordingEnded =>
+      _recordedFileDurationController.stream;
 
   /// A class having controls for recording audio and other useful handlers.
   ///
@@ -281,6 +290,7 @@ class RecorderController extends ChangeNotifier {
           var duration = int.tryParse(audioInfo[1]!);
           if (duration != null) {
             recordedDuration = Duration(milliseconds: duration);
+            _recordedFileDurationController.add(recordedDuration);
           }
         }
         elapsedDuration = Duration.zero;
@@ -415,6 +425,7 @@ class RecorderController extends ChangeNotifier {
     _currentScrolledDuration.dispose();
     _currentDurationController.close();
     _recorderStateController.close();
+    _recordedFileDurationController.close();
     _recorderTimer?.cancel();
     _timer?.cancel();
     _timer = null;
