@@ -60,12 +60,13 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 ### Usage
 1. Recording audio
 ```dart
-RecorderController controller = RecorderController();   // Initialise
-await controller.record(path: 'path');                  // Record (path is optional)
-await controller.pause();                               // Pause recording
-final path = await controller.stop();                   // Stop recording and get the path
-controller.refresh();                                   // Refresh waveform to original position
-controller.dispose();                                   // Dispose controller
+RecorderController controller = RecorderController();      // Initialise
+await controller.record(path: 'path');                     // Record (path is optional)
+final hasPermission = await controller.checkPermission();  // Check mic permission (also called duration record)
+await controller.pause();                                  // Pause recording
+final path = await controller.stop();                      // Stop recording and get the path
+controller.refresh();                                      // Refresh waveform to original position
+controller.dispose();                                      // Dispose controller
 ```
 
 2. Use `AudioWaveforms` widget in widget tree
@@ -101,6 +102,7 @@ controller.sampleRate = 44100;                                   // Updating sam
 controller.bitRate = 48000;                                      // Updating bitrate
 controller.onRecorderStateChanged.listen((state){});             // Listening to recorder state changes
 controller.onCurrentDuration.listen((duration){});               // Listening to current duration updates
+controller.onRecordingEnded.listen((duration));                  // Listening to audio file duration
 controller.recordedDuration;                                     // Get recorded audio duration 
 controller.currentScrolledDuration;                              // Current duration position notifier
 ```

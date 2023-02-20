@@ -65,8 +65,7 @@ class AudioFileWaveforms extends StatefulWidget {
   /// Generate waveforms from audio file. You play those audio file using
   /// [PlayerController].
   ///
-  /// When you play the audio file, another waveform
-  /// will drawn on top of it to show
+  /// When you play the audio file, waves change their color according to
   /// how much audio has been played and how much is left.
   ///
   /// With seeking gesture enabled, playing audio can be seeked to

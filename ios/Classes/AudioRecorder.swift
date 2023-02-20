@@ -6,6 +6,8 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var path: String?
     var hasPermission: Bool = false
     var useLegacyNormalization: Bool = false
+    var audioUrl: URL?
+    var recordedDuration: CMTime = CMTime.zero
     
     public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ bitRate : Int?,_ fileNameFormat: String, _ useLegacy: Bool?){
         useLegacyNormalization = useLegacy ?? false
@@ -41,21 +43,44 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord, options: options)
             try AVAudioSession.sharedInstance().setActive(true)
             
-            let url = URL(string: self.path!) ?? URL(fileURLWithPath: self.path!)
-            audioRecorder = try AVAudioRecorder(url: url, settings: bitRate != nil ? settingsWithBitrate as [String : Any] : settings as [String : Any])
+            audioUrl = URL(fileURLWithPath: self.path!)
+            
+            if(audioUrl == nil){
+                result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise file URL", details: nil))
+            }
+            audioRecorder = try AVAudioRecorder(url: audioUrl!, settings: bitRate != nil ? settingsWithBitrate as [String : Any] : settings as [String : Any])
+            
             audioRecorder?.delegate = self
             audioRecorder?.isMeteringEnabled = true
             audioRecorder?.record()
             result(true)
         } catch {
-            result(FlutterError(code: "", message: "Failed to start recording", details: nil))
+            result(FlutterError(code: Constants.audioWaveforms, message: "Failed to start recording", details: nil))
         }
     }
     
     public func stopRecording(_ result: @escaping FlutterResult) {
         audioRecorder?.stop()
+        if(audioUrl != nil) {
+            let asset = AVURLAsset(url:  audioUrl!)
+            if #available(iOS 15.0, *) {
+                Task {
+                    do {
+                        recordedDuration = try await asset.load(.duration)
+                        result([path,Int(recordedDuration.seconds * 1000).description])
+                    } catch let err {
+                        debugPrint(err.localizedDescription)
+                        result([path,CMTime.zero.seconds.description])
+                    }
+                }
+            } else {
+                recordedDuration = asset.duration
+                result([path,Int(recordedDuration.seconds * 1000).description])
+            }
+        } else {
+            result([path,CMTime.zero.seconds.description])
+        }
         audioRecorder = nil
-        result(path)
     }
     
     public func pauseRecording(_ result: @escaping FlutterResult) {
