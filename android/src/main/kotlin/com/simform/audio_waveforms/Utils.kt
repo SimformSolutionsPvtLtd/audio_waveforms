@@ -62,10 +62,17 @@ object Constants {
     const val onCurrentExtractedWaveformData = "onCurrentExtractedWaveformData"
     const val waveformData = "waveformData"
     const val useLegacyNormalization = "useLegacyNormalization"
+    const val updateFrequency = "updateFrequency"
 }
 
 enum class FinishMode(val value:Int) {
     Loop(0),
     Pause(1),
     Stop(2)
+}
+
+enum class UpdateFrequency(val value:Long) {
+    High(50),
+    Medium(100),
+    Low(200),
 }

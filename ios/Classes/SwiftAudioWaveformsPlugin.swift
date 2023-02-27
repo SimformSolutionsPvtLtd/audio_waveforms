@@ -48,7 +48,10 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
             let key = args?[Constants.playerKey] as? String
             if(key != nil){
                 initPlayer(playerKey: key!)
-                audioPlayers[key!]?.preparePlayer(path: args?[Constants.path] as? String, volume: args?[Constants.volume] as? Double,result: result)
+                audioPlayers[key!]?.preparePlayer(path: args?[Constants.path] as? String,
+                                                  volume: args?[Constants.volume] as? Double,
+                                                  updateFrequency: getUpdateFrequency(freq: args?[Constants.updateFrequency] as? Int) ,
+                                                  result: result)
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not prepare player", details: "Player key is null"))
             }
@@ -129,6 +132,15 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    func getUpdateFrequency(freq: Int?) -> UpdateFrequency{
+        if(freq == 2){
+            return UpdateFrequency.high
+        } else if(freq == 1){
+            return UpdateFrequency.medium
+        }
+        return UpdateFrequency.low
+    }
+    
     func initPlayer(playerKey: String) {
         if audioPlayers[playerKey] == nil {
             let newPlayer = AudioPlayer(plugin: self,playerKey: playerKey,channel: flutterChannel)
@@ -144,7 +156,7 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
                     result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise Url from provided audio file", details: "If path contains `file://` try removing it"))
                     return
                 }
-                var newExtractor = try WaveformExtractor(url: audioUrl!, flutterResult: result, channel: flutterChannel)
+                let newExtractor = try WaveformExtractor(url: audioUrl!, flutterResult: result, channel: flutterChannel)
                 extractors[playerKey] = newExtractor
                 let data = newExtractor.extractWaveform(samplesPerPixel: noOfSamples, playerKey: playerKey)
                 newExtractor.cancel()

@@ -24,13 +24,16 @@ class AudioPlayer(
     private var isPlayerPrepared: Boolean = false
     private var finishMode = FinishMode.Stop
     private var key = playerKey
+    private var updateFrequency = UpdateFrequency.Low
 
     fun preparePlayer(
         result: MethodChannel.Result,
         path: String?,
-        volume: Float?
+        volume: Float?,
+        frequency: UpdateFrequency,
     ) {
         if (path != null) {
+            updateFrequency = frequency
             val uri = Uri.parse(path)
             val mediaItem = MediaItem.fromUri(uri)
             player = ExoPlayer.Builder(appContext).build()
@@ -167,7 +170,7 @@ class AudioPlayer(
                     args[Constants.current] = currentPosition
                     args[Constants.playerKey] = key
                     methodChannel.invokeMethod(Constants.onCurrentDuration, args)
-                    handler.postDelayed(this, 200)
+                    handler.postDelayed(this, updateFrequency.value)
                 } else {
                     result.error(Constants.LOG_TAG, "Can't get current Position of player", "")
                 }

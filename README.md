@@ -62,7 +62,7 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 ```dart
 RecorderController controller = RecorderController();      // Initialise
 await controller.record(path: 'path');                     // Record (path is optional)
-final hasPermission = await controller.checkPermission();  // Check mic permission (also called duration record)
+final hasPermission = await controller.checkPermission();  // Check mic permission (also called during record)
 await controller.pause();                                  // Pause recording
 final path = await controller.stop();                      // Stop recording and get the path
 controller.refresh();                                      // Refresh waveform to original position
@@ -129,7 +129,8 @@ await controller.pausePlayer();                                     // Pause aud
 await controller.stopPlayer();                                      // Stop audio player
 await controller.setVolume(1.0);                                    // Set volume level
 await controller.seekTo(5000);                                      // Seek audio
-final duration = await controller.getDuration(DurationType.max);    // Get duration of audio player      
+final duration = await controller.getDuration(DurationType.max);    // Get duration of audio player
+controller.updateFrequency = UpdateFrequency.low;                   // Update reporting rate of current duration.
 controller.onPlayerStateChanged.listen((state) {});                 // Listening to player state changes
 controller.onCurrentDurationChanged.listen((duration) {});          // Listening to current duration changes
 controller.onCurrentExtractedWaveformData.listen((data) {});        // Listening to latest extraction data
