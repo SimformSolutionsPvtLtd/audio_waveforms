@@ -91,11 +91,17 @@ class AudioWaveformsInterface {
   }
 
   ///platform call to prepare player
-  Future<bool> preparePlayer(String path, String key, [double? volume]) async {
+  Future<bool> preparePlayer({
+    required String path,
+    required String key,
+    required int frequency,
+    double? volume,
+  }) async {
     var result = await _methodChannel.invokeMethod(Constants.preparePlayer, {
       Constants.path: path,
       Constants.volume: volume,
       Constants.playerKey: key,
+      Constants.updateFrequency: frequency,
     });
     return result ?? false;
   }

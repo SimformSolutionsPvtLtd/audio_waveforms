@@ -40,6 +40,19 @@ class PlayerController extends ChangeNotifier {
 
   bool get shouldClearLabels => _shouldClearLabels;
 
+  /// Rate of updating the reported current duration. Making it high will
+  /// cause reporting duration at faster rate which also causes UI to look
+  /// smoother.
+  ///
+  /// **Important** -: As duration is reported from platform, low-end devices
+  /// may have higher impact if UpdateFrequency is set to high.
+  ///
+  /// Defaults to low (updates every 200 milliseconds).
+  ///
+  /// See also:
+  /// * [UpdateFrequency]
+  UpdateFrequency updateFrequency = UpdateFrequency.low;
+
   /// A stream to get current state of the player. This stream
   /// will emit event whenever there is change in the playerState.
   Stream<PlayerState> get onPlayerStateChanged =>
@@ -106,8 +119,12 @@ class PlayerController extends ChangeNotifier {
     int noOfSamples = 100,
   }) async {
     path = Uri.parse(path).path;
-    final isPrepared = await AudioWaveformsInterface.instance
-        .preparePlayer(path, playerKey, volume);
+    final isPrepared = await AudioWaveformsInterface.instance.preparePlayer(
+      path: path,
+      key: playerKey,
+      frequency: _getFrequency(),
+      volume: volume,
+    );
     if (isPrepared) {
       _maxDuration = await getDuration();
       _setPlayerState(PlayerState.initialized);
@@ -274,6 +291,18 @@ class PlayerController extends ChangeNotifier {
   void setRefresh(bool refresh) {
     _shouldRefresh = refresh;
     notifyListeners();
+  }
+
+  // TODO: Replace this with enhanced enum when we drop support for dart 2.17 earlier versions
+  int _getFrequency() {
+    switch (updateFrequency) {
+      case UpdateFrequency.high:
+        return 2;
+      case UpdateFrequency.medium:
+        return 1;
+      case UpdateFrequency.low:
+        return 0;
+    }
   }
 
   @override

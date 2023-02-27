@@ -186,3 +186,15 @@ extension RecorderStateExtension on RecorderState {
 
   bool get isStopped => this == RecorderState.stopped;
 }
+
+/// Rate of updating the reported current duration.
+enum UpdateFrequency {
+  /// Reports duration at every 50 milliseconds.
+  high,
+
+  /// Reports duration at every 100 milliseconds.
+  medium,
+
+  /// Reports duration at every 200 milliseconds.
+  low
+}

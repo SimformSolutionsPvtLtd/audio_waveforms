@@ -1,6 +1,7 @@
-## 1.0.4 (Unreleased)
+## 1.0.4
 
 - Fixed [#171](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/171) - Do not call `notifyListeners()` when disposed
+- Add `UpdateFrequency` to update reporting rate of current duration. Fixes [#118](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/118) & [#145](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/145)
 
 ## 1.0.3
 

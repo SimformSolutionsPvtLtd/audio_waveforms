@@ -56,6 +56,7 @@ struct Constants {
     static let waveformData = "waveformData"
     static let onExtractionProgressUpdate = "onExtractionProgressUpdate"
     static let useLegacyNormalization = "useLegacyNormalization"
+    static let updateFrequency = "updateFrequency"
 }
 
 enum FinishMode : Int{
@@ -64,6 +65,11 @@ enum FinishMode : Int{
     case stop = 2
 }
 
+enum UpdateFrequency : Double{
+    case high = 50.0
+    case medium = 100.0
+    case low = 200.0
+}
 /// Creates an 2D array of floats
 public typealias FloatChannelData = [[Float]]
 
