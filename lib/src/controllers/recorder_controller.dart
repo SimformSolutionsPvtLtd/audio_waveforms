@@ -410,18 +410,11 @@ class RecorderController extends ChangeNotifier {
     _recorderState = state;
   }
 
-  /// This function is to release resources taken by android native
-  /// MetaDataRetriever.
-  void _release() {
-    AudioWaveformsInterface.instance.releaseMetaDataRetriever();
-  }
-
   /// Releases any resources taken by this recorder and with this
   /// controller is also disposed.
   @override
   void dispose() async {
     if (recorderState != RecorderState.stopped) await stop();
-    if (Platform.isAndroid) _release();
     _currentScrolledDuration.dispose();
     _currentDurationController.close();
     _recorderStateController.close();

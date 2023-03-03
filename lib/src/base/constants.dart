@@ -43,5 +43,4 @@ class Constants {
   static const String onCurrentExtractedWaveformData =
       "onCurrentExtractedWaveformData";
   static const String useLegacyNormalization = "useLegacyNormalization";
-  static const String releaseMetaDataRetriever = "releaseMetaDataRetriever";
 }

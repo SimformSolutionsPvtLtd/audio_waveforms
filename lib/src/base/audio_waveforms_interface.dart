@@ -90,10 +90,6 @@ class AudioWaveformsInterface {
     return hasPermission ?? false;
   }
 
-  Future<void> releaseMetaDataRetriever() async {
-    await _methodChannel.invokeMethod(Constants.releaseMetaDataRetriever);
-  }
-
   ///platform call to prepare player
   Future<bool> preparePlayer(String path, String key, [double? volume]) async {
     var result = await _methodChannel.invokeMethod(Constants.preparePlayer, {
