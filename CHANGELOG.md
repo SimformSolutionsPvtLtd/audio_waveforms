@@ -1,3 +1,7 @@
+## 1.0.3
+
+- Fixed [#163](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/163) - Failed to stop recording - thanks [@linchen00](https://github.com/linchen00)
+
 ## 1.0.2
 
 - Now, calling `stopAllPlayers` is not mandatory for disposing streams and it will also not dispose controller. With last remaining player they will be disposed (Streams can be re-initialised by creating a new PlayerController).
