@@ -22,8 +22,6 @@ private const val RECORD_AUDIO_REQUEST_CODE = 1001
 class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     private var useLegacyNormalization = false
-    private var mediaMetadataRetriever = MediaMetadataRetriever()
-    private var audioInfoArrayList = ArrayList<String>()
 
     fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
         if (useLegacyNormalization) {
@@ -72,6 +70,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                 reset()
                 release()
             }
+            val audioInfoArrayList = ArrayList<String>()
             val duration = getDuration(path)
             audioInfoArrayList.add(path)
             audioInfoArrayList.add(duration)
@@ -82,13 +81,17 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     }
 
     private fun getDuration(path: String): String {
-        mediaMetadataRetriever.setDataSource(path)
-        val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION)
-        return duration ?: "-1"
-    }
-
-    fun releaseMetaDataRetriever(){
-        mediaMetadataRetriever.release()
+        val mediaMetadataRetriever = MediaMetadataRetriever()
+        try {
+            mediaMetadataRetriever.setDataSource(path)
+            val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION)
+            return duration ?: "-1"
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Failed to get recording duration")
+        } finally {
+            mediaMetadataRetriever.release()
+        }
+        return "-1"
     }
 
     fun startRecorder(result: MethodChannel.Result, recorder: MediaRecorder?, useLegacy: Boolean) {
