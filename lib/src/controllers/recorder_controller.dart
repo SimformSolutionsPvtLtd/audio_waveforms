@@ -68,6 +68,8 @@ class RecorderController extends ChangeNotifier {
 
   bool shouldClearLabels = false;
 
+  bool _isDisposed = false;
+
   bool _useLegacyNormalization = false;
 
   /// Provides currently recorded audio duration. Use [onCurrentDuration]
@@ -410,6 +412,12 @@ class RecorderController extends ChangeNotifier {
     _recorderState = state;
   }
 
+  @override
+  void notifyListeners() {
+    if (_isDisposed) return;
+    super.notifyListeners();
+  }
+
   /// Releases any resources taken by this recorder and with this
   /// controller is also disposed.
   @override
@@ -423,6 +431,7 @@ class RecorderController extends ChangeNotifier {
     _timer?.cancel();
     _timer = null;
     _recorderTimer = null;
+    _isDisposed = true;
     super.dispose();
   }
 }

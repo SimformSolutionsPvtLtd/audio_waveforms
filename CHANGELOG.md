@@ -1,3 +1,7 @@
+## 1.0.4 (Unreleased)
+
+- Fixed [#171](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/171) - Do not call `notifyListeners()` when disposed
+
 ## 1.0.3
 
 - Fixed [#163](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/163) - Failed to stop recording - thanks [@linchen00](https://github.com/linchen00)
