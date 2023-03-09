@@ -24,11 +24,7 @@ class PlayerController extends ChangeNotifier {
 
   bool get shouldRefresh => _shouldRefresh;
 
-  void _setPlayerState(PlayerState state) {
-    _playerState = state;
-    PlatformStreams.instance
-        .addPlayerStateEvent(PlayerIdentifier(playerKey, state));
-  }
+  bool _isDisposed = false;
 
   int _maxDuration = -1;
 
@@ -72,6 +68,12 @@ class PlayerController extends ChangeNotifier {
       PlatformStreams.instance.init();
     }
     PlatformStreams.instance.playerControllerFactory.addAll({playerKey: this});
+  }
+
+  void _setPlayerState(PlayerState state) {
+    _playerState = state;
+    PlatformStreams.instance
+        .addPlayerStateEvent(PlayerIdentifier(playerKey, state));
   }
 
   /// Calls platform to prepare player.
@@ -249,6 +251,7 @@ class PlayerController extends ChangeNotifier {
     if (PlatformStreams.instance.playerControllerFactory.length == 1) {
       PlatformStreams.instance.dispose();
     }
+    _isDisposed = true;
     super.dispose();
   }
 
@@ -271,6 +274,12 @@ class PlayerController extends ChangeNotifier {
   void setRefresh(bool refresh) {
     _shouldRefresh = refresh;
     notifyListeners();
+  }
+
+  @override
+  void notifyListeners() {
+    if (_isDisposed) return;
+    super.notifyListeners();
   }
 
   @override
