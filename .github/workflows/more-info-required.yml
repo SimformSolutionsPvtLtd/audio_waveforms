@@ -1,7 +1,7 @@
 name: Close un-respoded issues
 on:
   schedule:
-    - cron: "06 8 * * *"
+    - cron: "10 8 * * *"
 
 jobs:
   close-issues:
@@ -13,7 +13,7 @@ jobs:
       - uses: actions/stale@v5
         with:
           days-before-issue-stale: -1
-          days-before-issue-close: 7
+          days-before-issue-close: 0
           stale-issue-label: "more-info-required"
           stale-issue-message: ""
           close-issue-message: "This issue was closed because additional information was requested and no more information was provided since 7 days after being marked as more-info-required."
