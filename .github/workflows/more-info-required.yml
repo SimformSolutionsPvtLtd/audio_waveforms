@@ -1,7 +1,7 @@
 name: Close un-respoded issues
 on:
   schedule:
-    - cron: "01 0 * * *"
+    - cron: "06 8 * * *"
 
 jobs:
   close-issues:
