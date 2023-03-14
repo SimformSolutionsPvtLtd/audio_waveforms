@@ -1,0 +1,22 @@
+name: Close un-respoded issues
+on:
+  schedule:
+    - cron: "01 0 * * *"
+
+jobs:
+  close-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v5
+        with:
+          days-before-issue-stale: -1
+          days-before-issue-close: 7
+          stale-issue-label: "more-info-required"
+          stale-issue-message: ""
+          close-issue-message: "This issue was closed because additional information was requested and no more information was provided since 7 days after being marked as more-info-required."
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
