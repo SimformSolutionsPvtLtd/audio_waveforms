@@ -1,5 +1,7 @@
 name: Autocloser
-on: [issues]
+on:
+  issues:
+    types: [ labeled ]
 jobs:
   autoclose:
     if: ${{ github.event.label.name == 'bug' }}
