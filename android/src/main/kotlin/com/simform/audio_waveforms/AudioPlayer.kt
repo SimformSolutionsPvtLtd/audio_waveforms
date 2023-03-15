@@ -161,6 +161,19 @@ class AudioPlayer(
         }
     }
 
+    fun setRate(rate: Float?, result: MethodChannel.Result) {
+        try {
+            if (rate != null) {
+                player?.setPlaybackSpeed(rate)
+                result.success(true)
+            } else {
+                result.success(false)
+            }
+        } catch (e: Exception) {
+            result.success(false)
+        }
+    }
+
     private fun startListening(result: MethodChannel.Result) {
         runnable = object : Runnable {
             override fun run() {

@@ -25,6 +25,8 @@ class Constants {
   static const String progress = "progress";
   static const String setVolume = "setVolume";
   static const String volume = "volume";
+  static const String setRate = "setRate";
+  static const String rate = "rate";
   static const String rightVolume = "rightVolume";
   static const String getDuration = "getDuration";
   static const String durationType = "durationType";

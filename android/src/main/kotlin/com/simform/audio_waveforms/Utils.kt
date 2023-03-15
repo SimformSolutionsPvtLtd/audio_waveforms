@@ -48,6 +48,8 @@ object Constants {
     const val progress = "progress"
     const val setVolume = "setVolume"
     const val volume = "volume"
+    const val setRate = "setRate"
+    const val rate = "rate"
     const val getDuration = "getDuration"
     const val durationType = "durationType"
     const val playerKey = "playerKey"
