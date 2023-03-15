@@ -101,6 +101,13 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not set volume", details: "Player key is null"))
             }
+        case Constants.setRate:
+            let key = args?[Constants.playerKey] as? String
+            if(key != nil){
+                audioPlayers[key!]?.setRate(args?[Constants.rate] as? Double,result)
+            } else {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Can not set rate", details: "Player key is null"))
+            }
         case Constants.getDuration:
             let type = args?[Constants.durationType] as? Int
             let key = args?[Constants.playerKey] as? String

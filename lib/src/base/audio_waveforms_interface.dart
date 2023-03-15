@@ -156,6 +156,15 @@ class AudioWaveformsInterface {
     });
     return result ?? false;
   }
+  
+  ///platform call to set rate
+  Future<bool> setRate(double rate, String key) async {
+    var result = await _methodChannel.invokeMethod(Constants.setRate, {
+      Constants.rate: rate,
+      Constants.playerKey: key,
+    });
+    return result ?? false;
+  }
 
   ///platform call to seek audio at provided position
   Future<bool> seekTo(String key, int progress) async {

@@ -40,6 +40,8 @@ struct Constants {
     static let seekTo = "seekTo"
     static let progress = "progress"
     static let setVolume = "setVolume"
+    static let setRate = "setRate"
+    static let rate = "rate"
     static let volume = "volume"
     static let getDuration = "getDuration"
     static let durationType = "durationType"
