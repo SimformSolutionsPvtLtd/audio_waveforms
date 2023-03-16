@@ -7,15 +7,19 @@ import 'package:flutter/material.dart';
 /// visible.
 class WaveClipper extends CustomClipper<Path> {
   final double extraClipperHeight;
+  final double waveWidth;
 
-  WaveClipper(this.extraClipperHeight);
+  WaveClipper({
+    required this.extraClipperHeight,
+    this.waveWidth = 0,
+  });
 
   @override
   getClip(Size size) {
     final path = Path()
       ..lineTo(0, size.height + extraClipperHeight)
-      ..lineTo(size.width, size.height + extraClipperHeight)
-      ..lineTo(size.width, 0);
+      ..lineTo(size.width - waveWidth, size.height + extraClipperHeight)
+      ..lineTo(size.width - waveWidth, 0);
     return path;
   }
 

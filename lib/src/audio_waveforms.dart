@@ -68,12 +68,10 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
         onHorizontalDragStart:
             widget.enableGesture ? _handleHorizontalDragStart : null,
         child: ClipPath(
-          clipper: WaveClipper(!widget.waveStyle.showDurationLabel
-              ? 0.0
-              : widget.waveStyle.extraClipperHeight ??
-                  (widget.waveStyle.durationLinesHeight +
-                      (widget.waveStyle.durationStyle.fontSize ??
-                          widget.waveStyle.durationLinesHeight))),
+          clipper: WaveClipper(
+            extraClipperHeight: _extraClipperHeight,
+            waveWidth: _waveWidth,
+          ),
           child: RepaintBoundary(
             child: CustomPaint(
               size: widget.size,
@@ -120,6 +118,30 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
         ),
       ),
     );
+  }
+
+  /// Gets width of a single wave including space between two waves.
+  double get _waveWidth =>
+      widget.waveStyle.waveThickness + widget.waveStyle.spacing;
+
+  /// Provides extra clipping if needed.
+  double get _extraClipperHeight {
+    if (widget.waveStyle.showDurationLabel) {
+      // If duration labels are enabled and for some reason labels are getting
+      // cut or effecting other widget cut. This will help to reduce or add
+      // clipping.
+      if (widget.waveStyle.extraClipperHeight != null) {
+        return widget.waveStyle.extraClipperHeight!;
+      }
+      // Default clipping. Calculated from duration line.
+      return widget.waveStyle.durationLinesHeight +
+          (widget.waveStyle.durationStyle.fontSize ??
+              widget.waveStyle.durationLinesHeight);
+    } else {
+      // If labels are disabled then there is no need to add/remove extra
+      // clipping.
+      return 0;
+    }
   }
 
   ///This handles scrolling of the wave
