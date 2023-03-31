@@ -212,6 +212,13 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
       clipBehavior: widget.clipBehavior,
       child: GestureDetector(
         onTap: widget.onTap,
+        onTapDown: (details) async {
+          if (widget.enableSeekGesture) {
+            final _maxDuration = await widget.playerController.getDuration();
+            _audioProgress = details.localPosition.dx / widget.size.width;
+            setState(() {});
+          }
+        },
         onDoubleTap: widget.onDoubleTap,
         onLongPress: widget.onLongPress,
         onForcePressUpdate: widget.onForcePressUpdate,
@@ -313,6 +320,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     var seekPosition = widget.playerController.maxDuration * _proportion;
 
     widget.playerController.seekTo(seekPosition.toInt());
+    widget.playerController.notifyListeners();
   }
 
   /// This method handles tap seek gesture
