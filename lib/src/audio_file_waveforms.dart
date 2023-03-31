@@ -62,6 +62,21 @@ class AudioFileWaveforms extends StatefulWidget {
   /// Allow seeking with gestures when turned on.
   final bool enableSeekGesture;
 
+  /// Resets the waveform playhead position on complete.
+  final bool resetPositionOnComplete;
+
+  /// The `onTap` callback for the waveforms internal `GestureDetector`.
+  final void Function()? onTap;
+
+  /// The `onDoubleTap` callback for the waveforms internal `GestureDetector`.
+  final void Function()? onDoubleTap;
+
+  /// The `onLongPress` callback for the waveforms internal `GestureDetector`.
+  final void Function()? onLongPress;
+
+  /// The `onForcePressUpdate` callback for the waveforms internal `GestureDetector`.
+  final void Function(ForcePressDetails details)? onForcePressUpdate;
+
   /// Generate waveforms from audio file. You play those audio file using
   /// [PlayerController].
   ///
@@ -86,6 +101,11 @@ class AudioFileWaveforms extends StatefulWidget {
     this.clipBehavior = Clip.none,
     this.waveformType = WaveformType.long,
     this.enableSeekGesture = true,
+    this.resetPositionOnComplete = true,
+    this.onTap,
+    this.onDoubleTap,
+    this.onLongPress,
+    this.onForcePressUpdate,
   }) : super(key: key);
 
   @override
@@ -137,7 +157,9 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
 
     onCompletionSubscription =
         widget.playerController.onCompletion.listen((event) {
-      _seekProgress.value = widget.playerController.maxDuration;
+      widget.resetPositionOnComplete
+          ? _seekProgress.value
+          : widget.playerController.maxDuration;
       _updatePlayerPercent(widget.size);
     });
     if (widget.waveformData.isNotEmpty) {
@@ -189,6 +211,10 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
       decoration: widget.decoration,
       clipBehavior: widget.clipBehavior,
       child: GestureDetector(
+        onTap: widget.onTap,
+        onDoubleTap: widget.onDoubleTap,
+        onLongPress: widget.onLongPress,
+        onForcePressUpdate: widget.onForcePressUpdate,
         onHorizontalDragUpdate:
             widget.enableSeekGesture ? _handleDragGestures : null,
         onTapUp: widget.enableSeekGesture ? _handleScrubberSeekStart : null,
