@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '/src/base/utils.dart';
 import 'player_controller.dart';
 
+// ignore_for_file: deprecated_member_use_from_same_package
 class RecorderController extends ChangeNotifier {
   final List<double> _waveData = [];
 
@@ -23,11 +24,12 @@ class RecorderController extends ChangeNotifier {
 
   int? bitRate;
 
-  /// **Important**: This is legacy normalizationFactor which was removed
-  /// in 1.0.0 release. Only use this if you are using legacy normalization.
-  ///
   /// Db we get from native is too high so in Android it the value is
-  /// subtracted and in IOS value added
+  /// subtracted and in IOS value added.
+  @Deprecated(
+    '\nThis is legacy normalizationFactor which was removed'
+    ' in 1.0.0 release. Only use this if you are using legacy normalization',
+  )
   double normalizationFactor = Platform.isAndroid ? 60 : 40;
 
   /// Current maximum peak power for ios and peak amplitude android.
