@@ -21,6 +21,11 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+def appCenterVersionCode = System.getenv('APPCENTER_BUILD_ID')
+if (appCenterVersionCode != null) {
+    flutterVersionCode = appCenterVersionCode
+}
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
