@@ -26,7 +26,10 @@ apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
-    compileSdkVersion 33
+    if (project.android.hasProperty("namespace")) {
+        namespace "com.simform.audio_waveforms_example"
+    }
+    compileSdk 33
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
