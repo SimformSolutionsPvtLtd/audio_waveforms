@@ -212,15 +212,15 @@ class _HomeState extends State<Home> {
       if (isRecording) {
         recorderController.reset();
 
-        final path = await recorderController.stop(false);
+        path = await recorderController.stop(false);
 
         if (path != null) {
           isRecordingCompleted = true;
           debugPrint(path);
-          debugPrint("Recorded file size: ${File(path).lengthSync()}");
+          debugPrint("Recorded file size: ${File(path!).lengthSync()}");
         }
       } else {
-        await recorderController.record(path: path!);
+        await recorderController.record(path: path); // Path is optional
       }
     } catch (e) {
       debugPrint(e.toString());

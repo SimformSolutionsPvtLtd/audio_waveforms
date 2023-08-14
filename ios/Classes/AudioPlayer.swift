@@ -31,7 +31,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             do {
                 player = try AVAudioPlayer(contentsOf: audioUrl!)
             } catch {
-                result(FlutterError(code: Constants.audioWaveforms, message: "Failed to prepare player", details: nil))
+                result(FlutterError(code: Constants.audioWaveforms, message: "Failed to prepare player", details: error.localizedDescription))
             }
             player?.prepareToPlay()
             player?.volume = Float(volume ?? 1.0)
