@@ -40,18 +40,21 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
 
   double _initialOffsetPosition = 0.0;
   double _initialPosition = 0.0;
+  Duration currentlyRecordedDuration = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    widget.recorderController.addListener(() {
-      if (mounted) setState(() {});
-    });
+    widget.recorderController
+      ..addListener(_updateOnControllerUpdate)
+      ..onCurrentDuration.listen((duration) {
+        currentlyRecordedDuration = duration;
+      });
   }
 
   @override
   void dispose() {
-    widget.recorderController.removeListener(() {});
+    widget.recorderController.removeListener(_updateOnControllerUpdate);
     super.dispose();
   }
 
@@ -107,13 +110,14 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 labelSpacing: widget.waveStyle.labelSpacing,
                 gradient: widget.waveStyle.gradient,
                 shouldClearLabels: widget.recorderController.shouldClearLabels,
-                revertClearlabelCall:
+                revertClearLabelCall:
                     widget.recorderController.revertClearLabelCall,
                 setCurrentPositionDuration:
                     widget.recorderController.setScrolledPositionDuration,
                 shouldCalculateScrolledPosition:
                     widget.shouldCalculateScrolledPosition,
                 scaleFactor: widget.waveStyle.scaleFactor,
+                currentlyRecordedDuration: currentlyRecordedDuration,
               ),
             ),
           ),
@@ -177,5 +181,11 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
     ambiguate(WidgetsBinding.instance)?.addPostFrameCallback((_) {
       setState(() {});
     });
+  }
+
+  void _updateOnControllerUpdate() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 }

@@ -92,35 +92,31 @@ class PlayerWavePainter extends CustomPainter {
 
   void _drawWave(Size size, Canvas canvas) {
     final length = waveformData.length;
+    final halfWidth = size.width / 2;
+    final halfHeight = size.height / 2;
     if (cachedAudioProgress != audioProgress) {
       pushBack();
     }
     for (int i = 0; i < length; i++) {
-      canvas.drawLine(
-        Offset(
-          i * spacing +
-              dragOffset.dx -
-              totalBackDistance.dx +
-              emptySpace +
-              (waveformType.isFitWidth ? 0 : size.width / 2),
-          size.height / 2 +
-              (showBottom
-                  ? ((waveformData[i] * animValue)) * scaleFactor * scrollScale
-                  : 0),
-        ),
-        Offset(
-          i * spacing +
-              dragOffset.dx -
-              totalBackDistance.dx +
-              emptySpace +
-              (waveformType.isFitWidth ? 0 : size.width / 2),
-          size.height / 2 +
-              (showTop
-                  ? -((waveformData[i] * animValue)) * scaleFactor * scrollScale
-                  : 0),
-        ),
-        i < audioProgress * length ? liveWavePaint : fixedWavePaint,
-      );
+      final currentDragPointer = dragOffset.dx - totalBackDistance.dx;
+      final waveWidth = i * spacing;
+      final dx = waveWidth +
+          currentDragPointer +
+          emptySpace +
+          (waveformType.isFitWidth ? 0 : halfWidth);
+      final waveHeight =
+          (waveformData[i] * animValue) * scaleFactor * scrollScale;
+      final bottomDy = halfHeight + (showBottom ? waveHeight : 0);
+      final topDy = halfHeight + (showTop ? -waveHeight : 0);
+
+      // Only draw waves which are in visible viewport.
+      if (dx > 0 && dx < halfWidth * 2) {
+        canvas.drawLine(
+          Offset(dx, bottomDy),
+          Offset(dx, topDy),
+          i < audioProgress * length ? liveWavePaint : fixedWavePaint,
+        );
+      }
     }
   }
 }

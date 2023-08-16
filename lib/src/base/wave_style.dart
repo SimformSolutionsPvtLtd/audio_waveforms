@@ -16,7 +16,7 @@ class WaveStyle {
   /// Whether to show bottom wave or not default to true
   final bool showBottom;
 
-  /// Wave padding from bottom default is size.height/2
+  /// Wave padding from bottom. Default to size.height/2.
   final double? bottomPadding;
 
   /// The kind of finish to place on the end of lines drawn
