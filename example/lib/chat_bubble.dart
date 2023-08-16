@@ -156,6 +156,9 @@ class _WaveBubbleState extends State<WaveBubble> {
                             : await controller.startPlayer(
                                 finishMode: FinishMode.loop,
                               );
+                        print('======== max duration');
+                        print(controller.maxDuration);
+                        print('========');
                       },
                       icon: Icon(
                         controller.playerState.isPlaying

@@ -2,7 +2,14 @@ package com.simform.audio_waveforms
 
 import android.Manifest
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
 import android.media.MediaRecorder
@@ -13,15 +20,17 @@ import androidx.core.app.ActivityCompat
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 import java.io.IOException
-import java.lang.IllegalStateException
 import kotlin.math.log10
 
 private const val LOG_TAG = "AudioWaveforms"
 private const val RECORD_AUDIO_REQUEST_CODE = 1001
 
-class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
+class AudioRecorder(
+    private val context: Context,
+) : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     private var useLegacyNormalization = false
+
 
     fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
         if (useLegacyNormalization) {
@@ -45,6 +54,9 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         sampleRate: Int,
         bitRate: Int?
     ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            checkInputDevice()
+        }
         recorder?.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(getOutputFormat(outputFormat))
@@ -53,6 +65,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             if (bitRate != null) {
                 setAudioEncodingBitRate(bitRate)
             }
+
             setOutputFile(path)
             try {
                 recorder.prepare()
@@ -61,6 +74,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                 Log.e(LOG_TAG, "Failed to stop initialize recorder")
             }
         }
+
     }
 
     fun stopRecording(result: MethodChannel.Result, recorder: MediaRecorder?, path: String) {
@@ -170,6 +184,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                     MediaRecorder.AudioEncoder.AAC
                 }
             }
+
             Constants.vorbis -> return MediaRecorder.AudioEncoder.VORBIS
 
             else -> return MediaRecorder.AudioEncoder.AAC
@@ -193,6 +208,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             Constants.amr_nb -> return MediaRecorder.OutputFormat.AMR_NB
             Constants.webm ->
                 return MediaRecorder.OutputFormat.WEBM
+
             Constants.mpeg_2_ts -> {
                 return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     MediaRecorder.OutputFormat.MPEG_2_TS
@@ -201,8 +217,59 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                     MediaRecorder.OutputFormat.MPEG_4
                 }
             }
+
             Constants.aac_adts -> return MediaRecorder.OutputFormat.AAC_ADTS
             else -> return MediaRecorder.OutputFormat.MPEG_4
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun checkInputDevice() {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val devices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
+        context.registerReceiver(scoAudioReceiver,
+            IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)
+        )
+        audioManager.registerAudioDeviceCallback(object : AudioDeviceCallback() {
+            override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
+                super.onAudioDevicesAdded(addedDevices)
+                println("in callback")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && addedDevices != null) {
+                    println("in condition")
+                    for (device in addedDevices) {
+                        println("in for loop")
+                        if (device.type == AudioDeviceInfo.TYPE_BLE_HEADSET || device.type == AudioDeviceInfo.TYPE_WIRED_HEADSET || device.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
+                            println("set device")
+                            audioManager.setCommunicationDevice(device)
+                            break
+                        } else {
+
+                        }
+                    }
+                } else {
+//                    audioManager.startBluetoothSco()
+                }
+            }
+
+        }, null)
+
+    }
+    private val scoAudioReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED) {
+                val state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1)
+                // Handle the SCO audio state change here
+                when (state) {
+                    AudioManager.SCO_AUDIO_STATE_CONNECTED -> {
+                        // Bluetooth SCO audio connection established
+                    }
+                    AudioManager.SCO_AUDIO_STATE_DISCONNECTED -> {
+                        // Bluetooth SCO audio connection disconnected
+                    }
+                    // You can handle other states as needed
+                }
+            }
+        }
+    }
+
 }

@@ -146,6 +146,7 @@ class _HomeState extends State<Home> {
                                     waveColor: Colors.white,
                                     extendWaveform: true,
                                     showMiddleLine: false,
+                                    showDurationLabel: true,
                                   ),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12.0),
@@ -210,14 +211,16 @@ class _HomeState extends State<Home> {
   void _startOrStopRecording() async {
     try {
       if (isRecording) {
-        recorderController.reset();
+       // recorderController.reset();
 
         final path = await recorderController.stop(false);
 
         if (path != null) {
           isRecordingCompleted = true;
+          print('tag');
+          print(recorderController.recordedDuration);
           debugPrint(path);
-          debugPrint("Recorded file size: ${File(path).lengthSync()}");
+          debugPrint("Recorded file size: ${File(path!).lengthSync()}");
         }
       } else {
         await recorderController.record(path: path!);
@@ -225,8 +228,17 @@ class _HomeState extends State<Home> {
     } catch (e) {
       debugPrint(e.toString());
     } finally {
+      recorderController.onCurrentDuration.listen((event) async {
+        if (event >= const Duration(seconds: 5)) {
+         // final path = await recorderController.stop(false);
+
+          // setState(() {
+         //   isRecording = !isRecording;
+         //  });
+        }
+      });
       setState(() {
-        isRecording = !isRecording;
+        isRecording = true;
       });
     }
   }

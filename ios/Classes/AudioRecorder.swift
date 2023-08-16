@@ -49,7 +49,6 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
                 result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise file URL", details: nil))
             }
             audioRecorder = try AVAudioRecorder(url: audioUrl!, settings: bitRate != nil ? settingsWithBitrate as [String : Any] : settings as [String : Any])
-            
             audioRecorder?.delegate = self
             audioRecorder?.isMeteringEnabled = true
             audioRecorder?.record()
