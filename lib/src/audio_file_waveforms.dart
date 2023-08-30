@@ -62,6 +62,8 @@ class AudioFileWaveforms extends StatefulWidget {
   /// Allow seeking with gestures when turned on.
   final bool enableSeekGesture;
 
+  final Function(int)? onDragEnd;
+
   /// Generate waveforms from audio file. You play those audio file using
   /// [PlayerController].
   ///
@@ -86,6 +88,7 @@ class AudioFileWaveforms extends StatefulWidget {
     this.clipBehavior = Clip.none,
     this.waveformType = WaveformType.long,
     this.enableSeekGesture = true,
+    this.onDragEnd,
   }) : super(key: key);
 
   @override
@@ -255,10 +258,14 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     _isScrolled = false;
     scrollScale = 1.0;
     if (mounted) setState(() {});
-
+    final int position =
+        (widget.playerController.maxDuration * _proportion).toInt();
+    if (widget.onDragEnd != null) {
+      widget.onDragEnd!(position);
+    }
     if (widget.waveformType.isLong) {
       widget.playerController.seekTo(
-        (widget.playerController.maxDuration * _proportion).toInt(),
+        position,
       );
     }
   }
