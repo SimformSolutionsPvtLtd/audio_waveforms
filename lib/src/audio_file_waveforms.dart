@@ -263,7 +263,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms> with SingleTick
     }
 
     if (widget.playAfterSeekGesture && widget.playerController.playerState != PlayerState.playing) {
-      widget.playerController.startPlayer();
+      widget.playerController.startPlayer(finishMode: FinishMode.pause, forceRefresh: false);
     }
   }
 
