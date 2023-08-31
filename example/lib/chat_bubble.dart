@@ -30,11 +30,8 @@ class ChatBubble extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    color: isSender
-                        ? const Color(0xFF276bfd)
-                        : const Color(0xFF343145)),
-                padding: const EdgeInsets.only(
-                    bottom: 9, top: 8, left: 14, right: 12),
+                    color: isSender ? const Color(0xFF276bfd) : const Color(0xFF343145)),
+                padding: const EdgeInsets.only(bottom: 9, top: 8, left: 14, right: 12),
                 child: Text(
                   text,
                   style: const TextStyle(color: Colors.white, fontSize: 20),
@@ -94,10 +91,7 @@ class _WaveBubbleState extends State<WaveBubble> {
     // Opening file from assets folder
     if (widget.index != null) {
       file = File('${widget.appDirectory.path}/audio${widget.index}.mp3');
-      await file?.writeAsBytes(
-          (await rootBundle.load('assets/audios/audio${widget.index}.mp3'))
-              .buffer
-              .asUint8List());
+      await file?.writeAsBytes((await rootBundle.load('assets/audios/audio${widget.index}.mp3')).buffer.asUint8List());
     }
     if (widget.index == null && widget.path == null && file?.path == null) {
       return;
@@ -112,8 +106,7 @@ class _WaveBubbleState extends State<WaveBubble> {
       controller
           .extractWaveformData(
             path: widget.path ?? file!.path,
-            noOfSamples:
-                playerWaveStyle.getSamplesForWidth(widget.width ?? 200),
+            noOfSamples: playerWaveStyle.getSamplesForWidth(widget.width ?? 200),
           )
           .then((waveformData) => debugPrint(waveformData.toString()));
     }
@@ -130,8 +123,7 @@ class _WaveBubbleState extends State<WaveBubble> {
   Widget build(BuildContext context) {
     return widget.path != null || file?.path != null
         ? Align(
-            alignment:
-                widget.isSender ? Alignment.centerRight : Alignment.centerLeft,
+            alignment: widget.isSender ? Alignment.centerRight : Alignment.centerLeft,
             child: Container(
               padding: EdgeInsets.only(
                 bottom: 6,
@@ -141,9 +133,7 @@ class _WaveBubbleState extends State<WaveBubble> {
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: widget.isSender
-                    ? const Color(0xFF276bfd)
-                    : const Color(0xFF343145),
+                color: widget.isSender ? const Color(0xFF276bfd) : const Color(0xFF343145),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -158,20 +148,18 @@ class _WaveBubbleState extends State<WaveBubble> {
                               );
                       },
                       icon: Icon(
-                        controller.playerState.isPlaying
-                            ? Icons.stop
-                            : Icons.play_arrow,
+                        controller.playerState.isPlaying ? Icons.stop : Icons.play_arrow,
                       ),
                       color: Colors.white,
                       splashColor: Colors.transparent,
                       highlightColor: Colors.transparent,
                     ),
                   AudioFileWaveforms(
+                    pauseOnSeekGesture: true,
+                    playAfterSeekGesture: true,
                     size: Size(MediaQuery.of(context).size.width / 2, 70),
                     playerController: controller,
-                    waveformType: widget.index?.isOdd ?? false
-                        ? WaveformType.fitWidth
-                        : WaveformType.long,
+                    waveformType: widget.index?.isOdd ?? false ? WaveformType.fitWidth : WaveformType.long,
                     playerWaveStyle: playerWaveStyle,
                   ),
                   if (widget.isSender) const SizedBox(width: 10),
