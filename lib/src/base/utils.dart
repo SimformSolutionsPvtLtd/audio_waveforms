@@ -20,7 +20,7 @@ enum RecorderState { initialized, recording, paused, stopped }
 /// Android and IOS are have been separated to better support
 /// platform wise encoder and output formats.
 ///
-/// Check https://developer.android.com/reference/android/media/MediaRecorder.AudioEncoder
+/// Check [MediaRecorder.AudioEncoder](https://developer.android.com/reference/android/media/MediaRecorder.AudioEncoder)
 /// for more info.
 enum AndroidEncoder {
   /// Default
@@ -44,7 +44,7 @@ enum AndroidEncoder {
 /// Android and IOS are have been separated to better support
 /// platform wise encoder and output formats.
 ///
-/// Check https://developer.android.com/reference/android/media/MediaRecorder.OutputFormat
+/// Check [MediaRecorder.OutputFormat](https://developer.android.com/reference/android/media/MediaRecorder.OutputFormat)
 /// for more info.
 enum AndroidOutputFormat {
   /// Default
@@ -72,7 +72,7 @@ enum AndroidOutputFormat {
 /// Android and IOS are have been separated to better support
 /// platform wise encoder and output formats.
 ///
-/// Check https://developer.apple.com/documentation/coreaudiotypes/1572096-audio_format_identifiers
+/// Check [Audio Format Identifiers](https://developer.apple.com/documentation/coreaudiotypes/1572096-audio_format_identifiers)
 /// for more info.
 enum IosEncoder {
   /// Default
