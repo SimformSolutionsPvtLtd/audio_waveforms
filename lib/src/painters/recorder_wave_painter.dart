@@ -48,6 +48,7 @@ class RecorderWavePainter extends CustomPainter {
     required this.currentlyRecordedDuration,
     required this.labels,
     required this.isRtl,
+    this.clipRRect,
   })  : _wavePaint = Paint()
           ..color = waveColor
           ..strokeWidth = waveThickness
@@ -97,6 +98,7 @@ class RecorderWavePainter extends CustomPainter {
   final Duration currentlyRecordedDuration;
   final List<Label> labels;
   final bool isRtl;
+  final RRect? clipRRect;
 
   static const int durationBuffer = 5;
 
@@ -148,6 +150,10 @@ class RecorderWavePainter extends CustomPainter {
       } else {
         _setScrolledDuration(size);
       }
+    }
+
+    if (clipRRect != null) {
+      canvas.clipRRect(clipRRect!);
     }
   }
 
