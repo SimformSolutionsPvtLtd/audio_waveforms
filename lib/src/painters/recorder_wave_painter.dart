@@ -109,6 +109,10 @@ class RecorderWavePainter extends CustomPainter {
       revertClearLabelCall();
     }
 
+    if (clipRRect != null) {
+      canvas.clipRRect(clipRRect!);
+    }
+
     // Wave gradient
     if (gradient != null) _waveGradient();
 
@@ -150,10 +154,6 @@ class RecorderWavePainter extends CustomPainter {
       } else {
         _setScrolledDuration(size);
       }
-    }
-
-    if (clipRRect != null) {
-      canvas.clipRRect(clipRRect!);
     }
   }
 
