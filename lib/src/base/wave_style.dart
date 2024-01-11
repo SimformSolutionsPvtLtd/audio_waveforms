@@ -65,6 +65,9 @@ class WaveStyle {
   /// Value > 0 will be padded right and value < 0 will be padded left.
   final double durationTextPadding;
 
+  /// Applies this clipRRect to waveforms.
+  final RRect? clipRRect;
+
   /// Applies this gradient to waveforms.
   ///
   /// **Use as below**
@@ -113,6 +116,7 @@ class WaveStyle {
     this.durationLinesColor = Colors.blueAccent,
     this.gradient,
     this.scaleFactor = 20.0,
+    this.clipRRect,
   }) : assert(waveThickness < spacing,
             "waveThickness can't be greater than spacing");
 }
