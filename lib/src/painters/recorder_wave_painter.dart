@@ -105,6 +105,11 @@ class RecorderWavePainter extends CustomPainter {
       pushBack();
       revertClearlabelCall();
     }
+
+    if (clipRRect != null) {
+      canvas.clipRRect(clipRRect!);
+    }
+
     for (var i = 0; i < waveData.length; i++) {
       ///wave gradient
       if (gradient != null) _waveGradient();
@@ -133,10 +138,6 @@ class RecorderWavePainter extends CustomPainter {
 
     ///calculates scrolled position with respect to duration
     if (shouldCalculateScrolledPosition) _setScrolledDuration(size);
-
-    if (clipRRect != null) {
-      canvas.clipRRect(clipRRect!);
-    }
   }
 
   @override
