@@ -24,7 +24,7 @@ class WaveformExtractor(
 ) {
     private var decoder: MediaCodec? = null
     private var extractor: MediaExtractor? = null
-    private var duration = 0L
+    private var durationMillis = 0L
     private var progress = 0F
     private var currentProgress = 0F
 
@@ -48,7 +48,7 @@ class WaveformExtractor(
             val format = mediaExtractor.getTrackFormat(it)
             val mime = format.getString(MediaFormat.KEY_MIME) ?: ""
             if (mime.contains("audio")) {
-                duration = format.getLong(MediaFormat.KEY_DURATION) / 1000000
+                durationMillis = format.getLong(MediaFormat.KEY_DURATION) / 1000
                 mediaExtractor.selectTrack(it)
                 return format
             }
@@ -101,7 +101,7 @@ class WaveformExtractor(
                         } else {
                             16
                         }
-                        totalSamples = sampleRate.toLong() * duration
+                        totalSamples = (sampleRate.toLong() * durationMillis) / 1000
                         perSamplePoints = totalSamples / expectedPoints
                     }
 
