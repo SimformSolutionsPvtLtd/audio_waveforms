@@ -65,13 +65,21 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     fun stopRecording(result: MethodChannel.Result, recorder: MediaRecorder?, path: String) {
         try {
+            var duration: String
+
+            try {
+                recorder?.stop()
+                duration = getDuration(path)
+            } catch (e: RuntimeException) {
+                // Stop was called immediately after start which causes stop() call to fail.
+                duration = "-1"
+            }
+
             recorder?.apply {
-                stop()
                 reset()
                 release()
             }
             val audioInfoArrayList = ArrayList<String>()
-            val duration = getDuration(path)
             audioInfoArrayList.add(path)
             audioInfoArrayList.add(duration)
             result.success(audioInfoArrayList)
