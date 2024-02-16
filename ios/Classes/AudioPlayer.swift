@@ -86,8 +86,12 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     func stopPlayer(result: @escaping FlutterResult) {
         stopListening()
         player?.stop()
-        player = nil
         timer = nil
+        result(true)
+    }
+    
+    func release(result: @escaping FlutterResult) {
+        player = nil
         result(true)
     }
     

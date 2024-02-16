@@ -132,7 +132,6 @@ class AudioPlayer(
         }
         isPlayerPrepared = false
         player?.stop()
-        player?.release()
         result.success(true)
     }
 
@@ -144,6 +143,15 @@ class AudioPlayer(
             result.success(true)
         } catch (e: Exception) {
             result.error(Constants.LOG_TAG, "Failed to pause the player", e.toString())
+        }
+
+    }
+    fun release(result: MethodChannel.Result) {
+        try {
+            player?.release()
+            result.success(true)
+        } catch (e: Exception) {
+            result.error(Constants.LOG_TAG, "Failed to release player resource", e.toString())
         }
 
     }

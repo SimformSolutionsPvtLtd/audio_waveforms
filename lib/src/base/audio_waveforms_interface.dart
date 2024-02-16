@@ -122,6 +122,12 @@ class AudioWaveformsInterface {
     return result ?? false;
   }
 
+  ///platform call to release resource
+  Future<bool> release(String key)async{
+    var result = await  _methodChannel.invokeMethod(Constants.releaseAudioPlayerResource,{Constants.playerKey : key});
+    return result ?? false;
+  }
+
   ///platform call to pause player
   Future<bool> pausePlayer(String key) async {
     var result = await _methodChannel

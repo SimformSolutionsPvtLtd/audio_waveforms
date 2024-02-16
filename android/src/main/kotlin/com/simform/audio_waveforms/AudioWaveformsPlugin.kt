@@ -113,6 +113,11 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+            Constants.releaseAudioPlayerResource -> {
+                val key = call.argument(Constants.playerKey) as String?
+                audioPlayers[key]?.release(result)
+                recorder = null
+            }
             Constants.seekTo -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val progress = call.argument(Constants.progress) as Int?
