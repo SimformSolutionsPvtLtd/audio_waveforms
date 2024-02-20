@@ -22,7 +22,7 @@ class AudioPlayer(
     private var player: ExoPlayer? = null
     private var playerListener: Player.Listener? = null
     private var isPlayerPrepared: Boolean = false
-    private var finishMode = FinishMode.Stop
+    private var releaseMode = ReleaseMode.Release
     private var key = playerKey
     private var updateFrequency: Long = 200
 
@@ -58,26 +58,25 @@ class AudioPlayer(
                     }
                     if (state == Player.STATE_ENDED) {
                         val args: MutableMap<String, Any?> = HashMap()
-                        when (finishMode) {
-                            FinishMode.Loop -> {
-                                player?.seekTo(0)
-                                player?.play()
-                                args[Constants.finishType] = 0
-                            }
-
-                            FinishMode.Pause -> {
-                                player?.seekTo(0)
-                                player?.playWhenReady = false
-                                stopListening()
-                                args[Constants.finishType] = 1
-                            }
-
-                            else -> {
+                        when(releaseMode){
+                            ReleaseMode.Release -> {
                                 player?.stop()
                                 player?.release()
                                 player = null
                                 stopListening()
-                                args[Constants.finishType] = 2
+                                args[Constants.releaseType] = 0
+                            }
+                            ReleaseMode.Loop -> {
+                                player?.seekTo(0)
+                                player?.play()
+                                args[Constants.releaseType] = 1
+                            }
+
+                            ReleaseMode.Pause -> {
+                                player?.seekTo(0)
+                                player?.playWhenReady = false
+                                stopListening()
+                                args[Constants.releaseType] = 2
                             }
                         }
                         args[Constants.playerKey] = key
@@ -104,15 +103,8 @@ class AudioPlayer(
         }
     }
 
-    fun start(result: MethodChannel.Result, finishMode: Int?) {
+    fun start(result: MethodChannel.Result) {
         try {
-            if (finishMode != null && finishMode == 0) {
-                this.finishMode = FinishMode.Loop
-            } else if (finishMode != null && finishMode == 1) {
-                this.finishMode = FinishMode.Pause
-            } else {
-                this.finishMode = FinishMode.Stop
-            }
             player?.playWhenReady = true
             player?.play()
             result.success(true)
@@ -194,6 +186,27 @@ class AudioPlayer(
         }
     }
 
+    fun setReleaseMode(result: MethodChannel.Result, releaseModeType : Int?){
+        try{
+            releaseModeType?.let {
+                when (releaseModeType) {
+                    0 -> {
+                        this.releaseMode = ReleaseMode.Release
+                    }
+                    1 -> {
+                        this.releaseMode = ReleaseMode.Loop
+                    }
+                    else -> {
+                        this.releaseMode = ReleaseMode.Pause
+                    }
+                }
+            }
+
+        }catch (e:Exception){
+            result.error(Constants.LOG_TAG,"Can not set the release mode",e.toString())
+        }
+    }
+
     private fun startListening(result: MethodChannel.Result) {
         runnable = object : Runnable {
             override fun run() {
@@ -217,4 +230,6 @@ class AudioPlayer(
         args[Constants.playerKey] = key
         methodChannel.invokeMethod(Constants.onCurrentDuration, args)
     }
+
+
 }

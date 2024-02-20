@@ -7,7 +7,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     private var stopWhenCompleted = false
     private var timer: Timer?
     private var player: AVAudioPlayer?
-    private var finishMode: FinishMode = FinishMode.stop
+    private var releaseMode:ReleaseMode = ReleaseMode.release
     private var updateFrequency = 200
     var plugin: SwiftAudioWaveformsPlugin
     var playerKey: String
@@ -53,42 +53,42 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         }
     }
     
-    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer,
-                                     successfully flag: Bool) {
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer,successfully flag: Bool) {
         var finishType = 2
-        switch self.finishMode {
-        case .loop:
-            self.player?.currentTime = 0
-            self.player?.play()
-            finishType = 0
-        case .pause:
-            self.player?.pause()
-            stopListening()
-            finishType = 1
-        case .stop:
+        var releaseType = 0
+
+        switch self.releaseMode{
+        case .release:
             self.player?.stop()
             stopListening()
             self.player = nil
-            finishType = 2
+            releaseType = 0
+
+        case .loop:
+            self.player?.currentTime = 0
+            self.player?.play()
+            releaseType = 1
+
+        case .pause:
+            self.player?.pause()
+            stopListening()
+            releaseType = 2
         }
-        plugin.flutterChannel.invokeMethod(Constants.onDidFinishPlayingAudio, arguments: [Constants.finishType: finishType, Constants.playerKey: playerKey])
         
+        plugin.flutterChannel.invokeMethod(Constants.onDidFinishPlayingAudio, arguments: [
+            Constants.releaseType: releaseType,
+            Constants.playerKey: playerKey])
+
     }
-    
-    func startPlyer(result: @escaping FlutterResult, finishMode: Int?) {
-        if(finishMode != nil && finishMode == 0) {
-            self.finishMode = FinishMode.loop
-        } else if(finishMode != nil && finishMode == 1) {
-            self.finishMode = FinishMode.pause
-        } else {
-            self.finishMode = FinishMode.stop
-        }
+
+    func startPlyer(result: @escaping FlutterResult) {
         player?.play()
         player?.delegate = self
         startListening()
         result(true)
     }
-    
+
+
     func pausePlayer(result: @escaping FlutterResult) {
         stopListening()
         player?.pause()
@@ -121,12 +121,12 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         player?.volume = Float(volume ?? 1.0)
         result(true)
     }
-    
+
     func setRate(_ rate: Double?, _ result: @escaping FlutterResult) {
         player?.rate = Float(rate ?? 1.0);
         result(true)
     }
-    
+
     func seekTo(_ time: Int?, _ result: @escaping FlutterResult) {
         if(time != nil) {
             player?.currentTime = Double(time! / 1000)
@@ -137,6 +137,16 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         }
     }
     
+    func setReleaseMode(result : @escaping FlutterResult, releaseType : Int?){
+        if(releaseType != nil && releaseType == 0){
+            self.releaseMode = ReleaseMode.release
+        }else if(releaseType != nil && releaseType == 1){
+            self.releaseMode = ReleaseMode.loop
+        }else{
+            self.releaseMode = ReleaseMode.pause
+        }
+    }
+
     func startListening() {
         if #available(iOS 10.0, *) {
             timer = Timer.scheduledTimer(withTimeInterval: (Double(updateFrequency) / 1000), repeats: true, block: { _ in

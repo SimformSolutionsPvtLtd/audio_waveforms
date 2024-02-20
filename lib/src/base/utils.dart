@@ -198,3 +198,25 @@ enum UpdateFrequency {
   const UpdateFrequency(this.value);
   final int value;
 }
+
+/// This enum is meant to be used as a parameter of setReleaseMode method.
+///
+/// It represents the behavior of AudioPlayer when an audio is finished or stopped.
+enum ReleaseMode{
+  ///Release all resources, just like calling release method.
+  ///
+  /// In Android, the media player is quite resource-intensive, and this will
+  /// let it go. Data will be buffered again when needed (if it's a remote file,
+  /// it will be downloaded again).
+  /// In iOS works just like stop method.
+  ///
+  /// This is the default behavior.
+  release,
+
+  ///Keeps the buffered data and plays again after completion, creating a loop.
+  loop,
+
+  ///Stop audio playback but keep all resources intact.
+  ///Use this if you intend to play again later.
+  pause,
+}

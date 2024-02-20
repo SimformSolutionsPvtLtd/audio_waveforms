@@ -59,13 +59,20 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
             break
         case Constants.startPlayer:
             let key = args?[Constants.playerKey] as? String
-            let finishMode = args?[Constants.finishMode] as? Int
             if(key != nil){
-                audioPlayers[key!]?.startPlyer(result: result,finishMode: finishMode)
+                audioPlayers[key!]?.startPlyer(result: result)
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not start player", details: "Player key is null"))
             }
             break
+        case Constants.setReleaseMode:
+            let key = args?[Constants.playerKey] as? String
+            let releaseType = args?[Constants.releaseType] as? Int
+            if(key != nil){
+                audioPlayers[key!]?.setReleaseMode(result: result, releaseType: releaseType)
+            }else{
+                result(FlutterError(code: Constants.audioWaveforms, message: "Can not set release mode", details: "Player key is null"))
+            }
         case Constants.pausePlayer:
             let key = args?[Constants.playerKey] as? String
             if(key != nil){
