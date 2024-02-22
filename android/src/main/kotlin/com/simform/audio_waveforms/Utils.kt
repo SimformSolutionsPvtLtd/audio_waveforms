@@ -76,3 +76,7 @@ enum class UpdateFrequency(val value:Long) {
     Medium(100),
     Low(200),
 }
+
+fun interface RequestPermissionsSuccessCallback {
+    fun onSuccess(results: Boolean?)
+}

@@ -208,8 +208,4 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             else -> return MediaRecorder.OutputFormat.MPEG_4
         }
     }
-
-    fun interface RequestPermissionsSuccessCallback {
-        fun onSuccess(results: Boolean?)
-    }
 }
