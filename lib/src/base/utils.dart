@@ -129,14 +129,15 @@ extension FilterForPlayer<T> on Stream<PlayerIdentifier<T>> {
 /// An enum to be used to change behaviour of player when audio
 /// is finished playing.
 enum FinishMode {
-  ///Loops the audio.
+  ///Keeps the buffered data and plays again after completion, creating a loop.
   loop,
 
-  ///Pause the audio, playing again will start from [0] milliseconds.
+  ///Stop audio playback but keep all resources intact.
+  ///Use this if you intend to play again later.
   pause,
 
   ///Stops player and disposes it(a PlayerController won't be disposed).
-  stop
+  stop,
 }
 
 /// An enum to decide which type of waveform to show.
@@ -196,27 +197,6 @@ enum UpdateFrequency {
   low(200);
 
   const UpdateFrequency(this.value);
+
   final int value;
-}
-
-/// This enum is meant to be used as a parameter of setReleaseMode method.
-///
-/// It represents the behavior of AudioPlayer when an audio is finished or stopped.
-enum ReleaseMode{
-  ///Release all resources, just like calling release method.
-  ///
-  /// In Android, the media player is quite resource-intensive, and this will
-  /// let it go. Data will be buffered again when needed (if it's a remote file,
-  /// it will be downloaded again).
-  /// In iOS works just like stop method.
-  ///
-  /// This is the default behavior.
-  release,
-
-  ///Keeps the buffered data and plays again after completion, creating a loop.
-  loop,
-
-  ///Stop audio playback but keep all resources intact.
-  ///Use this if you intend to play again later.
-  pause,
 }

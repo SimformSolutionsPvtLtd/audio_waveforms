@@ -48,8 +48,8 @@ object Constants {
     const val seekTo = "seekTo"
     const val progress = "progress"
     const val setVolume = "setVolume"
-    const val setReleaseMode = "setReleaseMode";
-    const val releaseType = "releaseType";
+    const val finishMode = "finishMode"
+    const val finishType = "finishType"
     const val volume = "volume"
     const val setRate = "setRate"
     const val rate = "rate"
@@ -71,23 +71,12 @@ object Constants {
     const val resultDuration = "resultDuration"
 }
 
-enum class FinishMode(val value:Int) {
+enum class FinishMode(val value: Int) {
     Loop(0),
     Pause(1),
     Stop(2)
 }
 
-enum class UpdateFrequency(val value:Long) {
-    High(50),
-    Medium(100),
-    Low(200),
-}
-
-enum class ReleaseMode(val value: Int){
-    Release(0),
-    Loop(1),
-    Pause(2)
-}
 
 fun interface RequestPermissionsSuccessCallback {
     fun onSuccess(results: Boolean?)

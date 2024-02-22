@@ -154,7 +154,7 @@ class _WaveBubbleState extends State<WaveBubble> {
                         controller.playerState.isPlaying
                             ? await controller.pausePlayer()
                             : await controller.startPlayer();
-                        controller.setReleaseMode(ReleaseMode.release);
+                        controller.setFinishMode(finishMode: FinishMode.loop);
                       },
                       icon: Icon(
                         controller.playerState.isPlaying

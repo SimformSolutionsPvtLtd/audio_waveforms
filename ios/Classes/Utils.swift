@@ -43,8 +43,8 @@ struct Constants {
     static let setRate = "setRate"
     static let rate = "rate"
     static let volume = "volume"
-    static let setReleaseMode = "setReleaseMode"
-    static let releaseType = "releaseType"
+    static let finishMode = "finishMode"
+    static let finishType = "finishType"
     static let getDuration = "getDuration"
     static let durationType = "durationType"
     static let preparePlayer = "preparePlayer"
@@ -76,8 +76,8 @@ public extension RangeReplaceableCollection where Iterator.Element: ExpressibleB
     }
 }
 
-enum ReleaseMode : Int{
-    case release = 0
-    case loop = 1
-    case pause = 2
+enum FinishMode : Int{
+    case loop = 0
+    case pause = 1
+    case stop = 2
 }

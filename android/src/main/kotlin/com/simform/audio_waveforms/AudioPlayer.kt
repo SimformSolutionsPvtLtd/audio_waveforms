@@ -22,7 +22,7 @@ class AudioPlayer(
     private var player: ExoPlayer? = null
     private var playerListener: Player.Listener? = null
     private var isPlayerPrepared: Boolean = false
-    private var releaseMode = ReleaseMode.Release
+    private var finishMode = FinishMode.Stop
     private var key = playerKey
     private var updateFrequency: Long = 200
 
@@ -58,25 +58,26 @@ class AudioPlayer(
                     }
                     if (state == Player.STATE_ENDED) {
                         val args: MutableMap<String, Any?> = HashMap()
-                        when(releaseMode){
-                            ReleaseMode.Release -> {
+                        when (finishMode) {
+                            FinishMode.Stop -> {
                                 player?.stop()
                                 player?.release()
                                 player = null
                                 stopListening()
-                                args[Constants.releaseType] = 0
-                            }
-                            ReleaseMode.Loop -> {
-                                player?.seekTo(0)
-                                player?.play()
-                                args[Constants.releaseType] = 1
+                                args[Constants.finishType] = 2
                             }
 
-                            ReleaseMode.Pause -> {
+                            FinishMode.Loop -> {
+                                player?.seekTo(0)
+                                player?.play()
+                                args[Constants.finishType] = 0
+                            }
+
+                            FinishMode.Pause -> {
                                 player?.seekTo(0)
                                 player?.playWhenReady = false
                                 stopListening()
-                                args[Constants.releaseType] = 2
+                                args[Constants.finishType] = 1
                             }
                         }
                         args[Constants.playerKey] = key
@@ -186,24 +187,30 @@ class AudioPlayer(
         }
     }
 
-    fun setReleaseMode(result: MethodChannel.Result, releaseModeType : Int?){
-        try{
+    fun setFinishMode(result: MethodChannel.Result, releaseModeType: Int?) {
+        try {
             releaseModeType?.let {
                 when (releaseModeType) {
                     0 -> {
-                        this.releaseMode = ReleaseMode.Release
+                        this.finishMode = FinishMode.Loop
                     }
+
                     1 -> {
-                        this.releaseMode = ReleaseMode.Loop
+                        this.finishMode = FinishMode.Pause
                     }
+
+                    2 -> {
+                        this.finishMode = FinishMode.Stop
+                    }
+
                     else -> {
-                        this.releaseMode = ReleaseMode.Pause
+                        throw Exception("Invalid Finish mode")
                     }
                 }
             }
 
-        }catch (e:Exception){
-            result.error(Constants.LOG_TAG,"Can not set the release mode",e.toString())
+        } catch (e: Exception) {
+            result.error(Constants.LOG_TAG, "Can not set the release mode", e.toString())
         }
     }
 

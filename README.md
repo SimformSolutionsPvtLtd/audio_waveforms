@@ -262,13 +262,11 @@ Widget build(BuildContext context) {
    **Note**-: When `shouldExtractWaveform` is enabled, with preparePlayer waveform data will also start to be extracted and `PlayerController` will hold the extracted waveform data so an `AudioFileWaveforms` widget with same PlayerController will always show same waveforms if it is rebuild or even if widget is removed from widget tree and added again.  
    
 #### Customizing the Player
-1. Choose how player should stop
-   - FinishMode.loop: Plays audio file again after finishing it.
-   - FinishMode.pause: Pauses at `0` millisecond after finishing the audio file.
-   - FinishMode.stop: Stops the player at end and also releases resources taken the native player.
+1. Play the audio file
    ```dart
-   playerController.startPlayer(finishMode: FinishMode.stop);
+   playerController.startPlayer();
    ```
+   
 2. Set volume of the player
    ```dart
    playerController.setVolume(1.0); // Values should be between 0 and 1.
@@ -281,6 +279,14 @@ Widget build(BuildContext context) {
    ```dart
    playerController.seekTo(5000); // Required value is in milliseconds.
    ```
+5. Choose how player should stop when audio is finished playing.
+   - FinishMode.loop: Plays audio file again after finishing it.
+   - FinishMode.pause: Pauses at `0` millisecond after finishing the audio file.
+   - FinishMode.stop: Stops the player at end and also releases resources taken the native player.
+   ```dart
+   playerController.setFinishMode(finishMode: FinishMode.stop);
+   ``` 
+   
 #### Saving resources by precalculating the waveforms
 You can precalculate waveforms by using `playerController.extractWaveformData()`.
 This function gives back list of doubles which you can directly set into `AudioFileWaveforms` widget. Since calculating waveforms is expensive process, you can save this data somewhere and use it again when same file is used. 

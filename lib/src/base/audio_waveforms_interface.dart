@@ -175,15 +175,15 @@ class AudioWaveformsInterface {
         {Constants.progress: progress, Constants.playerKey: key});
     return result ?? false;
   }
-  
+
   /// Sets the release mode.
-  Future<void> setReleaseMode(String key,ReleaseMode releaseMode)async{
-    return await _methodChannel.invokeMethod(Constants.setReleaseMode,{
-      Constants.releaseType : releaseMode.index,
+  Future<void> setReleaseMode(String key, FinishMode finishMode) async {
+    return await _methodChannel.invokeMethod(Constants.finishMode, {
+      Constants.finishType: finishMode.index,
       Constants.playerKey: key,
     });
   }
-  
+
   Future<List<double>> extractWaveformData({
     required String key,
     required String path,
@@ -216,12 +216,8 @@ class AudioWaveformsInterface {
           break;
         case Constants.onDidFinishPlayingAudio:
           var key = call.arguments[Constants.playerKey];
-          var playerState = (call.arguments[Constants.releaseType] is int) &&
-            call.arguments[Constants.releaseType] == 0
-              ? PlayerState.stopped
-              : call.arguments[Constants.releaseType] == 1
-                ? PlayerState.playing
-                : PlayerState.paused;
+          var playerState =
+              getPlayerState(call.arguments[Constants.finishType]);
           var stateIdentifier = PlayerIdentifier<PlayerState>(key, playerState);
           var completionIdentifier = PlayerIdentifier<void>(key, null);
           PlatformStreams.instance.addCompletionEvent(completionIdentifier);
@@ -245,6 +241,17 @@ class AudioWaveformsInterface {
           break;
       }
     });
+  }
+
+  PlayerState getPlayerState(int finishModel) {
+    switch (finishModel) {
+      case 0:
+        return PlayerState.playing;
+      case 1:
+        return PlayerState.paused;
+      default:
+        return PlayerState.stopped;
+    }
   }
 
   void removeMethodCallHandler() {

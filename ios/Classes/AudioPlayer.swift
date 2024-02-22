@@ -7,7 +7,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     private var stopWhenCompleted = false
     private var timer: Timer?
     private var player: AVAudioPlayer?
-    private var releaseMode:ReleaseMode = ReleaseMode.release
+    private var finishMode:FinishMode = FinishMode.stop
     private var updateFrequency = 200
     var plugin: SwiftAudioWaveformsPlugin
     var playerKey: String
@@ -55,28 +55,30 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer,successfully flag: Bool) {
         var finishType = 2
-        var releaseType = 0
 
-        switch self.releaseMode{
-        case .release:
-            self.player?.stop()
-            stopListening()
-            self.player = nil
-            releaseType = 0
+        switch self.finishMode{
 
         case .loop:
             self.player?.currentTime = 0
             self.player?.play()
-            releaseType = 1
+            finishType = 0
 
         case .pause:
             self.player?.pause()
             stopListening()
-            releaseType = 2
+            finishType = 1
+
+        case .stop:
+            self.player?.stop()
+            stopListening()
+            self.player = nil
+            finishType = 2
+
+
         }
         
         plugin.flutterChannel.invokeMethod(Constants.onDidFinishPlayingAudio, arguments: [
-            Constants.releaseType: releaseType,
+            Constants.finishType: finishType,
             Constants.playerKey: playerKey])
 
     }
@@ -137,13 +139,13 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         }
     }
     
-    func setReleaseMode(result : @escaping FlutterResult, releaseType : Int?){
+    func setFinishMode(result : @escaping FlutterResult, releaseType : Int?){
         if(releaseType != nil && releaseType == 0){
-            self.releaseMode = ReleaseMode.release
+            self.finishMode = FinishMode.loop
         }else if(releaseType != nil && releaseType == 1){
-            self.releaseMode = ReleaseMode.loop
+            self.finishMode = FinishMode.pause
         }else{
-            self.releaseMode = ReleaseMode.pause
+            self.finishMode = FinishMode.stop
         }
     }
 

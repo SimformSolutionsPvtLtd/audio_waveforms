@@ -92,10 +92,6 @@ class PlayerController extends ChangeNotifier {
   Stream<void> get onCompletion =>
       PlatformStreams.instance.onCompletion.filter(playerKey);
 
-  ReleaseMode _releaseMode = ReleaseMode.release;
-
-  ReleaseMode get releaseMode => _releaseMode;
-
   PlayerController() {
     if (!PlatformStreams.instance.isInitialised) {
       PlatformStreams.instance.init();
@@ -198,17 +194,15 @@ class PlayerController extends ChangeNotifier {
   /// A function to start the player to play/resume the audio.
   ///
   /// When playing audio is finished, this [player] will be [stopped]
-  /// and [disposed] by default. To change this behavior use [FinishMode] enum.
+  /// and [disposed] by default. To change this behavior use [setFinishMode] method.
   ///
-  /// See also:
-  /// * [FinishMode]
   Future<void> startPlayer({
     bool forceRefresh = true,
   }) async {
     if (_playerState == PlayerState.initialized ||
         _playerState == PlayerState.paused) {
-      final isStarted = await AudioWaveformsInterface.instance
-          .startPlayer(playerKey);
+      final isStarted =
+          await AudioWaveformsInterface.instance.startPlayer(playerKey);
       if (isStarted) {
         _setPlayerState(PlayerState.playing);
       } else {
@@ -289,12 +283,17 @@ class PlayerController extends ChangeNotifier {
     await AudioWaveformsInterface.instance.seekTo(playerKey, progress);
   }
 
-  ///Set the release Mode.
+  /// This method will be used to change behaviour of player when audio
+  /// is finished playing.
   ///
-  /// Check[ReleaseMode]'s doc to understand the difference between the modes.
-  Future<void> setReleaseMode(ReleaseMode  releaseMode)async{
-    _releaseMode = releaseMode;
-    return AudioWaveformsInterface.instance.setReleaseMode(playerKey, releaseMode);
+  /// Check[FinishMode]'s doc to understand the difference between the modes.
+  Future<void> setFinishMode({
+    FinishMode finishMode = FinishMode.stop,
+  }) async {
+    return AudioWaveformsInterface.instance.setReleaseMode(
+      playerKey,
+      finishMode,
+    );
   }
 
   /// Release any resources taken by this controller. Disposing this
