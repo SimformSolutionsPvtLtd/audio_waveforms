@@ -209,7 +209,7 @@ class PlayerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// A function to stop player. After calling this, resources are freed.
+  /// A function to stop player. After calling this.
   Future<void> stopPlayer() async {
     final isStopped =
         await AudioWaveformsInterface.instance.stopPlayer(playerKey);
@@ -217,6 +217,11 @@ class PlayerController extends ChangeNotifier {
       _setPlayerState(PlayerState.stopped);
     }
     notifyListeners();
+  }
+
+  /// Releases the resources associated with this player.
+  Future<void> release() async {
+    await AudioWaveformsInterface.instance.release(playerKey);
   }
 
   /// Sets volume for this player. Doesn't throw Exception.
@@ -264,6 +269,7 @@ class PlayerController extends ChangeNotifier {
   @override
   void dispose() async {
     if (playerState != PlayerState.stopped) await stopPlayer();
+    await release();
     PlatformStreams.instance.playerControllerFactory.remove(this);
     if (PlatformStreams.instance.playerControllerFactory.length == 1) {
       PlatformStreams.instance.dispose();

@@ -20,6 +20,7 @@ class Constants {
   static const String preparePlayer = "preparePlayer";
   static const String startPlayer = "startPlayer";
   static const String stopPlayer = "stopPlayer";
+  static const String releasePlayer = "releasePlayer";
   static const String pausePlayer = "pausePlayer";
   static const String seekTo = "seekTo";
   static const String progress = "progress";

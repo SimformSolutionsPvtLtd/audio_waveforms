@@ -44,6 +44,7 @@ object Constants {
     const val startPlayer = "startPlayer"
     const val stopPlayer = "stopPlayer"
     const val pausePlayer = "pausePlayer"
+    const val releasePlayer = "releasePlayer"
     const val seekTo = "seekTo"
     const val progress = "progress"
     const val setVolume = "setVolume"

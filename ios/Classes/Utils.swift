@@ -36,6 +36,7 @@ struct Constants {
     static let startPlayer = "startPlayer"
     static let stopPlayer = "stopPlayer"
     static let pausePlayer = "pausePlayer"
+    static let releasePlayer = "releasePlayer"
     static let seekTo = "seekTo"
     static let progress = "progress"
     static let setVolume = "setVolume"
