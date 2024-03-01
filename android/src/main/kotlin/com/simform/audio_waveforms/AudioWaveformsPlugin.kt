@@ -15,6 +15,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -35,6 +36,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var applicationContext: Context
     private var audioPlayers = mutableMapOf<String, AudioPlayer?>()
     private var extractors = mutableMapOf<String, WaveformExtractor?>()
+    private var pluginBinding: ActivityPluginBinding? = null
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, Constants.methodChannelName)
@@ -66,7 +68,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Constants.pauseRecording -> audioRecorder.pauseRecording(result, recorder)
             Constants.resumeRecording -> audioRecorder.resumeRecording(result, recorder)
             Constants.getDecibel -> audioRecorder.getDecibel(result, recorder)
-            Constants.checkPermission -> audioRecorder.checkPermission(result, activity)
+            Constants.checkPermission -> audioRecorder.checkPermission(result, activity, result :: success)
             Constants.preparePlayer -> {
                 val audioPath = call.argument(Constants.path) as String?
                 val volume = call.argument(Constants.volume) as Double?
@@ -276,6 +278,9 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
+        pluginBinding = binding
+        pluginBinding!!.addRequestPermissionsResultListener(this.audioRecorder)
+
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
@@ -292,5 +297,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         audioPlayers.clear()
         extractors.clear()
         activity = null
+        if (pluginBinding != null) {
+            pluginBinding!!.removeRequestPermissionsResultListener(this.audioRecorder)
+        }
     }
 }
