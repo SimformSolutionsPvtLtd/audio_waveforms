@@ -112,6 +112,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 shouldCalculateScrolledPosition:
                     widget.shouldCalculateScrolledPosition,
                 scaleFactor: widget.waveStyle.scaleFactor,
+                clipRRect: widget.waveStyle.clipRRect,
               ),
             ),
           ),
