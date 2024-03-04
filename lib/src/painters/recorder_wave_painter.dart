@@ -141,7 +141,7 @@ class RecorderWavePainter extends CustomPainter {
       final label = _labels[i];
       final content = label.content;
       final offset = label.offset;
-      final halfWidth = size.width / 2;
+      final halfWidth = size.width * 0.5;
       final textSpan = TextSpan(
         text: content,
         style: durationStyle,
@@ -191,7 +191,7 @@ class RecorderWavePainter extends CustomPainter {
   }
 
   void _drawMiddleLine(Canvas canvas, Size size) {
-    final halfWidth = size.width / 2;
+    final halfWidth = size.width * 0.5;
     canvas.drawLine(
       Offset(halfWidth, 0),
       Offset(halfWidth, size.height),
@@ -200,7 +200,7 @@ class RecorderWavePainter extends CustomPainter {
   }
 
   void _drawWave(Canvas canvas, Size size, int i) {
-    final halfWidth = size.width / 2;
+    final halfWidth = size.width * 0.5;
     final height = size.height;
     final dx =
         -totalBackDistance.dx + dragOffset.dx + (spacing * i) - initialPosition;

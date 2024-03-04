@@ -48,7 +48,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   @override
   void initState() {
     super.initState();
-    widget.recorderController.addListener(_updateOnControllerUpdate);
+    widget.recorderController.addListener(_recorderControllerListener);
     streamSubscription = widget.recorderController.onCurrentDuration.listen((duration) {
       currentlyRecordedDuration = duration;
     });
@@ -56,7 +56,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
 
   @override
   void dispose() {
-    widget.recorderController.removeListener(_updateOnControllerUpdate);
+    widget.recorderController.removeListener(_recorderControllerListener);
     streamSubscription.cancel();
     super.dispose();
   }
@@ -208,7 +208,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
     });
   }
 
-  void _updateOnControllerUpdate() {
+  void _recorderControllerListener() {
     if (mounted) {
       setState(() {});
     }
