@@ -92,8 +92,8 @@ class PlayerWavePainter extends CustomPainter {
 
   void _drawWave(Size size, Canvas canvas) {
     final length = waveformData.length;
-    final halfWidth = size.width / 2;
-    final halfHeight = size.height / 2;
+    final halfWidth = size.width * 0.5;
+    final halfHeight = size.height * 0.5;
     if (cachedAudioProgress != audioProgress) {
       pushBack();
     }
