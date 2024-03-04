@@ -167,16 +167,14 @@ class RecorderWavePainter extends CustomPainter {
     final labelDuration = Duration(seconds: i);
     final durationLineDx = _labelPadding + dragOffset.dx - totalBackDistance.dx;
     final height = size.height;
-
-    if (labelDuration <
-        Duration(
-            seconds: currentlyRecordedDuration.inSeconds + durationBuffer)) {
+    final currentDuration =
+        Duration(seconds: currentlyRecordedDuration.inSeconds + durationBuffer);
+    if (labelDuration < currentDuration) {
       canvas.drawLine(
         Offset(durationLineDx, height),
         Offset(durationLineDx, height + durationLinesHeight),
         _durationLinePaint,
       );
-
       _labels.add(
         Label(
           content: showHourInDuration
@@ -206,7 +204,7 @@ class RecorderWavePainter extends CustomPainter {
     final height = size.height;
     final dx =
         -totalBackDistance.dx + dragOffset.dx + (spacing * i) - initialPosition;
-    final scaledWaveHeight = (waveData[i] * scaleFactor);
+    final scaledWaveHeight = waveData[i] * scaleFactor;
     final upperDy = height - (showTop ? scaledWaveHeight : 0) - bottomPadding;
     final lowerDy =
         height + (showBottom ? scaledWaveHeight : 0) - bottomPadding;
