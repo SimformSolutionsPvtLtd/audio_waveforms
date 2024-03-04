@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '/audio_waveforms.dart';
@@ -41,20 +43,21 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   double _initialOffsetPosition = 0.0;
   double _initialPosition = 0.0;
   Duration currentlyRecordedDuration = Duration.zero;
+  late StreamSubscription<Duration> streamSubscription;
 
   @override
   void initState() {
     super.initState();
-    widget.recorderController
-      ..addListener(_updateOnControllerUpdate)
-      ..onCurrentDuration.listen((duration) {
-        currentlyRecordedDuration = duration;
-      });
+    widget.recorderController.addListener(_updateOnControllerUpdate);
+    streamSubscription = widget.recorderController.onCurrentDuration.listen((duration) {
+      currentlyRecordedDuration = duration;
+    });
   }
 
   @override
   void dispose() {
     widget.recorderController.removeListener(_updateOnControllerUpdate);
+    streamSubscription.cancel();
     super.dispose();
   }
 
