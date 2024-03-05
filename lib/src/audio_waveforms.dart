@@ -49,7 +49,8 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   void initState() {
     super.initState();
     widget.recorderController.addListener(_recorderControllerListener);
-    streamSubscription = widget.recorderController.onCurrentDuration.listen((duration) {
+    streamSubscription =
+        widget.recorderController.onCurrentDuration.listen((duration) {
       currentlyRecordedDuration = duration;
     });
   }
