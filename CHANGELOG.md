@@ -1,3 +1,16 @@
+## 1.0.5
+
+- Updated gradle file
+- Fixed [#232](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/232) - Last wave flickering 
+- Fixed [#252](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/252) - Android recording doesn't work the first time after granting permissions
+- Fixed [#230](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/230) - Stop player should not be freed the resources
+- Fixed [#165](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/165) - IOS recorder without path not working
+- Fixed [#232](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/232) - Unnecessary rendering
+- Added [#195](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/195) - Implement audio speed - thanks [@Zubii12](https://github.com/Zubii12) 
+- Fixed stopping a recording immediately after starting it throws multiple exceptions on Android - thanks [@mschudt](https://github.com/mschudt) 
+- Fixed waveform for audios under 1 second not being extractable on Android - thanks [@mschudt](https://github.com/mschudt) 
+- Minor update to docs 
+
 ## 1.0.4
 
 - Fixed [#171](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/171) - Do not call `notifyListeners()` when disposed
