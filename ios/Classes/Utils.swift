@@ -41,6 +41,8 @@ struct Constants {
     static let progress = "progress"
     static let setVolume = "setVolume"
     static let volume = "volume"
+    static let setReleaseMode = "setReleaseMode"
+    static let releaseType = "releaseType"
     static let getDuration = "getDuration"
     static let durationType = "durationType"
     static let preparePlayer = "preparePlayer"
@@ -49,8 +51,6 @@ struct Constants {
     static let playerKey = "playerKey"
     static let stopAllPlayers = "stopAllPlayers"
     static let onDidFinishPlayingAudio = "onDidFinishPlayingAudio"
-    static let finishMode = "finishMode"
-    static let finishType = "finishType"
     static let extractWaveformData = "extractWaveformData"
     static let noOfSamples = "noOfSamples"
     static let onCurrentExtractedWaveformData = "onCurrentExtractedWaveformData"
@@ -60,11 +60,6 @@ struct Constants {
     static let updateFrequency = "updateFrequency"
 }
 
-enum FinishMode : Int{
-    case loop = 0
-    case pause = 1
-    case stop = 2
-}
 
 enum UpdateFrequency : Double{
     case high = 50.0
@@ -79,4 +74,10 @@ public extension RangeReplaceableCollection where Iterator.Element: ExpressibleB
     init(zeros count: Int) {
         self.init(repeating: 0, count: count)
     }
+}
+
+enum FinishMode : Int{
+    case release = 0
+    case loop = 1
+    case pause = 2
 }

@@ -48,6 +48,8 @@ object Constants {
     const val seekTo = "seekTo"
     const val progress = "progress"
     const val setVolume = "setVolume"
+    const val setReleaseMode = "setReleaseMode";
+    const val releaseType = "releaseType";
     const val volume = "volume"
     const val getDuration = "getDuration"
     const val durationType = "durationType"
@@ -56,8 +58,6 @@ object Constants {
     const val onCurrentDuration = "onCurrentDuration"
     const val stopAllPlayers = "stopAllPlayers"
     const val onDidFinishPlayingAudio = "onDidFinishPlayingAudio"
-    const val finishMode = "finishMode"
-    const val finishType = "finishType"
     const val extractWaveformData = "extractWaveformData"
     const val noOfSamples = "noOfSamples"
     const val onCurrentExtractedWaveformData = "onCurrentExtractedWaveformData"
@@ -76,6 +76,12 @@ enum class UpdateFrequency(val value:Long) {
     High(50),
     Medium(100),
     Low(200),
+}
+
+enum class FinishMode(val value: Int){
+    Release(0),
+    Loop(1),
+    Pause(2)
 }
 
 fun interface RequestPermissionsSuccessCallback {
