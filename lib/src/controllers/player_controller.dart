@@ -281,7 +281,7 @@ class PlayerController extends ChangeNotifier {
   void dispose() async {
     if (playerState != PlayerState.stopped) await stopPlayer();
     await release();
-    PlatformStreams.instance.playerControllerFactory.remove(this);
+    PlatformStreams.instance.playerControllerFactory.remove(playerKey);
     if (PlatformStreams.instance.playerControllerFactory.length == 1) {
       PlatformStreams.instance.dispose();
     }
@@ -296,7 +296,7 @@ class PlayerController extends ChangeNotifier {
   void stopAllPlayers() async {
     PlatformStreams.instance.dispose();
     await AudioWaveformsInterface.instance.stopAllPlayers();
-    PlatformStreams.instance.playerControllerFactory.remove(this);
+    PlatformStreams.instance.playerControllerFactory.clear();
   }
 
   /// Sets [_shouldRefresh] flag with provided boolean parameter.
