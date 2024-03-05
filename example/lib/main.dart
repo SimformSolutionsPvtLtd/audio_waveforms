@@ -231,7 +231,12 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void _refreshWave() {
-    if (isRecording) recorderController.refresh();
+  void _refreshWave() async {
+    if (isRecording) {
+      var ab = await recorderController.pause();
+      path = ab;
+      setState(() {});
+      print('PATH is ------- ${ab}');
+    }
   }
 }

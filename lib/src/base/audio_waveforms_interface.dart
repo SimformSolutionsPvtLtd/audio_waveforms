@@ -56,10 +56,11 @@ class AudioWaveformsInterface {
   }
 
   ///platform call to pause recording
-  Future<bool?> pause() async {
-    final isRecording =
-        await _methodChannel.invokeMethod(Constants.pauseRecording);
-    return isRecording;
+  Future<List<String?>?> pause() async {
+    final audioInfo = await _methodChannel.invokeMethod(Constants.stopRecording);
+    return List.from(audioInfo ?? []);
+    /*final isRecording = await _methodChannel.invokeMethod(Constants.pauseRecording);
+    return isRecording;*/
   }
 
   ///platform call to stop recording

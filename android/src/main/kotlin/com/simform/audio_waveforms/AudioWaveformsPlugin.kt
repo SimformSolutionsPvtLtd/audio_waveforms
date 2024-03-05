@@ -65,7 +65,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 audioRecorder.stopRecording(result, recorder, path!!)
                 recorder = null
             }
-            Constants.pauseRecording -> audioRecorder.pauseRecording(result, recorder)
+            Constants.pauseRecording -> audioRecorder.pauseRecording(result, recorder,path!!)
             Constants.resumeRecording -> audioRecorder.resumeRecording(result, recorder)
             Constants.getDecibel -> audioRecorder.getDecibel(result, recorder)
             Constants.checkPermission -> audioRecorder.checkPermission(result, activity, result :: success)
