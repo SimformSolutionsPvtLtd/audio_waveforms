@@ -156,7 +156,7 @@ class AudioWaveformsInterface {
     });
     return result ?? false;
   }
-  
+
   ///platform call to set rate
   Future<bool> setRate(double rate, String key) async {
     var result = await _methodChannel.invokeMethod(Constants.setRate, {
