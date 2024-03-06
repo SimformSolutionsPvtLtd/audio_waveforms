@@ -2,6 +2,7 @@ package com.simform.audio_waveforms
 
 import android.app.Activity
 import android.content.Context
+import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
@@ -25,7 +26,7 @@ import java.util.*
 /** AudioWaveformsPlugin */
 class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var channel: MethodChannel
-    private var recorder: MediaRecorder? = null
+    private var recorder: AudioRecord? = null
     private var activity: Activity? = null
     private lateinit var audioRecorder: AudioRecorder
     private var path: String? = null
@@ -196,11 +197,11 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         sampleRate: Int,
         bitRate: Int?
     ) {
-        try {
-            recorder = MediaRecorder()
+        /*try {
+            recorder = AudioRecord();
         } catch (e: Exception) {
             Log.e(Constants.LOG_TAG, "Failed to initialise Recorder")
-        }
+        }*/
         if (path == null) {
             val outputDir = activity?.cacheDir
             val outputFile: File?
@@ -209,10 +210,9 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             try {
                 outputFile = File.createTempFile(currentDate, ".m4a", outputDir)
                 path = outputFile.path
-                audioRecorder.initRecorder(
+                recorder =audioRecorder.initRecorder(
                     path!!,
                     result,
-                    recorder,
                     encoder,
                     outputFormat,
                     sampleRate,
@@ -222,10 +222,9 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 Log.e(Constants.LOG_TAG, "Failed to create file")
             }
         } else {
-            audioRecorder.initRecorder(
+            recorder = audioRecorder.initRecorder(
                 path!!,
                 result,
-                recorder,
                 encoder,
                 outputFormat,
                 sampleRate,

@@ -3,6 +3,8 @@ package com.simform.audio_waveforms
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.media.AudioFormat
+import android.media.AudioRecord
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
 import android.media.MediaRecorder
@@ -10,43 +12,67 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
+import com.google.android.exoplayer2.audio.OpusUtil.SAMPLE_RATE
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
 import java.io.IOException
-import java.lang.IllegalStateException
-import kotlin.math.log10
+import java.lang.Math.abs
+import java.lang.Math.log10
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+
 
 private const val LOG_TAG = "AudioWaveforms"
 private const val RECORD_AUDIO_REQUEST_CODE = 1001
+
+val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
+val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+val BUFFER_SIZE_RECORDING = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
 
 class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     private var useLegacyNormalization = false
     private var successCallback: RequestPermissionsSuccessCallback? = null
-
-    fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
-        if (useLegacyNormalization) {
-            val db = 20 * log10(((recorder?.maxAmplitude?.toDouble() ?: (0.0 / 32768.0))))
+    var bufferSize = 0
+    var nativePath: String = ""
+    var tempPath: String = ""
+    private var recordingThread: Thread? = null
+    private var isRecordingAudio = true
+    private lateinit var recorder: AudioRecord
+    private var isConvertingDone = true
+    var decibleToSend = 0.0
+    fun getDecibel(result: MethodChannel.Result, recorder: AudioRecord?) {
+        /*if (useLegacyNormalization) {
+            val db = 20 * log10(((maxAmplitude?.toDouble() ?: (0.0 / 32768.0))))
             if (db == Double.NEGATIVE_INFINITY) {
                 Log.d(LOG_TAG, "Microphone might be turned off")
             } else {
                 result.success(db)
             }
         } else {
-            result.success(recorder?.maxAmplitude?.toDouble() ?: 0.0)
-        }
+            result.success(maxAmplitude?.toDouble() ?: 0.0)
+        }*/
+        //For temporary testing we have used global variable
+        result.success(decibleToSend?.toDouble() ?: 0.0)
     }
 
     fun initRecorder(
         path: String,
         result: MethodChannel.Result,
-        recorder: MediaRecorder?,
+        //recorder: AudioRecord?,
         encoder: Int,
         outputFormat: Int,
         sampleRate: Int,
         bitRate: Int?
-    ) {
-        recorder?.apply {
+    ): AudioRecord {
+        isConvertingDone = false
+        /*recorder?.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(getOutputFormat(outputFormat))
             setAudioEncoder(getEncoder(encoder))
@@ -61,31 +87,55 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             } catch (e: IOException) {
                 Log.e(LOG_TAG, "Failed to stop initialize recorder")
             }
+        }*/
+        val file = File(path)
+        file.delete()
+        file.parentFile.mkdirs()
+        tempPath = file.parentFile.path +"tempRecording.m4a";
+        nativePath = path;
+        Log.e(LOG_TAG, "outputPath:" + file.absolutePath);
+        // temporary file of storing recording
+        Log.e(LOG_TAG, "tempPath:" + tempPath);
+        bufferSize = AudioRecord.getMinBufferSize(
+            sampleRate,
+            AudioFormat.CHANNEL_IN_MONO,
+            getEncoder(encoder)
+        )
+        val minBufferSize = 1792;
+        val bufferSize = (sampleRate / 2).coerceAtLeast(minBufferSize)
+
+        Log.e(LOG_TAG, "Buffer Size:" + bufferSize);
+        recorder = AudioRecord(
+            MediaRecorder.AudioSource.MIC,
+            sampleRate,
+            AudioFormat.CHANNEL_IN_MONO,
+            getEncoder(encoder),
+            bufferSize
+        )
+        try {
+            //recorder.prepare()
+            result.success(true)
+        } catch (e: IOException) {
+            Log.e(LOG_TAG, "Failed to stop initialize recorder")
         }
+        return recorder;
     }
 
-    fun stopRecording(result: MethodChannel.Result, recorder: MediaRecorder?, path: String) {
+    fun stopRecording(result: MethodChannel.Result, recorder: AudioRecord?, path: String) {
         try {
             val audioInfoArrayList = ArrayList<String?>()
+            isRecordingAudio = false
+            recorder?.stop()
+            recordingThread = null
 
-            try {
-                recorder?.stop()
-
-                val duration = getDuration(path)
-                audioInfoArrayList.add(path)
-                audioInfoArrayList.add(duration)
-            } catch (e: RuntimeException) {
-                // Stop was called immediately after start which causes stop() call to fail.
-                audioInfoArrayList.add(null)
-                audioInfoArrayList.add("-1")
-            }
-
-            recorder?.apply {
-                reset()
-                release()
-            }
-
+            Log.d(LOG_TAG, "Start Converting to WAV")
+            rawToWave(File(tempPath), File(path), 16000)
+            Log.d(LOG_TAG, "Converted recording to WAV")
+            val duration = getDuration(path)
+            audioInfoArrayList.add(path)
+            audioInfoArrayList.add(duration)
             result.success(audioInfoArrayList)
+            Log.e(LOG_TAG, "stop path:" + path);
         } catch (e: IllegalStateException) {
             Log.e(LOG_TAG, "Failed to stop recording")
         }
@@ -105,20 +155,98 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         return "-1"
     }
 
-    fun startRecorder(result: MethodChannel.Result, recorder: MediaRecorder?, useLegacy: Boolean) {
+    fun startRecorder(result: MethodChannel.Result, recorder: AudioRecord?, useLegacy: Boolean) {
         try {
             useLegacyNormalization = useLegacy
-            recorder?.start()
+            Log.i(LOG_TAG, "Starting the audio stream")
+            isRecordingAudio = true
+            startStreaming()
             result.success(true)
         } catch (e: IllegalStateException) {
             Log.e(LOG_TAG, "Failed to start recording")
         }
     }
 
+    private fun startStreaming() {
+        Log.i(
+            LOG_TAG,
+            "Starting the background thread (in this foreground service) to read the audio data"
+        )
+        val streamThread = Thread {
+            try {
+                Log.d(LOG_TAG, "Creating the buffer of size $BUFFER_SIZE_RECORDING")
+                var bufferByte: ByteArray
+                val sampleRate = 16000
+                val bufferSize = (sampleRate / 2).coerceAtLeast(1792/*minBufferSize*/)
+                val buffer = ShortArray(bufferSize)
+                Log.d(LOG_TAG, "Creating the AudioRecord")
+                recorder = AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    sampleRate,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    bufferSize
+                )
+                Log.d(LOG_TAG, "AudioRecord recording...")
+                recorder.startRecording()
+                var outputStream: FileOutputStream? = null
+                try {
+                    outputStream = FileOutputStream(tempPath)
+                } catch (e: FileNotFoundException) {
+                    //return
+                    e.printStackTrace();
+                }
+
+                while (isRecordingAudio) {
+                    // read the data into the buffer
+                    var readBufferShortLength = recorder.read(buffer, 0, buffer.size)
+                    Log.d(LOG_TAG, "readBufferShortLength $readBufferShortLength")
+
+                    var maxAmplitude = 0.0
+                    for (i in 0 until readBufferShortLength) {
+                        if (abs(buffer[i].toInt().toDouble()) > maxAmplitude) {
+                            maxAmplitude = abs(buffer[i].toInt().toDouble())
+                        }
+                    }
+                    var db = 0.0
+                    if (maxAmplitude != 0.0) {
+                        db = 20.0 * Math.log10(maxAmplitude / 32767.0) + 90
+                    }
+                    decibleToSend = maxAmplitude;
+                    Log.d(LOG_TAG, "Max amplitude: $maxAmplitude ; DB: $db")
+
+                    bufferByte = shortToByte(buffer)
+                    try {
+                        outputStream!!.write(bufferByte, 0, bufferByte.size)
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+                }
+                Log.d(LOG_TAG, "AudioRecord finished recording")
+                // clean up file writing operations
+                outputStream?.flush()
+                outputStream?.close()
+            } catch (e: Exception) {
+                Log.e(LOG_TAG, "Exception: $e")
+            }
+        }
+
+        // start the thread
+        streamThread.start()
+    }
+
+    fun shortToByte(shortArray: ShortArray): ByteArray {
+        val buffer = ByteBuffer.allocate(shortArray.size * 2)
+        buffer.order(ByteOrder.LITTLE_ENDIAN)
+        buffer.asShortBuffer().put(shortArray)
+        val bytes = buffer.array()
+        return bytes
+    }
+
     @RequiresApi(Build.VERSION_CODES.N)
-    fun pauseRecording(result: MethodChannel.Result, recorder: MediaRecorder?) {
+    fun pauseRecording(result: MethodChannel.Result, recorder: AudioRecord?) {
         try {
-            recorder?.pause()
+            recorder?.stop()
             result.success(false)
         } catch (e: IllegalStateException) {
             Log.e(LOG_TAG, "Failed to pause recording")
@@ -126,9 +254,9 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun resumeRecording(result: MethodChannel.Result, recorder: MediaRecorder?) {
+    fun resumeRecording(result: MethodChannel.Result, recorder: AudioRecord?) {
         try {
-            recorder?.resume()
+            recorder?.startRecording()
             result.success(true)
         } catch (e: IllegalStateException) {
             Log.e(LOG_TAG, "Failed to resume recording")
@@ -154,7 +282,11 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         return result == PackageManager.PERMISSION_GRANTED
     }
 
-    fun checkPermission(result: MethodChannel.Result, activity: Activity?, successCallback: RequestPermissionsSuccessCallback) {
+    fun checkPermission(
+        result: MethodChannel.Result,
+        activity: Activity?,
+        successCallback: RequestPermissionsSuccessCallback
+    ) {
         this.successCallback = successCallback
         if (!isPermissionGranted(activity)) {
             activity?.let {
@@ -216,6 +348,93 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             }
             Constants.aac_adts -> return MediaRecorder.OutputFormat.AAC_ADTS
             else -> return MediaRecorder.OutputFormat.MPEG_4
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun rawToWave(rawFile: File, waveFile: File, sampleRate: Int) {
+        val rawData = ByteArray(rawFile.length().toInt())
+        var input: DataInputStream? = null
+        try {
+            input = DataInputStream(FileInputStream(rawFile))
+            input.read(rawData)
+        } finally {
+            input?.close()
+        }
+        var output: DataOutputStream? = null
+        try {
+            output = DataOutputStream(FileOutputStream(waveFile))
+            // WAVE header
+            // see http://ccrma.stanford.edu/courses/422/projects/WaveFormat/
+            writeString(output, "RIFF") // chunk id
+            writeInt(output, 36 + rawData.size) // chunk size
+            writeString(output, "WAVE") // format
+            writeString(output, "fmt ") // subchunk 1 id
+            writeInt(output, 16) // subchunk 1 size
+            writeShort(output, 1.toShort()) // audio format (1 = PCM)
+            writeShort(output, 1.toShort()) // number of channels
+            writeInt(output, sampleRate) // sample rate
+            writeInt(output, sampleRate * 2) // byte rate
+            writeShort(output, 2.toShort()) // block align
+            writeShort(output, 16.toShort()) // bits per sample
+            writeString(output, "data") // subchunk 2 id
+            writeInt(output, rawData.size) // subchunk 2 size
+            // Audio data (conversion big endian -> little endian)
+            val shorts = ShortArray(rawData.size / 2)
+            ByteBuffer.wrap(rawData).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts)
+            val bytes: ByteBuffer = ByteBuffer.allocate(shorts.size * 2)
+            for (s in shorts) {
+                bytes.putShort(s)
+            }
+            output.write(fullyReadFileToBytes(rawFile))
+        } finally {
+            output?.close()
+        }
+    }
+
+    @Throws(IOException::class)
+    fun fullyReadFileToBytes(f: File): ByteArray? {
+        val size = f.length().toInt()
+        val bytes = ByteArray(size)
+        val tmpBuff = ByteArray(size)
+        val fis = FileInputStream(f)
+        try {
+            var read = fis.read(bytes, 0, size)
+            if (read < size) {
+                var remain = size - read
+                while (remain > 0) {
+                    read = fis.read(tmpBuff, 0, remain)
+                    System.arraycopy(tmpBuff, 0, bytes, size - remain, read)
+                    remain -= read
+                }
+            }
+        } catch (e: IOException) {
+            throw e
+        } finally {
+            fis.close()
+        }
+        return bytes
+    }
+
+    @Throws(IOException::class)
+    private fun writeInt(output: DataOutputStream, value: Int) {
+        output.write(value shr 0)
+        output.write(value shr 8)
+        output.write(value shr 16)
+        output.write(value shr 24)
+    }
+
+    @Throws(IOException::class)
+    private fun writeShort(output: DataOutputStream, value: Short) {
+        var v = value.toInt()
+        output.write(v shr 0)
+        output.write(v shr 8)
+    }
+
+    @Throws(IOException::class)
+    private fun writeString(output: DataOutputStream, value: String) {
+        for (element in value) {
+            output.write(element.code)
         }
     }
 }

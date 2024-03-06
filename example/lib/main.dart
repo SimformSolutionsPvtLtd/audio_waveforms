@@ -47,10 +47,32 @@ class _HomeState extends State<Home> {
 
   void _getDir() async {
     appDirectory = await getApplicationDocumentsDirectory();
-    path = "${appDirectory.path}/recording.m4a";
+    path = "${appDirectory.path}/recording.wav";
     isLoading = false;
     setState(() {});
   }
+
+  /// Use this code to keep the file in download folder during testing
+  /// Need to add permission for the storage
+  /*void _getDir() async {
+    Directory? directory;
+    try {
+      if (Platform.isIOS) {
+        directory = await getApplicationDocumentsDirectory();
+      } else {
+        directory = Directory('/storage/emulated/0/Download');
+        // Put file in global download folder, if for an unknown reason it didn't exist, we fallback
+        // ignore: avoid_slow_async_io
+        if (!await directory.exists()) directory = await getExternalStorageDirectory();
+      }
+    } catch (err, stack) {
+      print("Cannot get download folder path");
+    }
+    appDirectory = directory!;
+    path = "${appDirectory.path}/recordingc.wav";
+    isLoading = false;
+    setState(() {});
+  }*/
 
   void _initialiseControllers() {
     recorderController = RecorderController()
