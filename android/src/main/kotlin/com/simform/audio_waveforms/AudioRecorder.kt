@@ -117,15 +117,19 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     @RequiresApi(Build.VERSION_CODES.N)
     fun pauseRecording(result: MethodChannel.Result, recorder: MediaRecorder?,path: String) {
+        val audioInfoArrayList = ArrayList<String?>()
+
         try {
-            recorder?.pause()
-            val audioInfoArrayList = ArrayList<String>()
+            recorder?.stop()
             val duration = getDuration(path)
             audioInfoArrayList.add(path)
             audioInfoArrayList.add(duration)
             result.success(audioInfoArrayList)
             //result.success(false)
-        } catch (e: IllegalStateException) {
+        } catch (e: RuntimeException) {
+            // Stop was called immediately after start which causes stop() call to fail.
+            audioInfoArrayList.add(null)
+            audioInfoArrayList.add("-1")
             Log.e(LOG_TAG, "Failed to pause recording")
         }
     }

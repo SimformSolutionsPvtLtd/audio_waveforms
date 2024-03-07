@@ -235,6 +235,7 @@ class _HomeState extends State<Home> {
     if (isRecording) {
       var ab = await recorderController.pause();
       path = ab;
+      isRecordingCompleted = true;
       setState(() {});
       print('PATH is ------- ${ab}');
     }
