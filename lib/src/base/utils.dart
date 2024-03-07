@@ -139,9 +139,6 @@ enum FinishMode {
   stop
 }
 
-// TODO: remove this function if we remove support for flutter 2.x
-T? ambiguate<T>(T? object) => object;
-
 /// An enum to decide which type of waveform to show.
 enum WaveformType {
   /// Fits Waveform in provided width. Audio can be seeked with
@@ -190,11 +187,14 @@ extension RecorderStateExtension on RecorderState {
 /// Rate of updating the reported current duration.
 enum UpdateFrequency {
   /// Reports duration at every 50 milliseconds.
-  high,
+  high(50),
 
   /// Reports duration at every 100 milliseconds.
-  medium,
+  medium(100),
 
   /// Reports duration at every 200 milliseconds.
-  low
+  low(200);
+
+  const UpdateFrequency(this.value);
+  final int value;
 }

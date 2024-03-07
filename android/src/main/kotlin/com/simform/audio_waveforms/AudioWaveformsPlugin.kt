@@ -77,10 +77,10 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 if (key != null) {
                     initPlayer(key)
                     audioPlayers[key]?.preparePlayer(
-                        result,
-                        audioPath,
-                        volume?.toFloat(),
-                        getUpdateFrequency(frequency),
+                            result,
+                            audioPath,
+                            volume?.toFloat(),
+                            frequency?.toLong(),
                     )
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
@@ -244,15 +244,6 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             audioPlayers[playerKey] = newPlayer
         }
         return
-    }
-
-    private fun getUpdateFrequency(frequency: Int?): UpdateFrequency {
-        if (frequency == 2) {
-            return UpdateFrequency.High
-        } else if (frequency == 1) {
-            return UpdateFrequency.Medium
-        }
-        return UpdateFrequency.Low
     }
 
     private fun createOrUpdateExtractor(

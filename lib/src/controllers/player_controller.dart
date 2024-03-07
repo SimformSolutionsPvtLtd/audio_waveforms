@@ -122,7 +122,7 @@ class PlayerController extends ChangeNotifier {
     final isPrepared = await AudioWaveformsInterface.instance.preparePlayer(
       path: path,
       key: playerKey,
-      frequency: _getFrequency(),
+      frequency: updateFrequency.value,
       volume: volume,
     );
     if (isPrepared) {
@@ -308,18 +308,6 @@ class PlayerController extends ChangeNotifier {
   void setRefresh(bool refresh) {
     _shouldRefresh = refresh;
     notifyListeners();
-  }
-
-  // TODO: Replace this with enhanced enum when we drop support for dart 2.17 earlier versions
-  int _getFrequency() {
-    switch (updateFrequency) {
-      case UpdateFrequency.high:
-        return 2;
-      case UpdateFrequency.medium:
-        return 1;
-      case UpdateFrequency.low:
-        return 0;
-    }
   }
 
   @override

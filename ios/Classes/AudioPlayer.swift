@@ -8,7 +8,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     private var timer: Timer?
     private var player: AVAudioPlayer?
     private var finishMode: FinishMode = FinishMode.stop
-    private var updateFrequency = UpdateFrequency.low
+    private var updateFrequency = 200
     var plugin: SwiftAudioWaveformsPlugin
     var playerKey: String
     var flutterChannel: FlutterMethodChannel
@@ -20,9 +20,9 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         flutterChannel = channel
     }
     
-    func preparePlayer(path: String?, volume: Double?, updateFrequency: UpdateFrequency,result: @escaping FlutterResult) {
+    func preparePlayer(path: String?, volume: Double?, updateFrequency: Int?,result: @escaping FlutterResult) {
         if(!(path ?? "").isEmpty) {
-            self.updateFrequency = updateFrequency
+            self.updateFrequency = updateFrequency ?? 200
             let audioUrl = URL.init(string: path!)
             if(audioUrl == nil){
                 result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise Url from provided audio file", details: "If path contains `file://` try removing it"))
@@ -128,7 +128,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     
     func startListening() {
         if #available(iOS 10.0, *) {
-            timer = Timer.scheduledTimer(withTimeInterval: (updateFrequency.rawValue / 1000), repeats: true, block: { _ in
+            timer = Timer.scheduledTimer(withTimeInterval: (Double(updateFrequency) / 1000), repeats: true, block: { _ in
                 let ms = (self.player?.currentTime ?? 0) * 1000
                 self.flutterChannel.invokeMethod(Constants.onCurrentDuration, arguments: [Constants.current: Int(ms), Constants.playerKey: self.playerKey])
             })
