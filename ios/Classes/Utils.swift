@@ -61,6 +61,8 @@ struct Constants {
     static let useLegacyNormalization = "useLegacyNormalization"
     static let updateFrequency = "updateFrequency"
     static let overrideAudioSession = "overrideAudioSession"
+    static let resultFilePath = "resultFilePath"
+    static let resultDuration = "resultDuration"
 }
 
 enum FinishMode : Int{
