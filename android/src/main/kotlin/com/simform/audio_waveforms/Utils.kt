@@ -74,12 +74,6 @@ enum class FinishMode(val value:Int) {
     Stop(2)
 }
 
-enum class UpdateFrequency(val value:Long) {
-    High(50),
-    Medium(100),
-    Low(200),
-}
-
 fun interface RequestPermissionsSuccessCallback {
     fun onSuccess(results: Boolean?)
 }

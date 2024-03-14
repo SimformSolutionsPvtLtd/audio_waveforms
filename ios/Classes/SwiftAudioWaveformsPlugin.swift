@@ -50,7 +50,7 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
                 initPlayer(playerKey: key!)
                 audioPlayers[key!]?.preparePlayer(path: args?[Constants.path] as? String,
                                                   volume: args?[Constants.volume] as? Double,
-                                                  updateFrequency: getUpdateFrequency(freq: args?[Constants.updateFrequency] as? Int) ,
+                                                  updateFrequency: args?[Constants.updateFrequency] as? Int,
                                                   result: result)
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not prepare player", details: "Player key is null"))
@@ -145,14 +145,6 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         }
     }
     
-    func getUpdateFrequency(freq: Int?) -> UpdateFrequency{
-        if(freq == 2){
-            return UpdateFrequency.high
-        } else if(freq == 1){
-            return UpdateFrequency.medium
-        }
-        return UpdateFrequency.low
-    }
     
     func initPlayer(playerKey: String) {
         if audioPlayers[playerKey] == nil {
