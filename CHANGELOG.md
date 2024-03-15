@@ -1,3 +1,7 @@
+## 1.0.6
+- upgrade Flutter version
+- minor internal restructure
+
 ## 1.0.5
 
 - Updated gradle file
