@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '/audio_waveforms.dart';
@@ -40,18 +42,23 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
 
   double _initialOffsetPosition = 0.0;
   double _initialPosition = 0.0;
+  Duration currentlyRecordedDuration = Duration.zero;
+  late StreamSubscription<Duration> streamSubscription;
 
   @override
   void initState() {
     super.initState();
-    widget.recorderController.addListener(() {
-      if (mounted) setState(() {});
+    widget.recorderController.addListener(_recorderControllerListener);
+    streamSubscription =
+        widget.recorderController.onCurrentDuration.listen((duration) {
+      currentlyRecordedDuration = duration;
     });
   }
 
   @override
   void dispose() {
-    widget.recorderController.removeListener(() {});
+    widget.recorderController.removeListener(_recorderControllerListener);
+    streamSubscription.cancel();
     super.dispose();
   }
 
@@ -105,13 +112,14 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 labelSpacing: widget.waveStyle.labelSpacing,
                 gradient: widget.waveStyle.gradient,
                 shouldClearLabels: widget.recorderController.shouldClearLabels,
-                revertClearlabelCall:
+                revertClearLabelCall:
                     widget.recorderController.revertClearLabelCall,
                 setCurrentPositionDuration:
                     widget.recorderController.setScrolledPositionDuration,
                 shouldCalculateScrolledPosition:
                     widget.shouldCalculateScrolledPosition,
                 scaleFactor: widget.waveStyle.scaleFactor,
+                currentlyRecordedDuration: currentlyRecordedDuration,
               ),
             ),
           ),
@@ -196,8 +204,11 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
       _totalBackDistance = Offset.zero;
       _dragOffset = Offset.zero;
     }
-    ambiguate(WidgetsBinding.instance)?.addPostFrameCallback((_) {
+  }
+
+  void _recorderControllerListener() {
+    if (mounted) {
       setState(() {});
-    });
+    }
   }
 }

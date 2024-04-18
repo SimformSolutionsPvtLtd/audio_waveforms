@@ -117,15 +117,25 @@ class AudioWaveformsInterface {
 
   ///platform call to stop player
   Future<bool> stopPlayer(String key) async {
-    var result = await _methodChannel
-        .invokeMethod(Constants.stopPlayer, {Constants.playerKey: key});
+    var result = await _methodChannel.invokeMethod(Constants.stopPlayer, {
+      Constants.playerKey: key,
+    });
+    return result ?? false;
+  }
+
+  ///platform call to release resource
+  Future<bool> release(String key) async {
+    var result = await _methodChannel.invokeMethod(Constants.releasePlayer, {
+      Constants.playerKey: key,
+    });
     return result ?? false;
   }
 
   ///platform call to pause player
   Future<bool> pausePlayer(String key) async {
-    var result = await _methodChannel
-        .invokeMethod(Constants.pausePlayer, {Constants.playerKey: key});
+    var result = await _methodChannel.invokeMethod(Constants.pausePlayer, {
+      Constants.playerKey: key,
+    });
     return result ?? false;
   }
 
@@ -142,6 +152,15 @@ class AudioWaveformsInterface {
   Future<bool> setVolume(double volume, String key) async {
     var result = await _methodChannel.invokeMethod(Constants.setVolume, {
       Constants.volume: volume,
+      Constants.playerKey: key,
+    });
+    return result ?? false;
+  }
+
+  ///platform call to set rate
+  Future<bool> setRate(double rate, String key) async {
+    var result = await _methodChannel.invokeMethod(Constants.setRate, {
+      Constants.rate: rate,
       Constants.playerKey: key,
     });
     return result ?? false;

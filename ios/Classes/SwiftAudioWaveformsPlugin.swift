@@ -50,7 +50,7 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
                 initPlayer(playerKey: key!)
                 audioPlayers[key!]?.preparePlayer(path: args?[Constants.path] as? String,
                                                   volume: args?[Constants.volume] as? Double,
-                                                  updateFrequency: getUpdateFrequency(freq: args?[Constants.updateFrequency] as? Int) ,
+                                                  updateFrequency: args?[Constants.updateFrequency] as? Int,
                                                   result: result)
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not prepare player", details: "Player key is null"))
@@ -81,6 +81,12 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not stop player", details: "Player key is null"))
             }
             break
+        case Constants.releasePlayer:
+            let key = args?[Constants.playerKey] as? String
+            if(key != nil){
+                audioPlayers[key!]?.release(result: result)
+            }
+            break;
         case Constants.seekTo:
             let key = args?[Constants.playerKey] as? String
             if(key != nil){
@@ -94,6 +100,13 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
                 audioPlayers[key!]?.setVolume(args?[Constants.volume] as? Double,result)
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not set volume", details: "Player key is null"))
+            }
+        case Constants.setRate:
+            let key = args?[Constants.playerKey] as? String
+            if(key != nil){
+                audioPlayers[key!]?.setRate(args?[Constants.rate] as? Double,result)
+            } else {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Can not set rate", details: "Player key is null"))
             }
         case Constants.getDuration:
             let type = args?[Constants.durationType] as? Int
@@ -132,14 +145,6 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         }
     }
     
-    func getUpdateFrequency(freq: Int?) -> UpdateFrequency{
-        if(freq == 2){
-            return UpdateFrequency.high
-        } else if(freq == 1){
-            return UpdateFrequency.medium
-        }
-        return UpdateFrequency.low
-    }
     
     func initPlayer(playerKey: String) {
         if audioPlayers[playerKey] == nil {

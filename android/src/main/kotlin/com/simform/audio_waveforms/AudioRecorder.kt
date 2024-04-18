@@ -22,6 +22,7 @@ private const val RECORD_AUDIO_REQUEST_CODE = 1001
 class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     private var useLegacyNormalization = false
+    private var successCallback: RequestPermissionsSuccessCallback? = null
 
     fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
         if (useLegacyNormalization) {
@@ -65,15 +66,25 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     fun stopRecording(result: MethodChannel.Result, recorder: MediaRecorder?, path: String) {
         try {
+            val audioInfoArrayList = ArrayList<String?>()
+
+            try {
+                recorder?.stop()
+
+                val duration = getDuration(path)
+                audioInfoArrayList.add(path)
+                audioInfoArrayList.add(duration)
+            } catch (e: RuntimeException) {
+                // Stop was called immediately after start which causes stop() call to fail.
+                audioInfoArrayList.add(null)
+                audioInfoArrayList.add("-1")
+            }
+
             recorder?.apply {
-                stop()
                 reset()
                 release()
             }
-            val audioInfoArrayList = ArrayList<String>()
-            val duration = getDuration(path)
-            audioInfoArrayList.add(path)
-            audioInfoArrayList.add(duration)
+
             result.success(audioInfoArrayList)
         } catch (e: IllegalStateException) {
             Log.e(LOG_TAG, "Failed to stop recording")
@@ -130,6 +141,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         grantResults: IntArray
     ): Boolean {
         return if (requestCode == RECORD_AUDIO_REQUEST_CODE) {
+            successCallback?.onSuccess(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
             grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
         } else {
             false
@@ -142,7 +154,8 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         return result == PackageManager.PERMISSION_GRANTED
     }
 
-    fun checkPermission(result: MethodChannel.Result, activity: Activity?) {
+    fun checkPermission(result: MethodChannel.Result, activity: Activity?, successCallback: RequestPermissionsSuccessCallback) {
+        this.successCallback = successCallback
         if (!isPermissionGranted(activity)) {
             activity?.let {
                 ActivityCompat.requestPermissions(

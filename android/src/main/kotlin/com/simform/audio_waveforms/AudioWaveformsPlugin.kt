@@ -15,6 +15,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -35,6 +36,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var applicationContext: Context
     private var audioPlayers = mutableMapOf<String, AudioPlayer?>()
     private var extractors = mutableMapOf<String, WaveformExtractor?>()
+    private var pluginBinding: ActivityPluginBinding? = null
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, Constants.methodChannelName)
@@ -66,7 +68,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Constants.pauseRecording -> audioRecorder.pauseRecording(result, recorder)
             Constants.resumeRecording -> audioRecorder.resumeRecording(result, recorder)
             Constants.getDecibel -> audioRecorder.getDecibel(result, recorder)
-            Constants.checkPermission -> audioRecorder.checkPermission(result, activity)
+            Constants.checkPermission -> audioRecorder.checkPermission(result, activity, result :: success)
             Constants.preparePlayer -> {
                 val audioPath = call.argument(Constants.path) as String?
                 val volume = call.argument(Constants.volume) as Double?
@@ -75,10 +77,10 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 if (key != null) {
                     initPlayer(key)
                     audioPlayers[key]?.preparePlayer(
-                        result,
-                        audioPath,
-                        volume?.toFloat(),
-                        getUpdateFrequency(frequency),
+                            result,
+                            audioPath,
+                            volume?.toFloat(),
+                            frequency?.toLong(),
                     )
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
@@ -113,6 +115,10 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+            Constants.releasePlayer -> {
+                val key = call.argument(Constants.playerKey) as String?
+                audioPlayers[key]?.release(result)
+            }
             Constants.seekTo -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val progress = call.argument(Constants.progress) as Int?
@@ -134,6 +140,15 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
                     audioPlayers[key]?.setVolume(volume?.toFloat(), result)
+                } else {
+                    result.error(Constants.LOG_TAG, "Player key can't be null", "")
+                }
+            }
+            Constants.setRate -> {
+                val rate = call.argument(Constants.rate) as Double?
+                val key = call.argument(Constants.playerKey) as String?
+                if (key != null) {
+                    audioPlayers[key]?.setRate(rate?.toFloat(), result)
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
@@ -231,15 +246,6 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         return
     }
 
-    private fun getUpdateFrequency(frequency: Int?): UpdateFrequency {
-        if (frequency == 2) {
-            return UpdateFrequency.High
-        } else if (frequency == 1) {
-            return UpdateFrequency.Medium
-        }
-        return UpdateFrequency.Low
-    }
-
     private fun createOrUpdateExtractor(
         playerKey: String,
         noOfSamples: Int,
@@ -276,6 +282,9 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
+        pluginBinding = binding
+        pluginBinding!!.addRequestPermissionsResultListener(this.audioRecorder)
+
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
@@ -292,5 +301,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         audioPlayers.clear()
         extractors.clear()
         activity = null
+        if (pluginBinding != null) {
+            pluginBinding!!.removeRequestPermissionsResultListener(this.audioRecorder)
+        }
     }
 }

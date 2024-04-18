@@ -44,10 +44,13 @@ object Constants {
     const val startPlayer = "startPlayer"
     const val stopPlayer = "stopPlayer"
     const val pausePlayer = "pausePlayer"
+    const val releasePlayer = "releasePlayer"
     const val seekTo = "seekTo"
     const val progress = "progress"
     const val setVolume = "setVolume"
     const val volume = "volume"
+    const val setRate = "setRate"
+    const val rate = "rate"
     const val getDuration = "getDuration"
     const val durationType = "durationType"
     const val playerKey = "playerKey"
@@ -71,8 +74,6 @@ enum class FinishMode(val value:Int) {
     Stop(2)
 }
 
-enum class UpdateFrequency(val value:Long) {
-    High(50),
-    Medium(100),
-    Low(200),
+fun interface RequestPermissionsSuccessCallback {
+    fun onSuccess(results: Boolean?)
 }

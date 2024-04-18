@@ -8,7 +8,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     private var timer: Timer?
     private var player: AVAudioPlayer?
     private var finishMode: FinishMode = FinishMode.stop
-    private var updateFrequency = UpdateFrequency.low
+    private var updateFrequency = 200
     var plugin: SwiftAudioWaveformsPlugin
     var playerKey: String
     var flutterChannel: FlutterMethodChannel
@@ -20,9 +20,9 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         flutterChannel = channel
     }
     
-    func preparePlayer(path: String?, volume: Double?, updateFrequency: UpdateFrequency,result: @escaping FlutterResult) {
+    func preparePlayer(path: String?, volume: Double?, updateFrequency: Int?,result: @escaping FlutterResult) {
         if(!(path ?? "").isEmpty) {
-            self.updateFrequency = updateFrequency
+            self.updateFrequency = updateFrequency ?? 200
             let audioUrl = URL.init(string: path!)
             if(audioUrl == nil){
                 result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise Url from provided audio file", details: "If path contains `file://` try removing it"))
@@ -31,8 +31,10 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             do {
                 player = try AVAudioPlayer(contentsOf: audioUrl!)
             } catch {
-                result(FlutterError(code: Constants.audioWaveforms, message: "Failed to prepare player", details: nil))
+                result(FlutterError(code: Constants.audioWaveforms, message: "Failed to prepare player", details: error.localizedDescription))
             }
+            player?.enableRate = true
+            player?.rate = 1.0
             player?.prepareToPlay()
             player?.volume = Float(volume ?? 1.0)
             result(true)
@@ -86,8 +88,12 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     func stopPlayer(result: @escaping FlutterResult) {
         stopListening()
         player?.stop()
-        player = nil
         timer = nil
+        result(true)
+    }
+    
+    func release(result: @escaping FlutterResult) {
+        player = nil
         result(true)
     }
     
@@ -106,6 +112,11 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         result(true)
     }
     
+    func setRate(_ rate: Double?, _ result: @escaping FlutterResult) {
+        player?.rate = Float(rate ?? 1.0);
+        result(true)
+    }
+    
     func seekTo(_ time: Int?, _ result: @escaping FlutterResult) {
         if(time != nil) {
             player?.currentTime = Double(time! / 1000)
@@ -117,7 +128,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     
     func startListening() {
         if #available(iOS 10.0, *) {
-            timer = Timer.scheduledTimer(withTimeInterval: (updateFrequency.rawValue / 1000), repeats: true, block: { _ in
+            timer = Timer.scheduledTimer(withTimeInterval: (Double(updateFrequency) / 1000), repeats: true, block: { _ in
                 let ms = (self.player?.currentTime ?? 0) * 1000
                 self.flutterChannel.invokeMethod(Constants.onCurrentDuration, arguments: [Constants.current: Int(ms), Constants.playerKey: self.playerKey])
             })
