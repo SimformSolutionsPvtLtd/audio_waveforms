@@ -9,7 +9,7 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var audioUrl: URL?
     var recordedDuration: CMTime = CMTime.zero
     
-    public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ bitRate : Int?,_ fileNameFormat: String, _ useLegacy: Bool?){
+    public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ bitRate : Int?,_ fileNameFormat: String, _ useLegacy: Bool?, overrideAudioSession : Bool){
         useLegacyNormalization = useLegacy ?? false
         let settings = [
             AVFormatIDKey: getEncoder(encoder ?? 0),
@@ -39,9 +39,10 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
         
         
         do {
-            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord, options: options)
-            try AVAudioSession.sharedInstance().setActive(true)
-            
+            if overrideAudioSession {
+                try AVAudioSession.sharedInstance().setCategory(.playAndRecord, options: options)
+                try AVAudioSession.sharedInstance().setActive(true)
+            }
             audioUrl = URL(fileURLWithPath: self.path!)
             
             if(audioUrl == nil){

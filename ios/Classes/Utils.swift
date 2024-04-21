@@ -60,6 +60,7 @@ struct Constants {
     static let onExtractionProgressUpdate = "onExtractionProgressUpdate"
     static let useLegacyNormalization = "useLegacyNormalization"
     static let updateFrequency = "updateFrequency"
+    static let overrideAudioSession = "overrideAudioSession"
 }
 
 enum FinishMode : Int{

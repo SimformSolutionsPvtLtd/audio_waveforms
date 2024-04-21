@@ -1,4 +1,4 @@
-![Audio Waveforms - Simform LLC.](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/blob/main/preview/banner.png)
+![Audio Waveforms - Simform LLC.](https://raw.githubusercontent.com/SimformSolutionsPvtLtd/audio_waveforms/main/preview/banner.png)
 
 # Audio Waveforms
 
@@ -40,7 +40,7 @@ Add this two rows in `ios/Runner/Info.plist`
 ```
 This plugin requires ios 10.0 or higher. So add this line in `Podfile`
 ```
-platform :ios, '10.0'
+platform :ios, '12.0'
 ```
 **Installing**
 
@@ -99,12 +99,14 @@ controller.androidEncoder = AndroidEncoder.aac;                  // Changing and
 controller.androidOutputFormat = AndroidOutputFormat.mpeg4;      // Changing android output format
 controller.iosEncoder = IosEncoder.kAudioFormatMPEG4AAC;         // Changing ios encoder
 controller.sampleRate = 44100;                                   // Updating sample rate
-controller.bitRate = 48000;                                      // Updating bitrate
+controller.bitRate = null;                                       // Updating bitrate
 controller.onRecorderStateChanged.listen((state){});             // Listening to recorder state changes
 controller.onCurrentDuration.listen((duration){});               // Listening to current duration updates
 controller.onRecordingEnded.listen((duration));                  // Listening to audio file duration
 controller.recordedDuration;                                     // Get recorded audio duration 
+controller.elapsedDuration;                                      // Get currently recorded audio duration
 controller.currentScrolledDuration;                              // Current duration position notifier
+controller.overrideAudioSession = true                           // Use default AudioSession config or not 
 ```
 
 ## Player
@@ -129,6 +131,7 @@ await controller.pausePlayer();                                     // Pause aud
 await controller.stopPlayer();                                      // Stop audio player
 await controller.setVolume(1.0);                                    // Set volume level
 await controller.seekTo(5000);                                      // Seek audio
+await controller.setRate(1.0);                                      // Update speed audio playback
 final duration = await controller.getDuration(DurationType.max);    // Get duration of audio player
 controller.updateFrequency = UpdateFrequency.low;                   // Update reporting rate of current duration.
 controller.onPlayerStateChanged.listen((state) {});                 // Listening to player state changes

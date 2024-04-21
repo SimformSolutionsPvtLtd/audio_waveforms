@@ -237,11 +237,10 @@ class PlayerController extends ChangeNotifier {
     return result;
   }
 
-  /// Sets rate for this player. Doesn't throw Exception.
+  /// Sets playback rate for this player. Doesn't throw Exception.
   /// Returns false if it couldn't set the rate.
   ///
   /// Default to 1.0
-
   Future<bool> setRate(double rate) async {
     final result =
         await AudioWaveformsInterface.instance.setRate(rate, playerKey);
