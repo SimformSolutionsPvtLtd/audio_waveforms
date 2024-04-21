@@ -68,7 +68,26 @@ class RecorderController extends ChangeNotifier {
   /// user has provided the microphone permission otherwise false.
   bool get hasPermission => _hasPermission;
 
-  bool shouldClearLabels = false;
+  /// IOS only.
+  ///
+  /// Overrides AVAudioSession settings with
+  /// ```
+  /// AVAudioSession.Category: .playAndRecord
+  /// AVAudioSession.CategoryOptions: [.defaultToSpeaker, .allowBluetooth]
+  /// ```
+  /// You may use your implementation to set your preferred configurations.
+  /// Changes to this property will only take effect after you call [record].
+  ///
+  /// **Important**-: If you set this property to false, you will be responsible
+  /// for the setting current configuration. Failed to do so may result in
+  /// audio not being recorded and waves not generating.
+  ///
+  /// Defaults to true.
+  bool overrideAudioSession = true;
+
+  bool get shouldClearLabels => _shouldClearLabels;
+
+  bool _shouldClearLabels = false;
 
   bool _isDisposed = false;
 
@@ -76,13 +95,17 @@ class RecorderController extends ChangeNotifier {
 
   /// Provides currently recorded audio duration. Use [onCurrentDuration]
   /// stream to get latest events duration.
-  Duration elapsedDuration = Duration.zero;
+  Duration get elapsedDuration => _elapsedDuration;
+
+  Duration _elapsedDuration = Duration.zero;
 
   /// Provides duration of recorded audio file when recording has been stopped.
   /// Until recording has been stopped, this duration will be
   /// zero(Duration.zero). Also, once new recording is started this duration
   /// will be reset to zero.
-  Duration recordedDuration = Duration.zero;
+  Duration get recordedDuration => _recordedDuration;
+
+  Duration _recordedDuration = Duration.zero;
 
   Timer? _recorderTimer;
 
@@ -201,6 +224,7 @@ class RecorderController extends ChangeNotifier {
             bitRate: bitRate ?? this.bitRate,
             path: path,
             useLegacyNormalization: _useLegacyNormalization,
+            overrideAudioSession: overrideAudioSession,
           );
           if (_isRecording) {
             _setRecorderState(RecorderState.recording);
@@ -293,11 +317,11 @@ class RecorderController extends ChangeNotifier {
         if (audioInfo[1] != null) {
           var duration = int.tryParse(audioInfo[1]!);
           if (duration != null) {
-            recordedDuration = Duration(milliseconds: duration);
+            _recordedDuration = Duration(milliseconds: duration);
             _recordedFileDurationController.add(recordedDuration);
           }
         }
-        elapsedDuration = Duration.zero;
+        _elapsedDuration = Duration.zero;
         _setRecorderState(RecorderState.stopped);
         if (callReset) reset();
         return audioInfo[0];
@@ -315,14 +339,14 @@ class RecorderController extends ChangeNotifier {
   void reset() {
     refresh();
     _waveData.clear();
-    shouldClearLabels = true;
+    _shouldClearLabels = true;
     notifyListeners();
   }
 
   /// Sets [shouldClearLabels] flag to false.
   void revertClearLabelCall() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      shouldClearLabels = false;
+      _shouldClearLabels = false;
       notifyListeners();
     });
   }
@@ -333,10 +357,10 @@ class RecorderController extends ChangeNotifier {
 
   /// Gets decibel by every defined frequency
   void _startTimer() {
-    recordedDuration = Duration.zero;
+    _recordedDuration = Duration.zero;
     const duration = Duration(milliseconds: 50);
     _recorderTimer = Timer.periodic(duration, (_) {
-      elapsedDuration += duration;
+      _elapsedDuration += duration;
       _currentDurationController.add(elapsedDuration);
     });
 
