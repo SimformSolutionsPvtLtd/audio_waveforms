@@ -63,8 +63,11 @@ class AudioWaveformsInterface {
 
   ///platform call to get decibel
   Future<double?> getDecibel() async {
-    var db = await _methodChannel.invokeMethod(Constants.getDecibel);
-    return db;
+    try {
+      return await _methodChannel.invokeMethod(Constants.getDecibel);
+    } catch (e) {
+      return 0;
+    }
   }
 
   ///platform call to check microphone permission
