@@ -31,10 +31,9 @@ class PlayerController extends ChangeNotifier {
   /// Provides [max] duration of currently provided audio file.
   int get maxDuration => _maxDuration;
 
-  final UniqueKey _playerKey = UniqueKey();
-
   /// An unique key string associated with [this] player only
-  String get playerKey => _playerKey.toString();
+  late final playerKey = shortHash(_playerKey);
+  final UniqueKey _playerKey = UniqueKey();
 
   final bool _shouldClearLabels = false;
 
