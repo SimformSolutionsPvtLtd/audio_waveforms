@@ -32,8 +32,7 @@ class PlayerController extends ChangeNotifier {
   int get maxDuration => _maxDuration;
 
   /// An unique key string associated with [this] player only
-  late final playerKey = shortHash(_playerKey);
-  final UniqueKey _playerKey = UniqueKey();
+  final playerKey = shortHash(UniqueKey());
 
   final bool _shouldClearLabels = false;
 
