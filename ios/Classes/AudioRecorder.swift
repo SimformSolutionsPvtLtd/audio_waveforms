@@ -112,20 +112,16 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             AVAudioSession.sharedInstance().requestRecordPermission() { [unowned self] allowed in
                 DispatchQueue.main.async {
                     self.hasPermission = allowed
+                    result(allowed)
                 }
             }
-            break
         case .denied:
-            hasPermission = false
-            break
+            result(false)
         case .granted:
-            hasPermission = true
-            break
+            result(true)
         @unknown default:
-            hasPermission = false
-            break
+            result(false)
         }
-        result(hasPermission)
     }
     public func getEncoder(_ enCoder: Int) -> Int {
         switch(enCoder) {
