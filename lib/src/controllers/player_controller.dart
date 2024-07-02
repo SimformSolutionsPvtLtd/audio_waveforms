@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:audio_waveforms/src/base/constants.dart';
@@ -31,8 +33,11 @@ class PlayerController extends ChangeNotifier {
   /// Provides [max] duration of currently provided audio file.
   int get maxDuration => _maxDuration;
 
+  final ValueKey<String> _playerKey =
+      ValueKey("${Isolate.current.hashCode}${Random().nextInt(10000)}");
+
   /// An unique key string associated with [this] player only
-  final playerKey = shortHash(UniqueKey());
+  String get playerKey => _playerKey.value;
 
   final bool _shouldClearLabels = false;
 
