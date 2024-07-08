@@ -279,7 +279,7 @@ class PlayerController extends ChangeNotifier {
     if (playerState != PlayerState.stopped) await stopPlayer();
     await release();
     PlatformStreams.instance.playerControllerFactory.remove(playerKey);
-    if (PlatformStreams.instance.playerControllerFactory.length == 1) {
+    if (PlatformStreams.instance.playerControllerFactory.isEmpty) {
       PlatformStreams.instance.dispose();
     }
     _isDisposed = true;
