@@ -120,6 +120,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     func seekTo(_ time: Int?, _ result: @escaping FlutterResult) {
         if(time != nil) {
             player?.currentTime = Double(time! / 1000)
+            sendCurrentDuration()
             result(true)
         } else {
             result(false)
@@ -129,8 +130,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     func startListening() {
         if #available(iOS 10.0, *) {
             timer = Timer.scheduledTimer(withTimeInterval: (Double(updateFrequency) / 1000), repeats: true, block: { _ in
-                let ms = (self.player?.currentTime ?? 0) * 1000
-                self.flutterChannel.invokeMethod(Constants.onCurrentDuration, arguments: [Constants.current: Int(ms), Constants.playerKey: self.playerKey])
+                self.sendCurrentDuration()
             })
         } else {
             // Fallback on earlier versions
@@ -140,5 +140,11 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     func stopListening() {
         timer?.invalidate()
         timer = nil
+        sendCurrentDuration()
+    }
+
+    func sendCurrentDuration() {
+        let ms = (player?.currentTime ?? 0) * 1000
+        flutterChannel.invokeMethod(Constants.onCurrentDuration, arguments: [Constants.current: Int(ms), Constants.playerKey: playerKey])
     }
 }

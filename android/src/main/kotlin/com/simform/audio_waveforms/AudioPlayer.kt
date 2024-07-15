@@ -89,6 +89,7 @@ class AudioPlayer(
     fun seekToPosition(result: MethodChannel.Result, progress: Long?) {
         if (progress != null) {
             player?.seekTo(progress)
+            sendCurrentDuration()
             result.success(true)
         } else {
             result.success(false)
@@ -187,16 +188,8 @@ class AudioPlayer(
     private fun startListening(result: MethodChannel.Result) {
         runnable = object : Runnable {
             override fun run() {
-                val currentPosition = player?.currentPosition
-                if (currentPosition != null) {
-                    val args: MutableMap<String, Any?> = HashMap()
-                    args[Constants.current] = currentPosition
-                    args[Constants.playerKey] = key
-                    methodChannel.invokeMethod(Constants.onCurrentDuration, args)
-                    handler.postDelayed(this, updateFrequency)
-                } else {
-                    result.error(Constants.LOG_TAG, "Can't get current Position of player", "")
-                }
+                sendCurrentDuration()
+                handler.postDelayed(this, updateFrequency)
             }
         }
         handler.post(runnable!!)
@@ -205,5 +198,14 @@ class AudioPlayer(
 
     private fun stopListening() {
         runnable?.let { handler.removeCallbacks(it) }
+        sendCurrentDuration()
+    }
+
+    private fun sendCurrentDuration() {
+        val currentPosition = player?.currentPosition ?: 0
+        val args: MutableMap<String, Any?> = HashMap()
+        args[Constants.current] = currentPosition
+        args[Constants.playerKey] = key
+        methodChannel.invokeMethod(Constants.onCurrentDuration, args)
     }
 }
