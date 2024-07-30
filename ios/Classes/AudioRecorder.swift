@@ -4,7 +4,6 @@ import Accelerate
 public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var audioRecorder: AVAudioRecorder?
     var path: String?
-    var hasPermission: Bool = false
     var useLegacyNormalization: Bool = false
     var audioUrl: URL?
     var recordedDuration: CMTime = CMTime.zero
@@ -111,21 +110,16 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
         case .undetermined:
             AVAudioSession.sharedInstance().requestRecordPermission() { [unowned self] allowed in
                 DispatchQueue.main.async {
-                    self.hasPermission = allowed
+                    result(allowed)
                 }
             }
-            break
         case .denied:
-            hasPermission = false
-            break
+            result(false)
         case .granted:
-            hasPermission = true
-            break
+            result(true)
         @unknown default:
-            hasPermission = false
-            break
+            result(false)
         }
-        result(hasPermission)
     }
     public func getEncoder(_ enCoder: Int) -> Int {
         switch(enCoder) {
