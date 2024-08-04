@@ -62,6 +62,9 @@ class AudioFileWaveforms extends StatefulWidget {
   /// Allow seeking with gestures when turned on.
   final bool enableSeekGesture;
 
+  /// Allow seeking with gestures on pause mode.
+  final bool enableSeekGestureOnPauseMode;
+
   /// Generate waveforms from audio file. You play those audio file using
   /// [PlayerController].
   ///
@@ -86,6 +89,7 @@ class AudioFileWaveforms extends StatefulWidget {
     this.clipBehavior = Clip.none,
     this.waveformType = WaveformType.long,
     this.enableSeekGesture = true,
+    this.enableSeekGestureOnPauseMode = true,
   }) : super(key: key);
 
   @override
@@ -129,14 +133,12 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     _growingWaveController
       ..forward()
       ..addListener(_updateGrowAnimationProgress);
-    onCurrentDurationSubscription =
-        widget.playerController.onCurrentDurationChanged.listen((event) {
+    onCurrentDurationSubscription = widget.playerController.onCurrentDurationChanged.listen((event) {
       _seekProgress.value = event;
       _updatePlayerPercent(widget.size);
     });
 
-    onCompletionSubscription =
-        widget.playerController.onCompletion.listen((event) {
+    onCompletionSubscription = widget.playerController.onCompletion.listen((event) {
       _seekProgress.value = widget.playerController.maxDuration;
       _updatePlayerPercent(widget.size);
     });
@@ -189,13 +191,10 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
       decoration: widget.decoration,
       clipBehavior: widget.clipBehavior,
       child: GestureDetector(
-        onHorizontalDragUpdate:
-            widget.enableSeekGesture ? _handleDragGestures : null,
+        onHorizontalDragUpdate: widget.enableSeekGesture ? _handleDragGestures : null,
         onTapUp: widget.enableSeekGesture ? _handleScrubberSeekStart : null,
-        onHorizontalDragStart:
-            widget.enableSeekGesture ? _handleHorizontalDragStart : null,
-        onHorizontalDragEnd:
-            widget.enableSeekGesture ? (_) => _handleOnDragEnd() : null,
+        onHorizontalDragStart: widget.enableSeekGesture ? _handleHorizontalDragStart : null,
+        onHorizontalDragEnd: widget.enableSeekGesture ? (_) => _handleOnDragEnd() : null,
         child: ClipPath(
           // TODO: Update extraClipperHeight when duration labels are added
           clipper: WaveClipper(extraClipperHeight: 0),
@@ -286,6 +285,10 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     _proportion = details.localPosition.dx / widget.size.width;
     var seekPosition = widget.playerController.maxDuration * _proportion;
 
+    //Manage pause mode gesture
+    if(widget.enableSeekGestureOnPauseMode){
+      _manageGestureOnPauseMode(seekPosition);
+    }
     widget.playerController.seekTo(seekPosition.toInt());
   }
 
@@ -294,6 +297,11 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     _proportion = details.localPosition.dx / widget.size.width;
     var seekPosition = widget.playerController.maxDuration * _proportion;
 
+    //Manage pause mode gesture
+    if(widget.enableSeekGestureOnPauseMode){
+      _seekProgress.value = seekPosition.toInt();
+      _updatePlayerPercent(widget.size);
+    }
     widget.playerController.seekTo(seekPosition.toInt());
   }
 
@@ -333,11 +341,16 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
         (widget.playerWaveStyle.spacing / 2);
 
     if (_scrollDirection < 0) {
-      _proportion = (start.abs() + details.delta.dx) /
-          (_waveformData.length * widget.playerWaveStyle.spacing);
+      _proportion = (start.abs() + details.delta.dx) / (_waveformData.length * widget.playerWaveStyle.spacing);
     } else {
-      _proportion = (details.delta.dx - start) /
-          (_waveformData.length * widget.playerWaveStyle.spacing);
+      _proportion = (details.delta.dx - start) / (_waveformData.length * widget.playerWaveStyle.spacing);
+    }
+
+    //Manage pause mode gesture
+    if(widget.enableSeekGestureOnPauseMode){
+      var seekPosition = widget.playerController.maxDuration * _proportion;
+      _seekProgress.value = seekPosition.toInt();
+      _manageGestureOnPauseMode(seekPosition);
     }
     if (mounted) setState(() {});
   }
@@ -394,5 +407,10 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
         setState(() {});
       }
     });
+  }
+
+  void _manageGestureOnPauseMode(double seekPosition) {
+    _seekProgress.value = seekPosition.toInt();
+    _updatePlayerPercent(widget.size);
   }
 }
