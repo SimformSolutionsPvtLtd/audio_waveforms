@@ -110,13 +110,13 @@ class PlayerController extends ChangeNotifier {
   /// number of bars in the waveform.
   ///
   /// Defaults to 100.
-  Future<void> preparePlayer({
-    required String path,
-    double? volume,
-    bool shouldExtractWaveform = true,
-    int noOfSamples = 100,
-  }) async {
-    path = Uri.parse(path).path;
+  Future<void> preparePlayer(
+      {required String path,
+      double? volume,
+      bool shouldExtractWaveform = true,
+      int noOfSamples = 100,
+      bool isLocal = true}) async {
+    path = isLocal ? Uri.parse(path).path : path;
     final isPrepared = await AudioWaveformsInterface.instance.preparePlayer(
       path: path,
       key: playerKey,

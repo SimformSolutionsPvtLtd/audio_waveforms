@@ -104,9 +104,9 @@ class _WaveBubbleState extends State<WaveBubble> {
     }
     // Prepare player with extracting waveform if index is even.
     controller.preparePlayer(
-      path: widget.path ?? file!.path,
-      shouldExtractWaveform: widget.index?.isEven ?? true,
-    );
+        path: widget.path ?? file!.path,
+        shouldExtractWaveform: widget.index?.isEven ?? true,
+        isLocal: true);
     // Extracting waveform separately if index is odd.
     if (widget.index?.isOdd ?? false) {
       controller
