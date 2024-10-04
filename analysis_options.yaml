@@ -1,4 +1,24 @@
-include: package:lints/core.yaml
+include: package:flutter_lints/flutter.yaml
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+analyzer:
+  strong-mode:
+    implicit-casts: false
+    implicit-dynamic: false
+  errors:
+    argument_type_not_assignable: error
+    invalid_assignment: error
+    dead_code: warning
+    overridden_fields: ignore
+    use_key_in_widget_constructors: ignore
+
+linter:
+  rules:
+    public_member_api_docs: false
+    avoid_print: true
+    avoid_empty_else: true
+    annotate_overrides: true
+    cancel_subscriptions: true
+    close_sinks: true
+    avoid_positional_boolean_parameters: false
+    use_super_parameters: true
+    prefer_relative_imports: true
