@@ -18,7 +18,7 @@ class AudioWaveforms extends StatefulWidget {
   final bool shouldCalculateScrolledPosition;
 
   const AudioWaveforms({
-    Key? key,
+    super.key,
     required this.size,
     required this.recorderController,
     this.waveStyle = const WaveStyle(),
@@ -28,7 +28,7 @@ class AudioWaveforms extends StatefulWidget {
     this.decoration,
     this.backgroundColor,
     this.shouldCalculateScrolledPosition = false,
-  }) : super(key: key);
+  });
 
   @override
   State<AudioWaveforms> createState() => _AudioWaveformsState();

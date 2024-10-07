@@ -1,4 +1,4 @@
-import 'package:audio_waveforms/src/base/player_identifier.dart';
+import 'player_identifier.dart';
 
 //ignore_for_file: constant_identifier_names
 extension DurationExtension on Duration {

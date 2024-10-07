@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:audio_waveforms/src/base/constants.dart';
-import 'package:audio_waveforms/src/base/platform_streams.dart';
-import 'package:audio_waveforms/src/base/player_identifier.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
+import '../../audio_waveforms.dart';
+import '../base/constants.dart';
+import '../base/platform_streams.dart';
+import '../base/player_identifier.dart';
 
 part '../base/audio_waveforms_interface.dart';
 

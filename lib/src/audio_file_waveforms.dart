@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:audio_waveforms/src/base/wave_clipper.dart';
-import 'package:audio_waveforms/src/painters/player_wave_painter.dart';
 import 'package:flutter/material.dart';
 
 import '../audio_waveforms.dart';
+import 'base/wave_clipper.dart';
+import 'painters/player_wave_painter.dart';
 
 class AudioFileWaveforms extends StatefulWidget {
   /// A size to define height and width of waveform.
@@ -71,7 +71,7 @@ class AudioFileWaveforms extends StatefulWidget {
   /// With seeking gesture enabled, playing audio can be seeked to
   /// any position using gestures.
   const AudioFileWaveforms({
-    Key? key,
+    super.key,
     required this.size,
     required this.playerController,
     this.waveformData = const [],
@@ -86,7 +86,7 @@ class AudioFileWaveforms extends StatefulWidget {
     this.clipBehavior = Clip.none,
     this.waveformType = WaveformType.long,
     this.enableSeekGesture = true,
-  }) : super(key: key);
+  });
 
   @override
   State<AudioFileWaveforms> createState() => _AudioFileWaveformsState();

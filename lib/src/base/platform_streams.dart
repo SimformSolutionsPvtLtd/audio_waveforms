@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:audio_waveforms/src/base/player_identifier.dart';
-
 import '../../audio_waveforms.dart';
+import 'player_identifier.dart';
 
 ///This class should be used for any type of native streams.
 class PlatformStreams {

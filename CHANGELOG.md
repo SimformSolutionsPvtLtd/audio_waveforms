@@ -1,7 +1,11 @@
-## 2.0.0 (Unreleased)
+## 1.1.0
 
-- **Breaking** Dropped support for Flutter < 3.0.0
+- Update flutter and dart version
 - Fixed [#256](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/256) - Default audio session config causing expected behavior for IOS.
+- Fixed [#303](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/303) - All player has same instances -  thanks [@AlexV525](https://github.com/AlexV525)
+- Fixed incorrect import for shortHash - thanks [@mattbajorek](https://github.com/mattbajorek)
+- Fixed Auto start permission on iOS by waiting for response after user confirms or denies - thanks [@mattbajorek](https://github.com/mattbajorek)
+- Fixed Dispose of instance if all playerKeys are removed - thanks [@mattbajorek](https://github.com/mattbajorek)
 
 ## 1.0.5
 
