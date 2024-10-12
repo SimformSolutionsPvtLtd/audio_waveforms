@@ -1,6 +1,7 @@
 ## 1.1.2
 
 - Fixed [#350](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/350) - Waveform clipping at starting position
+- Fixed [#304](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/304) - Updated Documentation.
 
 ## 1.1.1
 

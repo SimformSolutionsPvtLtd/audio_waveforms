@@ -172,7 +172,7 @@ class RecorderController extends ChangeNotifier {
   /// Below is the example format to save file with custom name and
   /// extension.
   ///
-  /// eg. /dir1/dir2/file-name.mp3
+  /// eg. /dir1/dir2/file-name.m4a
   ///
   /// How recorder will behave for different RecorderState -:
   ///
