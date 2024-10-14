@@ -291,7 +291,7 @@ class PlayerController extends ChangeNotifier {
   ///
   /// This method will close the stream and free resources taken by all
   /// players. This method will not dispose controller.
-  void stopAllPlayers() async {
+  Future<void> stopAllPlayers() async {
     PlatformStreams.instance.dispose();
     await AudioWaveformsInterface.instance.stopAllPlayers();
     PlatformStreams.instance.playerControllerFactory.clear();
