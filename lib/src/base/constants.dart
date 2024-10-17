@@ -26,6 +26,8 @@ class Constants {
   static const String progress = "progress";
   static const String setVolume = "setVolume";
   static const String volume = "volume";
+  static const String setReleaseMode = "setReleaseMode";
+  static const String releaseType = "releaseType";
   static const String setRate = "setRate";
   static const String rate = "rate";
   static const String rightVolume = "rightVolume";
@@ -38,8 +40,6 @@ class Constants {
   static const String onCurrentDuration = "onCurrentDuration";
   static const String stopAllPlayers = "stopAllPlayers";
   static const String onDidFinishPlayingAudio = "onDidFinishPlayingAudio";
-  static const String finishtype = "finishType";
-  static const String finishMode = "finishMode";
   static const String extractWaveformData = "extractWaveformData";
   static const String noOfSamples = "noOfSamples";
   static const String waveformData = "waveformData";

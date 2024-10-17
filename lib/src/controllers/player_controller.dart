@@ -75,6 +75,10 @@ class PlayerController extends ChangeNotifier {
   Stream<void> get onCompletion =>
       PlatformStreams.instance.onCompletion.filter(playerKey);
 
+  FinishMode _releaseMode = FinishMode.release;
+
+  FinishMode get releaseMode => _releaseMode;
+
   PlayerController() {
     if (!PlatformStreams.instance.isInitialised) {
       PlatformStreams.instance.init();
@@ -176,18 +180,15 @@ class PlayerController extends ChangeNotifier {
   /// A function to start the player to play/resume the audio.
   ///
   /// When playing audio is finished, this [player] will be [stopped]
-  /// and [disposed] by default. To change this behavior use [FinishMode] enum.
+  /// and [disposed] by default. To change this behavior use [setReleaseMode] Method.
   ///
-  /// See also:
-  /// * [FinishMode]
   Future<void> startPlayer({
-    FinishMode finishMode = FinishMode.stop,
     bool forceRefresh = true,
   }) async {
     if (_playerState == PlayerState.initialized ||
         _playerState == PlayerState.paused) {
       final isStarted = await AudioWaveformsInterface.instance
-          .startPlayer(playerKey, finishMode);
+          .startPlayer(playerKey);
       if (isStarted) {
         _setPlayerState(PlayerState.playing);
       } else {
@@ -266,6 +267,14 @@ class PlayerController extends ChangeNotifier {
     if (progress < 0 || _playerState.isStopped) return;
 
     await AudioWaveformsInterface.instance.seekTo(playerKey, progress);
+  }
+
+  ///Set the release Mode.
+  ///
+  /// Check[FinishMode]'s doc to understand the difference between the modes.
+  Future<void> setReleaseMode(FinishMode  finishMode)async{
+    _releaseMode = finishMode;
+    return AudioWaveformsInterface.instance.setReleaseMode(playerKey, finishMode);
   }
 
   /// Release any resources taken by this controller. Disposing this
