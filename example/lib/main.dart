@@ -231,7 +231,10 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void _refreshWave() {
-    if (isRecording) recorderController.refresh();
+  Future<void> _refreshWave() async {
+    if (isRecording) {
+      var ab = await recorderController.pause(saveOnPause: false);
+      print('object -- $ab');
+    }
   }
 }

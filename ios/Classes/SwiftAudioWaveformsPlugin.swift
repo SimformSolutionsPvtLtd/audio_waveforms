@@ -31,7 +31,10 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
                                          args?[Constants.encoder] as? Int, args?[Constants.sampleRate] as? Int, args?[Constants.bitRate] as? Int,Constants.fileNameFormat, args?[Constants.useLegacyNormalization] as? Bool,overrideAudioSession: (args?[Constants.overrideAudioSession] as? Bool) ?? true )
             break
         case Constants.pauseRecording:
-            audioRecorder.pauseRecording(result)
+            audioRecorder.pauseRecording(
+                result,
+                args?[Constants.saveOnPause] as? Bool
+            )
             break
         case Constants.resumeRecording:
             audioRecorder.resumeRecording(result)

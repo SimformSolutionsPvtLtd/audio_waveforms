@@ -48,4 +48,5 @@ class Constants {
   static const String useLegacyNormalization = "useLegacyNormalization";
   static const String updateFrequency = "updateFrequency";
   static const String overrideAudioSession = "overrideAudioSession";
+  static const String saveOnPause = "saveOnPause";
 }

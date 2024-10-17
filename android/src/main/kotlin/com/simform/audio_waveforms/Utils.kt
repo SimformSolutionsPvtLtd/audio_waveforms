@@ -66,6 +66,7 @@ object Constants {
     const val waveformData = "waveformData"
     const val useLegacyNormalization = "useLegacyNormalization"
     const val updateFrequency = "updateFrequency"
+    const val saveOnPause = "saveOnPause"
 }
 
 enum class FinishMode(val value:Int) {

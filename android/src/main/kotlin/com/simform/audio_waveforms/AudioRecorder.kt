@@ -38,13 +38,13 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     }
 
     fun initRecorder(
-        path: String,
-        result: MethodChannel.Result,
-        recorder: MediaRecorder?,
-        encoder: Int,
-        outputFormat: Int,
-        sampleRate: Int,
-        bitRate: Int?
+            path: String,
+            result: MethodChannel.Result,
+            recorder: MediaRecorder?,
+            encoder: Int,
+            outputFormat: Int,
+            sampleRate: Int,
+            bitRate: Int?
     ) {
         recorder?.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -116,10 +116,16 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun pauseRecording(result: MethodChannel.Result, recorder: MediaRecorder?) {
+    fun pauseRecording(result: MethodChannel.Result, recorder: MediaRecorder?, path: String, saveOnPause: Boolean) {
         try {
+            var filePath: String? = null
+
+            if (saveOnPause) {
+                filePath = path
+            }
+
             recorder?.pause()
-            result.success(false)
+            result.success(filePath)
         } catch (e: IllegalStateException) {
             Log.e(LOG_TAG, "Failed to pause recording")
         }
@@ -136,9 +142,9 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
+            requestCode: Int,
+            permissions: Array<out String>,
+            grantResults: IntArray
     ): Boolean {
         return if (requestCode == RECORD_AUDIO_REQUEST_CODE) {
             successCallback?.onSuccess(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
@@ -150,7 +156,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     private fun isPermissionGranted(activity: Activity?): Boolean {
         val result =
-            ActivityCompat.checkSelfPermission(activity!!, permissions[0])
+                ActivityCompat.checkSelfPermission(activity!!, permissions[0])
         return result == PackageManager.PERMISSION_GRANTED
     }
 
@@ -159,8 +165,8 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         if (!isPermissionGranted(activity)) {
             activity?.let {
                 ActivityCompat.requestPermissions(
-                    it, permissions,
-                    RECORD_AUDIO_REQUEST_CODE
+                        it, permissions,
+                        RECORD_AUDIO_REQUEST_CODE
                 )
             }
         } else {
@@ -183,6 +189,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                     MediaRecorder.AudioEncoder.AAC
                 }
             }
+
             Constants.vorbis -> return MediaRecorder.AudioEncoder.VORBIS
 
             else -> return MediaRecorder.AudioEncoder.AAC
@@ -206,6 +213,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             Constants.amr_nb -> return MediaRecorder.OutputFormat.AMR_NB
             Constants.webm ->
                 return MediaRecorder.OutputFormat.WEBM
+
             Constants.mpeg_2_ts -> {
                 return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     MediaRecorder.OutputFormat.MPEG_2_TS
@@ -214,6 +222,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                     MediaRecorder.OutputFormat.MPEG_4
                 }
             }
+
             Constants.aac_adts -> return MediaRecorder.OutputFormat.AAC_ADTS
             else -> return MediaRecorder.OutputFormat.MPEG_4
         }

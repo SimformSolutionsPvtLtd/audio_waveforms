@@ -283,17 +283,20 @@ class RecorderController extends ChangeNotifier {
   }
 
   /// Pauses the current recording. Call [record] to resume recording.
-  Future<void> pause() async {
+  Future<String?> pause({bool saveOnPause = false}) async {
     if (_recorderState.isRecording) {
-      _isRecording = (await AudioWaveformsInterface.instance.pause()) ?? true;
-      if (_isRecording) {
-        throw "Failed to pause recording";
-      }
+      final audioInfo = await AudioWaveformsInterface.instance
+          .pause(saveOnPause: saveOnPause);
+
+      _isRecording = false;
       _recorderTimer?.cancel();
       _timer?.cancel();
       _setRecorderState(RecorderState.paused);
+      notifyListeners();
+      return audioInfo;
+    } else {
+      throw "Failed stop recording";
     }
-    notifyListeners();
   }
 
   /// Stops the current recording.
