@@ -82,9 +82,14 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
         audioRecorder = nil
     }
     
-    public func pauseRecording(_ result: @escaping FlutterResult) {
+    public func pauseRecording(_ result: @escaping FlutterResult,_ saveOnPause: Bool?) {
+        var filePath : String? = nil
         audioRecorder?.pause()
-        result(false)
+        
+        if(saveOnPause ?? false){
+            filePath = path
+        }
+        result(filePath)
     }
     
     public func resumeRecording(_ result: @escaping FlutterResult) {
