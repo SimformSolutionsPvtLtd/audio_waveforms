@@ -1,6 +1,6 @@
 name: audio_waveforms
 description: A Flutter package that allow you to generate waveform while recording audio or from audio file.
-version: 1.1.0
+version: 1.1.1
 homepage: https://github.com/SimformSolutionsPvtLtd/audio_waveforms
 issue_tracker: https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues
 
@@ -15,7 +15,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^3.0.0
 
 
 flutter:

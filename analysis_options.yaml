@@ -1,9 +1,10 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  ## TODO(Jay): Make this both rules false when we upgrade the flutter_lint version
   strong-mode:
-    implicit-casts: false
-    implicit-dynamic: false
+    implicit-casts: true
+    implicit-dynamic: true
   errors:
     argument_type_not_assignable: error
     invalid_assignment: error
