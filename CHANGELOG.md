@@ -1,3 +1,7 @@
+## 1.1.1
+
+- Downgrade flutter_lint version to support flutter version 3.10.x
+
 ## 1.1.0
 
 - Update flutter and dart version
