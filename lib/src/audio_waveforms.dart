@@ -41,13 +41,14 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   Offset _dragOffset = Offset.zero;
 
   double _initialOffsetPosition = 0.0;
-  double _initialPosition = 0.0;
+  late double _initialPosition;
   Duration currentlyRecordedDuration = Duration.zero;
   late StreamSubscription<Duration> streamSubscription;
 
   @override
   void initState() {
     super.initState();
+    _initialPosition = -(widget.waveStyle.waveThickness / 2);
     widget.recorderController.addListener(_recorderControllerListener);
     streamSubscription =
         widget.recorderController.onCurrentDuration.listen((duration) {
