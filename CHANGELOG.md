@@ -1,3 +1,7 @@
+## 1.1.2
+
+- Fixed [#350](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/350) - Waveform clipping at starting position
+
 ## 1.1.1
 
 - Downgrade flutter_lint version to support flutter version 3.10.x
