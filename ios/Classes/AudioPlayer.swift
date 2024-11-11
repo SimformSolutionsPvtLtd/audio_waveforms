@@ -20,7 +20,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         flutterChannel = channel
     }
     
-    func preparePlayer(path: String?, volume: Double?, updateFrequency: Int?,result: @escaping FlutterResult) {
+    func preparePlayer(path: String?, volume: Double?, updateFrequency: Int?,result: @escaping FlutterResult, overrideAudioSession : Bool) {
         if(!(path ?? "").isEmpty) {
             self.updateFrequency = updateFrequency ?? 200
             let audioUrl = URL.init(string: path!)
@@ -30,6 +30,16 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             }
             do {
                 player = try AVAudioPlayer(contentsOf: audioUrl!)
+                do {
+                    if overrideAudioSession {
+                        try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+                        try AVAudioSession.sharedInstance().setActive(true)
+                    }
+                } catch {
+                    result(FlutterError(code: Constants.audioWaveforms, message: "Couldn't set audio session.", details: error.localizedDescription))
+
+                }
+                
             } catch {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Failed to prepare player", details: error.localizedDescription))
             }
