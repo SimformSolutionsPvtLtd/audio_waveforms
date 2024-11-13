@@ -52,6 +52,23 @@ class PlayerController extends ChangeNotifier {
   /// * [UpdateFrequency]
   UpdateFrequency updateFrequency = UpdateFrequency.low;
 
+  /// IOS only.
+  ///
+  /// Overrides AVAudioSession settings with
+  /// ```
+  /// AVAudioSession.Category: .playback
+  /// AVAudioSession.CategoryOptions: [.default]
+  /// ```
+  /// You may use your implementation to set your preferred configurations.
+  /// Changes to this property will only take effect after you call
+  /// [preparePlayer].
+  ///
+  /// Setting this property to true will set the AudioSession in native
+  /// otherwise nothing happens.
+  ///
+  /// Defaults to false.
+  bool overrideAudioSession = false;
+
   /// A stream to get current state of the player. This stream
   /// will emit event whenever there is change in the playerState.
   Stream<PlayerState> get onPlayerStateChanged =>
@@ -123,6 +140,7 @@ class PlayerController extends ChangeNotifier {
       key: playerKey,
       frequency: updateFrequency.value,
       volume: volume,
+      overrideAudioSession: overrideAudioSession,
     );
     if (isPrepared) {
       _maxDuration = await getDuration();

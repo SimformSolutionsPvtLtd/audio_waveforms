@@ -1,7 +1,8 @@
-## 1.1.2
+## 1.1.2 (Unreleased)
 
 - Fixed [#350](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/350) - Waveform clipping at starting position
 - Fixed [#304](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/304) - Updated Documentation.
+- Fixed [#349](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/349) - iOS audio plays without sound 
 
 ## 1.1.1
 
