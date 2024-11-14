@@ -178,4 +178,4 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         }
     }
 }
-`
+
