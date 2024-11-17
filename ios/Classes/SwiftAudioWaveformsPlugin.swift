@@ -1,4 +1,4 @@
-`import Flutter
+import Flutter
 import UIKit
 
 public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
@@ -178,4 +178,4 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         }
     }
 }
-`
+
