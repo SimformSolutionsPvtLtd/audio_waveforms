@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'dart:math' show max;
 
+import 'package:audio_waveforms/src/base/constants.dart';
 import 'package:flutter/material.dart';
 
 import '/src/base/utils.dart';
@@ -310,24 +311,19 @@ class RecorderController extends ChangeNotifier {
   Future<String?> stop([bool callReset = true]) async {
     if (_recorderState.isRecording || _recorderState.isPaused) {
       final audioInfo = await AudioWaveformsInterface.instance.stop();
-      if (audioInfo != null) {
-        _isRecording = false;
-        _timer?.cancel();
-        _recorderTimer?.cancel();
-        if (audioInfo[1] != null) {
-          var duration = int.tryParse(audioInfo[1]!);
-          if (duration != null) {
-            _recordedDuration = Duration(milliseconds: duration);
-            _recordedFileDurationController.add(recordedDuration);
-          }
-        }
-        _elapsedDuration = Duration.zero;
-        _setRecorderState(RecorderState.stopped);
-        if (callReset) reset();
-        return audioInfo[0];
-      } else {
-        throw "Failed stop recording";
+      _isRecording = false;
+      _timer?.cancel();
+      _recorderTimer?.cancel();
+      if (audioInfo[Constants.resultDuration] != null) {
+        final duration = audioInfo[Constants.resultDuration];
+
+        _recordedDuration = Duration(milliseconds: duration);
+        _recordedFileDurationController.add(recordedDuration);
       }
+      _elapsedDuration = Duration.zero;
+      _setRecorderState(RecorderState.stopped);
+      if (callReset) reset();
+      return audioInfo[Constants.resultFilePath];
     }
 
     notifyListeners();

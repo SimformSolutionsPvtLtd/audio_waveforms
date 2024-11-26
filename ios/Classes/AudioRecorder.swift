@@ -62,24 +62,32 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
         audioRecorder?.stop()
         if(audioUrl != nil) {
             let asset = AVURLAsset(url:  audioUrl!)
+            
             if #available(iOS 15.0, *) {
                 Task {
                     do {
                         recordedDuration = try await asset.load(.duration)
-                        result([path,Int(recordedDuration.seconds * 1000).description])
+                        sendResult(result, duration: Int(recordedDuration.seconds * 1000))
                     } catch let err {
                         debugPrint(err.localizedDescription)
-                        result([path,CMTime.zero.seconds.description])
+                        sendResult(result, duration: Int(CMTime.zero.seconds))
                     }
                 }
             } else {
                 recordedDuration = asset.duration
-                result([path,Int(recordedDuration.seconds * 1000).description])
+                sendResult(result, duration: Int(recordedDuration.seconds * 1000))
             }
         } else {
-            result([path,CMTime.zero.seconds.description])
+            sendResult(result, duration: Int(CMTime.zero.seconds))
         }
         audioRecorder = nil
+    }
+    
+    private func sendResult(_ result: @escaping FlutterResult, duration:Int){
+        var params = [String:Any?]()
+        params[Constants.resultFilePath] = path
+        params[Constants.resultDuration] = duration
+        result(params)
     }
     
     public func pauseRecording(_ result: @escaping FlutterResult) {

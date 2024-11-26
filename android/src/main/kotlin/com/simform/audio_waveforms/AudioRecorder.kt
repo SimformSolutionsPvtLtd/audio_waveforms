@@ -66,18 +66,18 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     fun stopRecording(result: MethodChannel.Result, recorder: MediaRecorder?, path: String) {
         try {
-            val audioInfoArrayList = ArrayList<String?>()
-
+            val hashMap : HashMap<String,Any?> = HashMap()
             try {
                 recorder?.stop()
 
                 val duration = getDuration(path)
-                audioInfoArrayList.add(path)
-                audioInfoArrayList.add(duration)
+
+                hashMap[Constants.resultFilePath] = path
+                hashMap[Constants.resultDuration] = duration
             } catch (e: RuntimeException) {
                 // Stop was called immediately after start which causes stop() call to fail.
-                audioInfoArrayList.add(null)
-                audioInfoArrayList.add("-1")
+                hashMap[Constants.resultFilePath] = null
+                hashMap[Constants.resultDuration] = -1
             }
 
             recorder?.apply {
@@ -85,24 +85,24 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                 release()
             }
 
-            result.success(audioInfoArrayList)
+            result.success(hashMap)
         } catch (e: IllegalStateException) {
             Log.e(LOG_TAG, "Failed to stop recording")
         }
     }
 
-    private fun getDuration(path: String): String {
+    private fun getDuration(path: String): Int {
         val mediaMetadataRetriever = MediaMetadataRetriever()
         try {
             mediaMetadataRetriever.setDataSource(path)
             val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION)
-            return duration ?: "-1"
+            return duration?.toInt() ?: -1
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Failed to get recording duration")
         } finally {
             mediaMetadataRetriever.release()
         }
-        return "-1"
+        return -1
     }
 
     fun startRecorder(result: MethodChannel.Result, recorder: MediaRecorder?, useLegacy: Boolean) {
