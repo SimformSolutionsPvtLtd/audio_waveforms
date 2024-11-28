@@ -11,11 +11,11 @@ class ChatBubble extends StatelessWidget {
   final bool isLast;
 
   const ChatBubble({
-    Key? key,
+    super.key,
     required this.text,
     this.isSender = false,
     this.isLast = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -56,13 +56,13 @@ class WaveBubble extends StatefulWidget {
   final Directory appDirectory;
 
   const WaveBubble({
-    Key? key,
+    super.key,
     required this.appDirectory,
     this.width,
     this.index,
     this.isSender = false,
     this.path,
-  }) : super(key: key);
+  });
 
   @override
   State<WaveBubble> createState() => _WaveBubbleState();
