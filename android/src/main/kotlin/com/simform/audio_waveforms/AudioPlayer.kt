@@ -6,14 +6,14 @@ import android.os.Handler
 import android.os.Looper
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import io.flutter.plugin.common.MethodChannel
-import java.lang.Exception
 
 class AudioPlayer(
-    context: Context,
-    channel: MethodChannel,
-    playerKey: String
+        context: Context,
+        channel: MethodChannel,
+        playerKey: String
 ) {
     private var handler: Handler = Handler(Looper.getMainLooper())
     private var runnable: Runnable? = null
@@ -24,13 +24,13 @@ class AudioPlayer(
     private var isPlayerPrepared: Boolean = false
     private var finishMode = FinishMode.Stop
     private var key = playerKey
-    private var updateFrequency:Long = 200
+    private var updateFrequency: Long = 200
 
     fun preparePlayer(
-        result: MethodChannel.Result,
-        path: String?,
-        volume: Float?,
-        frequency: Long?,
+            result: MethodChannel.Result,
+            path: String?,
+            volume: Float?,
+            frequency: Long?,
     ) {
         if (path != null) {
             frequency?.let {
@@ -42,6 +42,12 @@ class AudioPlayer(
             player?.addMediaItem(mediaItem)
             player?.prepare()
             playerListener = object : Player.Listener {
+
+                override fun onPlayerError(error: PlaybackException) {
+                    super.onPlayerError(error)
+                    result.error(Constants.LOG_TAG, error.message, "Unable to load media source.")
+                }
+
                 override fun onPlayerStateChanged(isReady: Boolean, state: Int) {
                     if (!isPlayerPrepared) {
                         if (state == Player.STATE_READY) {
@@ -58,12 +64,14 @@ class AudioPlayer(
                                 player?.play()
                                 args[Constants.finishType] = 0
                             }
+
                             FinishMode.Pause -> {
                                 player?.seekTo(0)
                                 player?.playWhenReady = false
                                 stopListening()
                                 args[Constants.finishType] = 1
                             }
+
                             else -> {
                                 player?.stop()
                                 player?.release()
@@ -74,8 +82,8 @@ class AudioPlayer(
                         }
                         args[Constants.playerKey] = key
                         methodChannel.invokeMethod(
-                            Constants.onDidFinishPlayingAudio,
-                            args
+                                Constants.onDidFinishPlayingAudio,
+                                args
                         )
                     }
                 }
@@ -149,6 +157,7 @@ class AudioPlayer(
         }
 
     }
+
     fun release(result: MethodChannel.Result) {
         try {
             player?.release()

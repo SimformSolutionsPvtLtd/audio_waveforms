@@ -4,6 +4,7 @@
 - Fixed [#304](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/304) - Updated Documentation.
 - Fixed [#349](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/349) - iOS audio plays without sound
 - Fixed seekTo position issue where onDrag of waveform at initial position first wave outside the seekLine
+- Fixed [#301](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/301) - Cannot catch error of preparePlayer
 
 ## 1.1.1
 
