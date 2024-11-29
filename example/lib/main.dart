@@ -9,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
 }
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+  const Home({super.key});
 
   @override
   State<Home> createState() => _HomeState();
@@ -93,7 +93,10 @@ class _HomeState extends State<Home> {
               scale: 1.5,
             ),
             const SizedBox(width: 10),
-            const Text('Simform'),
+            const Text(
+              'Simform',
+              style: TextStyle(color: Colors.white),
+            ),
           ],
         ),
       ),
