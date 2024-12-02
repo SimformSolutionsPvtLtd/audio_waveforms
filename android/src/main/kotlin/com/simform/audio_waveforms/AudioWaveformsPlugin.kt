@@ -202,6 +202,13 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 }
             }
 
+            Constants.pauseAllPlayers -> {
+                for ((key,_) in audioPlayers){
+                    audioPlayers[key]?.pause(result,true)
+                }
+                result.success(true)
+            }
+
             else -> result.notImplemented()
         }
     }

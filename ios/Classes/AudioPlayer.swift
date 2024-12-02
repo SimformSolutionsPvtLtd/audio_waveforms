@@ -91,10 +91,12 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     }
 
 
-    func pausePlayer(result: @escaping FlutterResult) {
+    func pausePlayer(result: @escaping FlutterResult, isPauseAllPlayer: Bool = false) {
         stopListening()
         player?.pause()
-        result(true)
+        if(!isPauseAllPlayer){
+            result(true)
+        }
     }
     
     func stopPlayer(result: @escaping FlutterResult) {
