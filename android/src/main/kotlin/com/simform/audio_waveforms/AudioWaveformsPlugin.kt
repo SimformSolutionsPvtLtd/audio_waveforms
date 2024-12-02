@@ -252,7 +252,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         result: Result,
     ) {
         if (path == null) {
-            result.error(Constants.LOG_TAG, "Path cant be null", "")
+            result.error(Constants.LOG_TAG, "Path can't be null", "")
             return
         }
         extractors[playerKey] = WaveformExtractor(
