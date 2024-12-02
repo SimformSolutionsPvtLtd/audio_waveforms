@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:audio_waveforms_example/audio_recorder.dart';
 import 'package:audio_waveforms_example/chat_bubble.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(const MyApp());
@@ -36,7 +38,9 @@ class _HomeState extends State<Home> {
   bool isRecording = false;
   bool isRecordingCompleted = false;
   bool isLoading = true;
-  late Directory appDirectory;
+  bool isFromAssets = false;
+  Directory? appDirectory;
+  List<File> audioFiles = [];
 
   @override
   void initState() {
@@ -47,9 +51,10 @@ class _HomeState extends State<Home> {
 
   void _getDir() async {
     appDirectory = await getApplicationDocumentsDirectory();
-    path = "${appDirectory.path}/recording.m4a";
-    isLoading = false;
+    path = "${appDirectory!.path}/recording.m4a";
     setState(() {});
+    loadAllAudioFiles();
+    isLoading = false;
   }
 
   void _initialiseControllers() {
@@ -60,10 +65,46 @@ class _HomeState extends State<Home> {
       ..sampleRate = 44100;
   }
 
+  void loadAllAudioFiles() async {
+    loadFileInMemory();
+    isFromAssets = true;
+    setState(() {});
+  }
+
+  void loadFileInMemory() async {
+    // Opening file from assets folder
+    final file1 = File('${appDirectory!.path}/audio1.mp3');
+    await file1.writeAsBytes((await rootBundle.load('assets/audios/audio1.mp3'))
+        .buffer
+        .asUint8List());
+    audioFiles.add(file1);
+
+    final file2 = File('${appDirectory!.path}/audio2.mp3');
+    await file2.writeAsBytes((await rootBundle.load('assets/audios/audio2.mp3'))
+        .buffer
+        .asUint8List());
+    audioFiles.add(file2);
+
+    final file3 = File('${appDirectory!.path}/audio3.mp3');
+    await file3.writeAsBytes((await rootBundle.load('assets/audios/audio3.mp3'))
+        .buffer
+        .asUint8List());
+    audioFiles.add(file3);
+
+    final file4 = File('${appDirectory!.path}/audio4.mp3');
+    await file4.writeAsBytes((await rootBundle.load('assets/audios/audio4.mp3'))
+        .buffer
+        .asUint8List());
+    audioFiles.add(file4);
+    setState(() {});
+  }
+
   void _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
     if (result != null) {
       musicFile = result.files.single.path;
+      audioFiles.add(File(musicFile!));
+      isFromAssets = false;
       setState(() {});
     } else {
       debugPrint("File not picked");
@@ -79,9 +120,9 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF252331),
+      backgroundColor: const Color(0xff222326),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF252331),
+        backgroundColor: const Color(0xff222326),
         elevation: 1,
         centerTitle: true,
         shadowColor: Colors.grey,
@@ -95,10 +136,82 @@ class _HomeState extends State<Home> {
             const SizedBox(width: 10),
             const Text(
               'Simform',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
+      ),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            onPressed: () async {
+              await _startOrStopRecording();
+
+              if (!context.mounted) {
+                return;
+              }
+              showModalBottomSheet(
+                showDragHandle: true,
+                backgroundColor: const Color(0xff222326),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                context: context,
+                builder: (context) {
+                  return AudioRecorder(
+                    appDirectory: appDirectory!,
+                    isRecording: isRecording,
+                    isRecordingCompleted: isRecordingCompleted,
+                    musicFile: musicFile,
+                    path: path,
+                    recorderController: recorderController,
+                    function: () async {
+                      path = await recorderController.stop(false);
+
+                      if (path != null) {
+                        isRecordingCompleted = true;
+                        debugPrint(path);
+                        debugPrint(
+                            "Recorded file size: ${File(path!).lengthSync()}");
+                        isRecording = !isRecording;
+                      }
+                    },
+                    updatePath: (filePath) {
+                      audioFiles.add(File(filePath!));
+                      setState(() {});
+                    },
+                  );
+                },
+              ).then((_) {
+                recorderController.stop();
+              });
+            },
+            backgroundColor: const Color(0xFF292D32),
+            elevation: 5,
+            child: const Icon(
+              Icons.mic,
+              color: Colors.blue,
+            ),
+          ),
+          const SizedBox(
+            width: 16,
+          ),
+          FloatingActionButton(
+            onPressed: () async {
+              _pickFile();
+            },
+            backgroundColor: const Color(0xFF292D32),
+            elevation: 5,
+            child: const Icon(
+              Icons.upload_file,
+              color: Colors.blue,
+            ),
+          ),
+        ],
       ),
       body: isLoading
           ? const Center(
@@ -110,107 +223,27 @@ class _HomeState extends State<Home> {
                   const SizedBox(height: 20),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: 4,
+                      itemCount: audioFiles.length,
+                      padding: const EdgeInsets.only(
+                        bottom: 80,
+                      ),
                       itemBuilder: (_, index) {
                         return WaveBubble(
-                          index: index + 1,
-                          isSender: index.isOdd,
+                          path: audioFiles[index].path,
                           width: MediaQuery.of(context).size.width / 2,
-                          appDirectory: appDirectory,
+                          appDirectory: appDirectory!,
                         );
                       },
                     ),
                   ),
-                  if (isRecordingCompleted)
-                    WaveBubble(
-                      path: path,
-                      isSender: true,
-                      appDirectory: appDirectory,
-                    ),
-                  if (musicFile != null)
-                    WaveBubble(
-                      path: musicFile,
-                      isSender: true,
-                      appDirectory: appDirectory,
-                    ),
-                  SafeArea(
-                    child: Row(
-                      children: [
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          child: isRecording
-                              ? AudioWaveforms(
-                                  enableGesture: true,
-                                  size: Size(
-                                      MediaQuery.of(context).size.width / 2,
-                                      50),
-                                  recorderController: recorderController,
-                                  waveStyle: const WaveStyle(
-                                    waveColor: Colors.white,
-                                    extendWaveform: true,
-                                    showMiddleLine: false,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    color: const Color(0xFF1E1B26),
-                                  ),
-                                  padding: const EdgeInsets.only(left: 18),
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 15),
-                                )
-                              : Container(
-                                  width:
-                                      MediaQuery.of(context).size.width / 1.7,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E1B26),
-                                    borderRadius: BorderRadius.circular(12.0),
-                                  ),
-                                  padding: const EdgeInsets.only(left: 18),
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 15),
-                                  child: TextField(
-                                    readOnly: true,
-                                    decoration: InputDecoration(
-                                      hintText: "Type Something...",
-                                      hintStyle: const TextStyle(
-                                          color: Colors.white54),
-                                      contentPadding:
-                                          const EdgeInsets.only(top: 16),
-                                      border: InputBorder.none,
-                                      suffixIcon: IconButton(
-                                        onPressed: _pickFile,
-                                        icon: Icon(Icons.adaptive.share),
-                                        color: Colors.white54,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                        ),
-                        IconButton(
-                          onPressed: _refreshWave,
-                          icon: Icon(
-                            isRecording ? Icons.refresh : Icons.send,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        IconButton(
-                          onPressed: _startOrStopRecording,
-                          icon: Icon(isRecording ? Icons.stop : Icons.mic),
-                          color: Colors.white,
-                          iconSize: 28,
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
     );
   }
 
-  void _startOrStopRecording() async {
+  Future<void> _startOrStopRecording() async {
     try {
       if (isRecording) {
         recorderController.reset();
@@ -236,5 +269,63 @@ class _HomeState extends State<Home> {
 
   void _refreshWave() {
     if (isRecording) recorderController.refresh();
+  }
+
+  Widget _getRecordOrUploadFileWidget({
+    required IconData icon,
+    required Color color,
+    required VoidCallback function,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: Colors.blue,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.white.withOpacity(0.1),
+            blurRadius: 16.0,
+          ),
+          // BoxShadow(
+          //   color: Colors.black.withOpacity(0.4),
+          //   offset: const Offset(6.0, 6.0),
+          //   blurRadius: 16.0,
+          // ),
+        ],
+      ),
+      child: Center(
+        child: IconButton(
+          onPressed: function,
+          icon: Icon(icon),
+          color: color,
+        ),
+      ),
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(
+        bottom: 16,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xff222326),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.white.withOpacity(0.1),
+            blurRadius: 16.0,
+          ),
+        ],
+      ),
+      child: Center(
+        child: IconButton(
+          onPressed: function,
+          icon: Icon(icon),
+          color: color,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+      ),
+    );
   }
 }
