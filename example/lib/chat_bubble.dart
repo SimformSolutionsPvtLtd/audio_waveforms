@@ -152,7 +152,7 @@ class _WaveBubbleState extends State<WaveBubble> {
                     IconButton(
                       onPressed: () async {
                         controller.playerState.isPlaying
-                            ? await controller.pausePlayer()
+                            ? await controller.stopAllPlayers()
                             : await controller.startPlayer();
                         controller.setFinishMode(finishMode: FinishMode.loop);
                       },
