@@ -7,7 +7,6 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
-
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -18,7 +17,8 @@ import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 
 /** AudioWaveformsPlugin */
@@ -109,7 +109,12 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Constants.stopPlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
-                    audioPlayers[key]?.stop(result)
+                    try{
+                        audioPlayers[key]?.stop()
+                        result.success(true)
+                    }catch (e: Exception){
+                        result.error(Constants.LOG_TAG, "Failed to stop player", e.message)
+                    }
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
@@ -118,7 +123,12 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Constants.pausePlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
-                    audioPlayers[key]?.pause(result)
+                    try{
+                        audioPlayers[key]?.pause()
+                        result.success(true)
+                    }catch (e: Exception){
+                        result.error(Constants.LOG_TAG, "Failed to pause player", e.message)
+                    }
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
@@ -194,11 +204,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             }
 
             Constants.stopAllPlayers -> {
-                for ((key, _) in audioPlayers) {
-                    audioPlayers[key]?.stop(result)
-                    audioPlayers[key] = null
-                }
-                result.success(true)
+                stopAllPlayer(result)
             }
 
             Constants.finishMode -> {
@@ -207,6 +213,10 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 key?.let {
                     audioPlayers[it]?.setFinishMode(result, releaseType)
                 }
+            }
+
+            Constants.pauseAllPlayers -> {
+                pauseAllPlayer(result)
             }
 
             else -> result.notImplemented()
@@ -317,6 +327,29 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         activity = null
         if (pluginBinding != null) {
             pluginBinding!!.removeRequestPermissionsResultListener(this.audioRecorder)
+        }
+    }
+
+    private fun stopAllPlayer(result: MethodChannel.Result) {
+        try {
+            for ((key, _) in audioPlayers) {
+                audioPlayers[key]?.stop()
+                audioPlayers[key] = null
+            }
+            result.success(true)
+        } catch (e: Exception) {
+            result.error(Constants.LOG_TAG, "Failed to stop players", e.message)
+        }
+    }
+
+    private fun pauseAllPlayer(result: MethodChannel.Result) {
+        try {
+            for ((key, _) in audioPlayers) {
+                audioPlayers[key]?.pause()
+            }
+            result.success(true)
+        } catch (e: Exception) {
+            result.error(Constants.LOG_TAG, "Failed to pause players", e.message)
         }
     }
 }

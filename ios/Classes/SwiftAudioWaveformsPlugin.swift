@@ -79,7 +79,8 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         case Constants.pausePlayer:
             let key = args?[Constants.playerKey] as? String
             if(key != nil){
-                audioPlayers[key!]?.pausePlayer(result: result)
+                audioPlayers[key!]?.pausePlayer()
+                result(true)
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not pause player", details: "Player key is null"))
             }
@@ -87,7 +88,8 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         case Constants.stopPlayer:
             let key = args?[Constants.playerKey] as? String
             if(key != nil){
-                audioPlayers[key!]?.stopPlayer(result: result)
+                audioPlayers[key!]?.stopPlayer()
+                result(true)
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not stop player", details: "Player key is null"))
             }
@@ -136,8 +138,8 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not get duration", details: "Player key is null"))
             }
         case Constants.stopAllPlayers:
-            for (playerKey,_) in audioPlayers{
-                audioPlayers[playerKey]?.stopPlayer(result: result)
+            for (playerKey,_) in audioPlayers {
+                audioPlayers[playerKey]?.stopPlayer()
                 audioPlayers[playerKey] = nil
             }
             result(true)
@@ -150,6 +152,12 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not get waveform data", details: "Player key is null"))
             }
+        case Constants.pauseAllPlayers:
+            for(playerKey,_) in audioPlayers {
+                audioPlayers[playerKey]?.pausePlayer()
+            }
+            result(true)
+            break
         default:
             result(FlutterMethodNotImplemented)
             break
