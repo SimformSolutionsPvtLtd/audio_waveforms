@@ -209,6 +209,11 @@ class AudioWaveformsInterface {
     return result ?? false;
   }
 
+  Future<bool> pauseAllPlayers() async {
+    var result = await _methodChannel.invokeMethod(Constants.pauseAllPlayers);
+    return result ?? false;
+  }
+
   Future<void> setMethodCallHandler() async {
     _methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
