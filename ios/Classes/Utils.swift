@@ -63,6 +63,7 @@ struct Constants {
     static let overrideAudioSession = "overrideAudioSession"
     static let resultFilePath = "resultFilePath"
     static let resultDuration = "resultDuration"
+    static let pauseAllPlayers = "pauseAllPlayers"
 }
 
 

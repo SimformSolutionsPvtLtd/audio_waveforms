@@ -147,6 +147,12 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not get waveform data", details: "Player key is null"))
             }
+        case Constants.pauseAllPlayers:
+            for(playerKey,_) in audioPlayers{
+                audioPlayers[playerKey]?.pausePlayer(result: result,isPauseAllPlayer: true)
+            }
+            result(true)
+            break
         default:
             result(FlutterMethodNotImplemented)
             break

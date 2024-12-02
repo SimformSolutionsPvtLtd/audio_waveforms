@@ -324,6 +324,13 @@ class PlayerController extends ChangeNotifier {
     PlatformStreams.instance.playerControllerFactory.clear();
   }
 
+  /// This method is to pause all players at once.
+  ///
+  /// This method will only pause the players it will not release the resources.
+  Future<void> pauseAllPlayers() async {
+    await AudioWaveformsInterface.instance.pauseAllPlayers();
+  }
+
   /// Sets [_shouldRefresh] flag with provided boolean parameter.
   void _setRefresh(bool refresh) {
     _shouldRefresh = refresh;

@@ -6,6 +6,7 @@
 - Fixed [#364](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/364) - seekTo position issue where onDrag of waveform at initial position first wave outside the seekLine. 
 - Fixed [#301](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/301) - Cannot catch error of preparePlayer
 - Fixes [#228](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/228) - Added feature to setReleaseMode for player controller. 
+- Fixes [#325](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/325) - Added feature to pause all player controller at once. 
 
 ## 1.1.1
 
