@@ -3,17 +3,14 @@ import 'dart:io';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class ChatBubble extends StatelessWidget {
   final String text;
-  final bool isSender;
   final bool isLast;
 
   const ChatBubble({
     super.key,
     required this.text,
-    this.isSender = false,
     this.isLast = false,
   });
 
@@ -26,13 +23,10 @@ class ChatBubble extends StatelessWidget {
         children: [
           Row(
             children: [
-              if (isSender) const Spacer(),
               Container(
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    color: isSender
-                        ? const Color(0xFF276bfd)
-                        : const Color(0xFF343145)),
+                    color: const Color(0xFF343145)),
                 padding: const EdgeInsets.only(
                     bottom: 9, top: 8, left: 14, right: 12),
                 child: Text(
@@ -49,9 +43,7 @@ class ChatBubble extends StatelessWidget {
 }
 
 class WaveBubble extends StatefulWidget {
-  final bool isSender;
-  final int? index;
-  final String? path;
+  final String path;
   final double? width;
   final Directory appDirectory;
 
@@ -59,9 +51,7 @@ class WaveBubble extends StatefulWidget {
     super.key,
     required this.appDirectory,
     this.width,
-    this.index,
-    this.isSender = false,
-    this.path,
+    required this.path,
   });
 
   @override
@@ -91,32 +81,11 @@ class _WaveBubbleState extends State<WaveBubble> {
   }
 
   void _preparePlayer() async {
-    // Opening file from assets folder
-    if (widget.index != null) {
-      file = File('${widget.appDirectory.path}/audio${widget.index}.mp3');
-      await file?.writeAsBytes(
-          (await rootBundle.load('assets/audios/audio${widget.index}.mp3'))
-              .buffer
-              .asUint8List());
-    }
-    if (widget.index == null && widget.path == null && file?.path == null) {
-      return;
-    }
     // Prepare player with extracting waveform if index is even.
     controller.preparePlayer(
-      path: widget.path ?? file!.path,
-      shouldExtractWaveform: widget.index?.isEven ?? true,
+      path: widget.path,
+      noOfSamples: playerWaveStyle.getSamplesForWidth(800),
     );
-    // Extracting waveform separately if index is odd.
-    if (widget.index?.isOdd ?? false) {
-      controller
-          .extractWaveformData(
-            path: widget.path ?? file!.path,
-            noOfSamples:
-                playerWaveStyle.getSamplesForWidth(widget.width ?? 200),
-          )
-          .then((waveformData) => debugPrint(waveformData.toString()));
-    }
   }
 
   @override
@@ -128,56 +97,94 @@ class _WaveBubbleState extends State<WaveBubble> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.path != null || file?.path != null
-        ? Align(
-            alignment:
-                widget.isSender ? Alignment.centerRight : Alignment.centerLeft,
-            child: Container(
-              padding: EdgeInsets.only(
-                bottom: 6,
-                right: widget.isSender ? 0 : 10,
-                top: 6,
-              ),
-              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: widget.isSender
-                    ? const Color(0xFF276bfd)
-                    : const Color(0xFF343145),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (!controller.playerState.isStopped)
-                    IconButton(
-                      onPressed: () async {
-                        controller.playerState.isPlaying
-                            ? await controller.pausePlayer()
-                            : await controller.startPlayer();
-                        controller.setFinishMode(finishMode: FinishMode.loop);
-                      },
-                      icon: Icon(
-                        controller.playerState.isPlaying
-                            ? Icons.stop
-                            : Icons.play_arrow,
-                      ),
-                      color: Colors.white,
-                      splashColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                    ),
-                  AudioFileWaveforms(
-                    size: Size(MediaQuery.of(context).size.width / 2, 70),
-                    playerController: controller,
-                    waveformType: widget.index?.isOdd ?? false
-                        ? WaveformType.fitWidth
-                        : WaveformType.long,
-                    playerWaveStyle: playerWaveStyle,
-                  ),
-                  if (widget.isSender) const SizedBox(width: 10),
-                ],
-              ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.white.withOpacity(0.2),
+            offset: const Offset(-6.0, -6.0),
+            blurRadius: 16.0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            offset: const Offset(-6.0, -6.0),
+            blurRadius: 16.0,
+          ),
+        ],
+        color: const Color(0xFF292D32),
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!controller.playerState.isStopped)
+            _getPlayAndPauseButtonWidget(
+              icon: controller.playerState.isPlaying
+                  ? Icons.pause
+                  : Icons.play_arrow,
+              radius: 24,
+              color:
+                  controller.playerState.isPlaying ? Colors.red : Colors.blue,
+              function: () async {
+                controller.playerState.isPlaying
+                    ? await controller.pausePlayer()
+                    : await controller.startPlayer();
+                controller.setFinishMode(finishMode: FinishMode.loop);
+              },
             ),
-          )
-        : const SizedBox.shrink();
+
+          const SizedBox(width: 10),
+          AudioFileWaveforms(
+            size: Size(MediaQuery.of(context).size.width / 2, 70),
+            playerController: controller,
+            waveformType: WaveformType.long,
+            // waveformType: widget.index?.isOdd ?? false
+            //     ? WaveformType.fitWidth
+            //     : WaveformType.long,
+            playerWaveStyle: playerWaveStyle,
+          ),
+          // if (widget.isSender) const SizedBox(width: 10),
+        ],
+      ),
+    );
+  }
+
+  Widget _getPlayAndPauseButtonWidget({
+    required IconData icon,
+    required double radius,
+    required Color color,
+    required VoidCallback function,
+  }) {
+    return CircleAvatar(
+      radius: radius,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xff222326),
+          borderRadius: BorderRadius.circular(24),
+          /*boxShadow: [
+            BoxShadow(
+              color: Colors.white.withOpacity(0.1),
+              blurRadius: 16.0,
+            ),
+            // BoxShadow(
+            //   color: Colors.black.withOpacity(0.4),
+            //   offset: const Offset(6.0, 6.0),
+            //   blurRadius: 16.0,
+            // ),
+          ],*/
+        ),
+        child: Center(
+          child: IconButton(
+            onPressed: function,
+            icon: Icon(icon),
+            color: color,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+          ),
+        ),
+      ),
+    );
   }
 }
