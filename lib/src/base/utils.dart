@@ -129,14 +129,15 @@ extension FilterForPlayer<T> on Stream<PlayerIdentifier<T>> {
 /// An enum to be used to change behaviour of player when audio
 /// is finished playing.
 enum FinishMode {
-  ///Loops the audio.
+  ///Keeps the buffered data and plays again after completion, creating a loop.
   loop,
 
-  ///Pause the audio, playing again will start from [0] milliseconds.
+  ///Stop audio playback but keep all resources intact.
+  ///Use this if you intend to play again later.
   pause,
 
   ///Stops player and disposes it(a PlayerController won't be disposed).
-  stop
+  stop,
 }
 
 /// An enum to decide which type of waveform to show.
@@ -196,5 +197,6 @@ enum UpdateFrequency {
   low(200);
 
   const UpdateFrequency(this.value);
+
   final int value;
 }

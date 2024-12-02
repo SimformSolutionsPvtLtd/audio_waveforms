@@ -48,6 +48,8 @@ object Constants {
     const val seekTo = "seekTo"
     const val progress = "progress"
     const val setVolume = "setVolume"
+    const val finishMode = "finishMode"
+    const val finishType = "finishType"
     const val volume = "volume"
     const val setRate = "setRate"
     const val rate = "rate"
@@ -58,8 +60,6 @@ object Constants {
     const val onCurrentDuration = "onCurrentDuration"
     const val stopAllPlayers = "stopAllPlayers"
     const val onDidFinishPlayingAudio = "onDidFinishPlayingAudio"
-    const val finishMode = "finishMode"
-    const val finishType = "finishType"
     const val extractWaveformData = "extractWaveformData"
     const val noOfSamples = "noOfSamples"
     const val onCurrentExtractedWaveformData = "onCurrentExtractedWaveformData"
@@ -71,11 +71,12 @@ object Constants {
     const val resultDuration = "resultDuration"
 }
 
-enum class FinishMode(val value:Int) {
+enum class FinishMode(val value: Int) {
     Loop(0),
     Pause(1),
     Stop(2)
 }
+
 
 fun interface RequestPermissionsSuccessCallback {
     fun onSuccess(results: Boolean?)

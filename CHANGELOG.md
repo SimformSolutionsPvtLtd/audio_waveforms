@@ -5,6 +5,7 @@
 - Fixed [#349](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/349) - iOS audio plays without sound
 - Fixed seekTo position issue where onDrag of waveform at initial position first wave outside the seekLine
 - Fixed [#301](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/301) - Cannot catch error of preparePlayer
+- Fixed [#228](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/228) - Add setReleaseMode for player controller
 
 ## 1.1.1
 

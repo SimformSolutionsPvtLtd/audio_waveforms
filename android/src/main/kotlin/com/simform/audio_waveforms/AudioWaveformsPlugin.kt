@@ -55,19 +55,22 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 bitRate = (call.argument(Constants.bitRate) as Int?)
                 checkPathAndInitialiseRecorder(result, encoder, outputFormat, sampleRate, bitRate)
             }
+
             Constants.startRecording -> {
                 val useLegacyNormalization =
-                    (call.argument(Constants.useLegacyNormalization) as Boolean?) ?: false
+                        (call.argument(Constants.useLegacyNormalization) as Boolean?) ?: false
                 audioRecorder.startRecorder(result, recorder, useLegacyNormalization)
             }
+
             Constants.stopRecording -> {
                 audioRecorder.stopRecording(result, recorder, path!!)
                 recorder = null
             }
+
             Constants.pauseRecording -> audioRecorder.pauseRecording(result, recorder)
             Constants.resumeRecording -> audioRecorder.resumeRecording(result, recorder)
             Constants.getDecibel -> audioRecorder.getDecibel(result, recorder)
-            Constants.checkPermission -> audioRecorder.checkPermission(result, activity, result :: success)
+            Constants.checkPermission -> audioRecorder.checkPermission(result, activity, result::success)
             Constants.preparePlayer -> {
                 val audioPath = call.argument(Constants.path) as String?
                 val volume = call.argument(Constants.volume) as Double?
@@ -86,18 +89,16 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 }
 
             }
+
             Constants.startPlayer -> {
-                val finishMode = call.argument(Constants.finishMode) as Int?
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
-                    audioPlayers[key]?.start(
-                        result,
-                        finishMode ?: 2
-                    )
+                    audioPlayers[key]?.start(result)
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.stopPlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
@@ -106,6 +107,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.pausePlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
@@ -114,10 +116,12 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.releasePlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 audioPlayers[key]?.release(result)
             }
+
             Constants.seekTo -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val progress = call.argument(Constants.progress) as Int?
@@ -129,11 +133,12 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     }
                 } else {
                     Log.e(
-                        Constants.LOG_TAG,
-                        "Minimum android O is required for seekTo function to works"
+                            Constants.LOG_TAG,
+                            "Minimum android O is required for seekTo function to works"
                     )
                 }
             }
+
             Constants.setVolume -> {
                 val volume = call.argument(Constants.volume) as Double?
                 val key = call.argument(Constants.playerKey) as String?
@@ -143,6 +148,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.setRate -> {
                 val rate = call.argument(Constants.rate) as Double?
                 val key = call.argument(Constants.playerKey) as String?
@@ -152,9 +158,10 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.getDuration -> {
                 val type =
-                    if ((call.argument(Constants.durationType) as Int?) == 0) DurationType.Current else DurationType.Max
+                        if ((call.argument(Constants.durationType) as Int?) == 0) DurationType.Current else DurationType.Max
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
                     audioPlayers[key]?.getDuration(result, type)
@@ -162,21 +169,23 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.extractWaveformData -> {
                 val key = call.argument(Constants.playerKey) as String?
                 val path = call.argument(Constants.path) as String?
                 val noOfSample = call.argument(Constants.noOfSamples) as Int?
                 if (key != null) {
                     createOrUpdateExtractor(
-                        playerKey = key,
-                        result = result,
-                        path = path,
-                        noOfSamples = noOfSample ?: 100,
+                            playerKey = key,
+                            result = result,
+                            path = path,
+                            noOfSamples = noOfSample ?: 100,
                     )
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.stopAllPlayers -> {
                 for ((key, _) in audioPlayers) {
                     audioPlayers[key]?.stop(result)
@@ -184,16 +193,25 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 }
                 result.success(true)
             }
+
+            Constants.finishMode -> {
+                val releaseType = call.argument<Int?>(Constants.finishType)
+                val key = call.argument<String?>(Constants.playerKey)
+                key?.let {
+                    audioPlayers[it]?.setFinishMode(result, releaseType)
+                }
+            }
+
             else -> result.notImplemented()
         }
     }
 
     private fun checkPathAndInitialiseRecorder(
-        result: Result,
-        encoder: Int,
-        outputFormat: Int,
-        sampleRate: Int,
-        bitRate: Int?
+            result: Result,
+            encoder: Int,
+            outputFormat: Int,
+            sampleRate: Int,
+            bitRate: Int?
     ) {
         try {
             recorder = MediaRecorder()
@@ -209,6 +227,19 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 outputFile = File.createTempFile(currentDate, ".m4a", outputDir)
                 path = outputFile.path
                 audioRecorder.initRecorder(
+                        path!!,
+                        result,
+                        recorder,
+                        encoder,
+                        outputFormat,
+                        sampleRate,
+                        bitRate
+                )
+            } catch (e: IOException) {
+                Log.e(Constants.LOG_TAG, "Failed to create file")
+            }
+        } else {
+            audioRecorder.initRecorder(
                     path!!,
                     result,
                     recorder,
@@ -216,19 +247,6 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     outputFormat,
                     sampleRate,
                     bitRate
-                )
-            } catch (e: IOException) {
-                Log.e(Constants.LOG_TAG, "Failed to create file")
-            }
-        } else {
-            audioRecorder.initRecorder(
-                path!!,
-                result,
-                recorder,
-                encoder,
-                outputFormat,
-                sampleRate,
-                bitRate
             )
         }
     }
@@ -236,9 +254,9 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private fun initPlayer(playerKey: String) {
         if (audioPlayers[playerKey] == null) {
             val newPlayer = AudioPlayer(
-                context = applicationContext,
-                channel = channel,
-                playerKey = playerKey,
+                    context = applicationContext,
+                    channel = channel,
+                    playerKey = playerKey,
             )
             audioPlayers[playerKey] = newPlayer
         }
@@ -246,30 +264,30 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     private fun createOrUpdateExtractor(
-        playerKey: String,
-        noOfSamples: Int,
-        path: String?,
-        result: Result,
+            playerKey: String,
+            noOfSamples: Int,
+            path: String?,
+            result: Result,
     ) {
         if (path == null) {
             result.error(Constants.LOG_TAG, "Path can't be null", "")
             return
         }
         extractors[playerKey] = WaveformExtractor(
-            context = applicationContext,
-            methodChannel = channel,
-            expectedPoints = noOfSamples,
-            key = playerKey,
-            path = path,
-            result = result,
-            extractorCallBack = object : ExtractorCallBack {
-                override fun onProgress(value: Float) {
-                    if (value == 1.0F) {
-                        result.success(extractors[playerKey]?.sampleData)
+                context = applicationContext,
+                methodChannel = channel,
+                expectedPoints = noOfSamples,
+                key = playerKey,
+                path = path,
+                result = result,
+                extractorCallBack = object : ExtractorCallBack {
+                    override fun onProgress(value: Float) {
+                        if (value == 1.0F) {
+                            result.success(extractors[playerKey]?.sampleData)
+                        }
                     }
-                }
 
-            }
+                }
         )
         extractors[playerKey]?.startDecode()
         extractors[playerKey]?.stop()

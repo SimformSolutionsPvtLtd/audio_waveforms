@@ -111,10 +111,9 @@ class AudioWaveformsInterface {
   }
 
   ///platform call to start player
-  Future<bool> startPlayer(String key, FinishMode finishMode) async {
+  Future<bool> startPlayer(String key) async {
     var result = await _methodChannel.invokeMethod(Constants.startPlayer, {
       Constants.playerKey: key,
-      Constants.finishMode: finishMode.index,
     });
     return result ?? false;
   }
@@ -177,6 +176,14 @@ class AudioWaveformsInterface {
     return result ?? false;
   }
 
+  /// Sets the release mode.
+  Future<void> setReleaseMode(String key, FinishMode finishMode) async {
+    return await _methodChannel.invokeMethod(Constants.finishMode, {
+      Constants.finishType: finishMode.index,
+      Constants.playerKey: key,
+    });
+  }
+
   Future<List<double>> extractWaveformData({
     required String key,
     required String path,
@@ -209,12 +216,8 @@ class AudioWaveformsInterface {
           break;
         case Constants.onDidFinishPlayingAudio:
           var key = call.arguments[Constants.playerKey];
-          var playerState = (call.arguments[Constants.finishtype] is int) &&
-                  call.arguments[Constants.finishtype] == 0
-              ? PlayerState.playing
-              : call.arguments[Constants.finishtype] == 1
-                  ? PlayerState.paused
-                  : PlayerState.stopped;
+          var playerState =
+              getPlayerState(call.arguments[Constants.finishType]);
           var stateIdentifier = PlayerIdentifier<PlayerState>(key, playerState);
           var completionIdentifier = PlayerIdentifier<void>(key, null);
           PlatformStreams.instance.addCompletionEvent(completionIdentifier);
@@ -238,6 +241,17 @@ class AudioWaveformsInterface {
           break;
       }
     });
+  }
+
+  PlayerState getPlayerState(int finishModel) {
+    switch (finishModel) {
+      case 0:
+        return PlayerState.playing;
+      case 1:
+        return PlayerState.paused;
+      default:
+        return PlayerState.stopped;
+    }
   }
 
   void removeMethodCallHandler() {

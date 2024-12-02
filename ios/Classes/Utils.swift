@@ -43,6 +43,8 @@ struct Constants {
     static let setRate = "setRate"
     static let rate = "rate"
     static let volume = "volume"
+    static let finishMode = "finishMode"
+    static let finishType = "finishType"
     static let getDuration = "getDuration"
     static let durationType = "durationType"
     static let preparePlayer = "preparePlayer"
@@ -51,8 +53,6 @@ struct Constants {
     static let playerKey = "playerKey"
     static let stopAllPlayers = "stopAllPlayers"
     static let onDidFinishPlayingAudio = "onDidFinishPlayingAudio"
-    static let finishMode = "finishMode"
-    static let finishType = "finishType"
     static let extractWaveformData = "extractWaveformData"
     static let noOfSamples = "noOfSamples"
     static let onCurrentExtractedWaveformData = "onCurrentExtractedWaveformData"
@@ -65,11 +65,6 @@ struct Constants {
     static let resultDuration = "resultDuration"
 }
 
-enum FinishMode : Int{
-    case loop = 0
-    case pause = 1
-    case stop = 2
-}
 
 /// Creates an 2D array of floats
 public typealias FloatChannelData = [[Float]]
@@ -79,4 +74,10 @@ public extension RangeReplaceableCollection where Iterator.Element: ExpressibleB
     init(zeros count: Int) {
         self.init(repeating: 0, count: count)
     }
+}
+
+enum FinishMode : Int{
+    case loop = 0
+    case pause = 1
+    case stop = 2
 }
