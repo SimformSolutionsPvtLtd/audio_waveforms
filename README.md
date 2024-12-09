@@ -357,6 +357,13 @@ playerController.release();
 playerController.stopAllPlayer();
 ```
 There could be any number of players but you can just call this function from any **one** player and it will stop all the players.
+
+#### Pausing players all at once
+```dart
+playerController.pauseAllPlayers();
+```
+There could be any number of players but you can just call this function from any **one** player and it will pause all the players.
+
 #### Disposing the controller
 ```dart
 playerController.dispose();

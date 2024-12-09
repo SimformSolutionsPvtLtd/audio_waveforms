@@ -52,12 +52,20 @@ class _HomeState extends State<Home> {
     setState(() {});
   }
 
+  var recordAudioListener;
   void _initialiseControllers() {
     recorderController = RecorderController()
       ..androidEncoder = AndroidEncoder.aac
       ..androidOutputFormat = AndroidOutputFormat.mpeg4
       ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
       ..sampleRate = 44100;
+
+    recordAudioListener = () {
+      var ab = recorderController.elapsedDuration.inSeconds ?? 0;
+      print('object-----> $ab');
+    };
+
+    recorderController.addListener(recordAudioListener);
   }
 
   void _pickFile() async {
@@ -214,14 +222,26 @@ class _HomeState extends State<Home> {
     try {
       if (isRecording) {
         recorderController.reset();
+        await recorderController.pause();
+        final audioFile = await recorderController.stop();
+        final time = recorderController.recordedDuration.inSeconds;
+        recorderController.removeListener(recordAudioListener!);
 
-        path = await recorderController.stop(false);
+        print('Duration  ======>  $audioFile   $time');
+
+        if (audioFile != null && (time ?? 0) > 0) {
+          print('object ---> Upload image');
+        }
+        recorderController.dispose();
+
+        /* path = await recorderController.stop(false);
 
         if (path != null) {
           isRecordingCompleted = true;
           debugPrint(path);
           debugPrint("Recorded file size: ${File(path!).lengthSync()}");
-        }
+          recorderController.dispose();
+        }*/
       } else {
         await recorderController.record(path: path); // Path is optional
       }

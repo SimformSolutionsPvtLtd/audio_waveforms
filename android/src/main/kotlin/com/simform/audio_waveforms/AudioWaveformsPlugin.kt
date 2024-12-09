@@ -102,7 +102,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Constants.stopPlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
-                    audioPlayers[key]?.stop(result)
+                    audioPlayers[key]?.stop()
+                    result.success(true)
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
@@ -111,7 +112,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Constants.pausePlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
-                    audioPlayers[key]?.pause(result)
+                    audioPlayers[key]?.pause()
+                    result.success(true)
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
@@ -188,7 +190,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
             Constants.stopAllPlayers -> {
                 for ((key, _) in audioPlayers) {
-                    audioPlayers[key]?.stop(result)
+                    audioPlayers[key]?.stop()
                     audioPlayers[key] = null
                 }
                 result.success(true)
@@ -200,6 +202,13 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 key?.let {
                     audioPlayers[it]?.setFinishMode(result, releaseType)
                 }
+            }
+
+            Constants.pauseAllPlayers -> {
+                for ((key, _) in audioPlayers) {
+                    audioPlayers[key]?.pause()
+                }
+                result.success(true)
             }
 
             else -> result.notImplemented()
