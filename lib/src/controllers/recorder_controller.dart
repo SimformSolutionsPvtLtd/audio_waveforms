@@ -430,8 +430,10 @@ class RecorderController extends ChangeNotifier {
   }
 
   void _setRecorderState(RecorderState state) {
-    _recorderStateController.add(state);
-    _recorderState = state;
+    if (!_recorderStateController.isClosed) {
+      _recorderStateController.add(state);
+      _recorderState = state;
+    }
   }
 
   @override
