@@ -1,6 +1,7 @@
 package com.simform.audio_waveforms
 
 import android.content.Context
+import android.media.audiofx.NoiseSuppressor
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -25,6 +26,8 @@ class AudioPlayer(
     private var finishMode = FinishMode.Stop
     private var key = playerKey
     private var updateFrequency: Long = 200
+    private var noiseSuppressor: NoiseSuppressor? = null
+
 
     fun preparePlayer(
             result: MethodChannel.Result,
@@ -41,6 +44,10 @@ class AudioPlayer(
             player = ExoPlayer.Builder(appContext).build()
             player?.addMediaItem(mediaItem)
             player?.prepare()
+            if (NoiseSuppressor.isAvailable()) {
+                noiseSuppressor = player?.audioSessionId?.let { NoiseSuppressor.create(it) }
+                noiseSuppressor?.enabled = isPlayerPrepared
+            }
             playerListener = object : Player.Listener {
 
                 override fun onPlayerError(error: PlaybackException) {
@@ -62,6 +69,7 @@ class AudioPlayer(
                             FinishMode.Stop -> {
                                 player?.stop()
                                 player?.release()
+                                noiseSuppressor?.release()
                                 player = null
                                 stopListening()
                                 args[Constants.finishType] = 2
