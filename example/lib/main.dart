@@ -228,9 +228,11 @@ class _HomeState extends State<Home> {
     } catch (e) {
       debugPrint(e.toString());
     } finally {
-      setState(() {
-        isRecording = !isRecording;
-      });
+      if (recorderController.hasPermission) {
+        setState(() {
+          isRecording = !isRecording;
+        });
+      }
     }
   }
 
