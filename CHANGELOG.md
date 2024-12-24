@@ -1,6 +1,7 @@
 ## 1.2.1 (Unreleased)
 
 - Fixed [#386](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/386) - On permission denied isRecording flag changed
+- Fixed [#384](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/384) - Provide a callback of drag,tap,start and end details on user gesture
 
 ## 1.2.0
 
