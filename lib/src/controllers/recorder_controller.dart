@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'dart:math' show max;
 
-import 'package:audio_waveforms/src/base/constants.dart';
 import 'package:flutter/material.dart';
 
 import '/src/base/utils.dart';
+import '../base/constants.dart';
 import 'player_controller.dart';
 
 // ignore_for_file: deprecated_member_use_from_same_package

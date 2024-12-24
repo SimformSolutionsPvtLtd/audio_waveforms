@@ -62,6 +62,18 @@ class AudioFileWaveforms extends StatefulWidget {
   /// Allow seeking with gestures when turned on.
   final bool enableSeekGesture;
 
+  /// Provides a callback when drag starts.
+  final Function(DragStartDetails)? onDragStart;
+
+  /// Provides a callback when drag ends.
+  final Function(DragEndDetails)? onDragEnd;
+
+  /// Provides a callback on drag updates.
+  final Function(DragUpdateDetails)? dragUpdateDetails;
+
+  /// Provides a callback when tapping on the waveform.
+  final Function(TapUpDetails)? tapUpUpdateDetails;
+
   /// Generate waveforms from audio file. You play those audio file using
   /// [PlayerController].
   ///
@@ -86,6 +98,10 @@ class AudioFileWaveforms extends StatefulWidget {
     this.clipBehavior = Clip.none,
     this.waveformType = WaveformType.long,
     this.enableSeekGesture = true,
+    this.onDragStart,
+    this.onDragEnd,
+    this.dragUpdateDetails,
+    this.tapUpUpdateDetails,
   });
 
   @override
@@ -201,8 +217,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
         onTapUp: widget.enableSeekGesture ? _handleScrubberSeekStart : null,
         onHorizontalDragStart:
             widget.enableSeekGesture ? _handleHorizontalDragStart : null,
-        onHorizontalDragEnd:
-            widget.enableSeekGesture ? (_) => _handleOnDragEnd() : null,
+        onHorizontalDragEnd: widget.enableSeekGesture ? _handleOnDragEnd : null,
         child: ClipPath(
           // TODO: Update extraClipperHeight when duration labels are added
           clipper: WaveClipper(extraClipperHeight: 0),
@@ -246,7 +261,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     }
   }
 
-  void _handleOnDragEnd() {
+  void _handleOnDragEnd(DragEndDetails dragEndDetails) {
     _isScrolled = false;
     scrollScale = 1.0;
     if (mounted) setState(() {});
@@ -256,6 +271,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
         (playerController.maxDuration * _proportion).toInt(),
       );
     }
+    widget.onDragEnd?.call(dragEndDetails);
   }
 
   void _addWaveformData(List<double> data) {
@@ -274,6 +290,8 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
         _handleScrollUpdate(details);
         break;
     }
+
+    widget.dragUpdateDetails?.call(details);
   }
 
   /// This method handles continues seek gesture
@@ -292,6 +310,8 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     var seekPosition = playerController.maxDuration * _proportion;
 
     playerController.seekTo(seekPosition.toInt());
+
+    widget.tapUpUpdateDetails?.call(details);
   }
 
   ///This method handles horizontal scrolling of the wave
@@ -332,8 +352,10 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   }
 
   ///This will help-out to determine direction of the scroll
-  void _handleHorizontalDragStart(DragStartDetails details) =>
-      _initialDragPosition = details.localPosition.dx;
+  void _handleHorizontalDragStart(DragStartDetails details) {
+    _initialDragPosition = details.localPosition.dx;
+    widget.onDragStart?.call(details);
+  }
 
   /// This initialises variable in [initState] so that everytime current duration
   /// gets updated it doesn't re assign them to same values.
