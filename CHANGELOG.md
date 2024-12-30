@@ -4,6 +4,9 @@
 - **BREAKING:** Fixed [#412](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/412) - Calling preparePlayer again does not cancel old waveform extraction.
 - Feature [#415](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/415) - Add stop extraction method and asynchronous extraction of waveform in ios
 - **BREAKING:** Feature [#416](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/416) - Add waveform extraction controller.
+- **BREAKING:**
+  - Remove duplicate parameters from RecorderController.
+  - Add `RecorderSettings` model for all the recording settings.
 
 ## 1.3.0
 
