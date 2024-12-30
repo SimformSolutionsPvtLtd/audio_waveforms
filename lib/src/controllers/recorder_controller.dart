@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '/src/base/utils.dart';
 import '../base/constants.dart';
+import '../models/recorder_settings.dart';
 import 'player_controller.dart';
 
 // ignore_for_file: deprecated_member_use_from_same_package
@@ -14,16 +15,6 @@ class RecorderController extends ChangeNotifier {
 
   /// At which rate waveform needs to be updated
   Duration updateFrequency = const Duration(milliseconds: 100);
-
-  AndroidEncoder androidEncoder = AndroidEncoder.aac;
-
-  AndroidOutputFormat androidOutputFormat = AndroidOutputFormat.mpeg4;
-
-  IosEncoder iosEncoder = IosEncoder.kAudioFormatMPEG4AAC;
-
-  int sampleRate = 44100;
-
-  int? bitRate;
 
   /// Db we get from native is too high so in Android it the value is
   /// subtracted and in IOS value added.
@@ -184,14 +175,7 @@ class RecorderController extends ChangeNotifier {
   /// this function is called then it will re-initialise the recorder.
   Future<void> record({
     String? path,
-    AndroidEncoder? androidEncoder,
-    AndroidOutputFormat? androidOutputFormat,
-    IosEncoder? iosEncoder,
-    int? sampleRate,
-    int? bitRate,
-    int? linearPCMBitDepth,
-    bool linearPCMIsBigEndian = false,
-    bool linearPCMIsFloat = false,
+    RecorderSettings recorderSettings = const RecorderSettings(),
   }) async {
     if (!_recorderState.isRecording) {
       await checkPermission();
@@ -199,10 +183,7 @@ class RecorderController extends ChangeNotifier {
         if (Platform.isAndroid && _recorderState.isStopped) {
           await _initRecorder(
             path: path,
-            androidEncoder: androidEncoder,
-            androidOutputFormat: androidOutputFormat,
-            sampleRate: sampleRate,
-            bitRate: bitRate,
+            recorderSettings: recorderSettings,
           );
         }
         if (_recorderState.isPaused) {
@@ -221,17 +202,10 @@ class RecorderController extends ChangeNotifier {
         }
         if (_recorderState.isInitialized) {
           _isRecording = await AudioWaveformsInterface.instance.record(
-            audioFormat: Platform.isIOS
-                ? iosEncoder?.index ?? this.iosEncoder.index
-                : androidEncoder?.index ?? this.androidEncoder.index,
-            sampleRate: sampleRate ?? this.sampleRate,
-            bitRate: bitRate ?? this.bitRate,
+            recorderSetting: recorderSettings,
             path: path,
             useLegacyNormalization: _useLegacyNormalization,
             overrideAudioSession: overrideAudioSession,
-            linearPCMBitDepth: linearPCMBitDepth,
-            linearPCMIsBigEndian: linearPCMIsBigEndian,
-            linearPCMIsFloat: linearPCMIsFloat,
           );
           if (_isRecording) {
             _setRecorderState(RecorderState.recording);
@@ -251,18 +225,11 @@ class RecorderController extends ChangeNotifier {
   /// Initialises recorder for android platform.
   Future<void> _initRecorder({
     String? path,
-    AndroidEncoder? androidEncoder,
-    AndroidOutputFormat? androidOutputFormat,
-    int? sampleRate,
-    int? bitRate,
+    required RecorderSettings recorderSettings,
   }) async {
     final initialized = await AudioWaveformsInterface.instance.initRecorder(
       path: path,
-      encoder: androidEncoder?.index ?? this.androidEncoder.index,
-      outputFormat:
-          androidOutputFormat?.index ?? this.androidOutputFormat.index,
-      sampleRate: sampleRate ?? this.sampleRate,
-      bitRate: bitRate ?? this.bitRate,
+      recorderSettings: recorderSettings,
     );
     if (initialized) {
       _setRecorderState(RecorderState.initialized);

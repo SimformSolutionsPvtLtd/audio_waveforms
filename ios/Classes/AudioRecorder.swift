@@ -10,7 +10,7 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     
     func startRecording(_ result: @escaping FlutterResult,_ recordingSettings: RecordingSettings){
         useLegacyNormalization = recordingSettings.useLegacy ?? false
-        
+
         var settings: [String: Any] = [
                 AVFormatIDKey: getEncoder(recordingSettings.encoder ?? 0),
                 AVSampleRateKey: recordingSettings.sampleRate ?? 44100,
@@ -21,19 +21,19 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
         if (recordingSettings.bitRate != nil) {
             settings[AVEncoderBitRateKey] = recordingSettings.bitRate
         }
-        
+
         if ((recordingSettings.encoder ?? 0) == Constants.kAudioFormatLinearPCM) {
             settings[AVLinearPCMBitDepthKey] = recordingSettings.linearPCMBitDepth
             settings[AVLinearPCMIsBigEndianKey] = recordingSettings.linearPCMIsBigEndian
             settings[AVLinearPCMIsFloatKey] = recordingSettings.linearPCMIsFloat
         }
-        
+
         let options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetooth]
         if (recordingSettings.path == nil) {
             let documentDirectory = getDocumentDirectory(result)
             let date = Date()
             let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = Constants.fileNameFormat
+            dateFormatter.dateFormat = recordingSettings.fileNameFormat
             let fileName = dateFormatter.string(from: date) + ".m4a"
             self.path = "\(documentDirectory)/\(fileName)"
         } else {

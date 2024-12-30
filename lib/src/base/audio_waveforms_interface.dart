@@ -10,30 +10,19 @@ class AudioWaveformsInterface {
 
   ///platform call to start recording
   Future<bool> record({
-    required int audioFormat,
-    required int sampleRate,
-    int? bitRate,
+    required RecorderSettings recorderSetting,
     String? path,
     bool useLegacyNormalization = false,
     bool overrideAudioSession = true,
-    int? linearPCMBitDepth,
-    bool linearPCMIsBigEndian = false,
-    bool linearPCMIsFloat = false,
   }) async {
     final isRecording = await _methodChannel.invokeMethod(
       Constants.startRecording,
       Platform.isIOS
-          ? {
-              Constants.path: path,
-              Constants.encoder: audioFormat,
-              Constants.sampleRate: sampleRate,
-              Constants.bitRate: bitRate,
-              Constants.useLegacyNormalization: useLegacyNormalization,
-              Constants.overrideAudioSession: overrideAudioSession,
-              Constants.linearPCMBitDepth: linearPCMBitDepth,
-              Constants.linearPCMIsBigEndian: linearPCMIsBigEndian,
-              Constants.linearPCMIsFloat: linearPCMIsFloat,
-            }
+          ? recorderSetting.iosToJson(
+              path: path,
+              overrideAudioSession: overrideAudioSession,
+              useLegacyNormalization: useLegacyNormalization,
+            )
           : {
               Constants.useLegacyNormalization: useLegacyNormalization,
             },
@@ -45,20 +34,11 @@ class AudioWaveformsInterface {
   /// This method is only required for Android platform.
   Future<bool> initRecorder({
     String? path,
-    required int encoder,
-    required int outputFormat,
-    required int sampleRate,
-    int? bitRate,
+    required RecorderSettings recorderSettings,
   }) async {
     final initialized = await _methodChannel.invokeMethod(
       Constants.initRecorder,
-      {
-        Constants.path: path,
-        Constants.outputFormat: outputFormat,
-        Constants.encoder: encoder,
-        Constants.sampleRate: sampleRate,
-        Constants.bitRate: bitRate,
-      },
+      recorderSettings.androidToJson(path: path),
     );
     return initialized ?? false;
   }

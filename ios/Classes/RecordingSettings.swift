@@ -12,6 +12,7 @@ struct RecordingSettings {
     var encoder : Int?
     var sampleRate : Int?
     var bitRate : Int?
+    var fileNameFormat : String
     var useLegacy : Bool?
     var overrideAudioSession : Bool
     var linearPCMBitDepth : Int
@@ -23,6 +24,7 @@ struct RecordingSettings {
         let encoder = json[Constants.encoder] as? Int
         let sampleRate = json[Constants.sampleRate] as? Int
         let bitRate = json[Constants.bitRate] as? Int
+        let fileNameFormat = Constants.fileNameFormat
         let useLegacy = json[Constants.useLegacyNormalization] as? Bool
         let overrideAudioSession = json[Constants.overrideAudioSession] as? Bool ?? true
         let linearPCMBitDepth = json[Constants.linearPCMBitDepth] as? Int ?? 16
@@ -34,6 +36,7 @@ struct RecordingSettings {
             encoder: encoder,
             sampleRate: sampleRate,
             bitRate: bitRate,
+            fileNameFormat: fileNameFormat,
             useLegacy: useLegacy,
             overrideAudioSession: overrideAudioSession,
             linearPCMBitDepth: linearPCMBitDepth,
