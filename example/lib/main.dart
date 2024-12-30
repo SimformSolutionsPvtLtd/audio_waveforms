@@ -53,11 +53,7 @@ class _HomeState extends State<Home> {
   }
 
   void _initialiseControllers() {
-    recorderController = RecorderController()
-      ..androidEncoder = AndroidEncoder.aac
-      ..androidOutputFormat = AndroidOutputFormat.mpeg4
-      ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
-      ..sampleRate = 44100;
+    recorderController = RecorderController();
   }
 
   void _pickFile() async {
@@ -223,7 +219,10 @@ class _HomeState extends State<Home> {
           debugPrint("Recorded file size: ${File(path!).lengthSync()}");
         }
       } else {
-        await recorderController.record(path: path); // Path is optional
+        await recorderController.record(
+          path: path, // Path is optional
+          recorderSettings: const RecorderSettings(),
+        );
       }
     } catch (e) {
       debugPrint(e.toString());

@@ -18,18 +18,18 @@ struct Constants {
     static let fileNameFormat = "YY-MM-dd-HH-mm-ss"
     static let resumeRecording = "resumeRecording"
 
-    static let kAudioFormatMPEG4AAC = 1
-    static let kAudioFormatMPEGLayer1 = 2
-    static let kAudioFormatMPEGLayer2 = 3
-    static let kAudioFormatMPEGLayer3 = 4
-    static let kAudioFormatMPEG4AAC_ELD = 5
-    static let kAudioFormatMPEG4AAC_HE = 6
-    static let kAudioFormatOpus = 7
-    static let kAudioFormatAMR = 8
-    static let kAudioFormatAMR_WB = 9
-    static let kAudioFormatLinearPCM = 10
-    static let kAudioFormatAppleLossless = 11
-    static let kAudioFormatMPEG4AAC_HE_V2 = 12
+    static let kAudioFormatMPEG4AAC = 0
+    static let kAudioFormatMPEGLayer1 = 1
+    static let kAudioFormatMPEGLayer2 = 2
+    static let kAudioFormatMPEGLayer3 = 3
+    static let kAudioFormatMPEG4AAC_ELD = 4
+    static let kAudioFormatMPEG4AAC_HE = 5
+    static let kAudioFormatOpus = 6
+    static let kAudioFormatAMR = 7
+    static let kAudioFormatAMR_WB = 8
+    static let kAudioFormatLinearPCM = 9
+    static let kAudioFormatAppleLossless = 10
+    static let kAudioFormatMPEG4AAC_HE_V2 = 11
 
     static let readAudioFile = "readAudioFile"
     static let durationEventChannel = "durationEventChannel"
@@ -63,6 +63,9 @@ struct Constants {
     static let overrideAudioSession = "overrideAudioSession"
     static let resultFilePath = "resultFilePath"
     static let resultDuration = "resultDuration"
+    static let linearPCMBitDepth = "linearPCMBitDepth";
+    static let linearPCMIsBigEndian = "linearPCMIsBigEndian";
+    static let linearPCMIsFloat = "linearPCMIsFloat";
 }
 
 

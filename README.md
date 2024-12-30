@@ -114,9 +114,15 @@ Widget build(BuildContext context) {
 2. Encoders and output format,
    ```dart
    recorderController.record(
-     androidEncoder: AndroidEncoder.aac,
-     androidOutputFormat: AndroidOutputFormat.mpeg4,
-     iosEncoder: IosEncoder.kAudioFormatMPEG4AAC,
+     recorderSettings: const RecorderSettings(
+       iosEncoderSetting: IosEncoderSetting(
+         iosEncoder: IosEncoder.kAudioFormatMPEG4AAC,
+       ),
+       androidEncoderSettings: AndroidEncoderSettings(
+         androidEncoder: AndroidEncoder.aac,
+         androidOutputFormat: AndroidOutputFormat.mpeg4,
+       ),
+     ),
    );
    ```
    **Note** -: These are default encoder and output format to support `.m4a` file format. If you change them make sure that your file **extension**, **sample rate** and **bit rate** supports them and also which are supported by `MediaRecorder` for Android and `AVAudioRecorder` for iOS.
