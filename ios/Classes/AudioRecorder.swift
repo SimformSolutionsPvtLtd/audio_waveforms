@@ -8,37 +8,41 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var audioUrl: URL?
     var recordedDuration: CMTime = CMTime.zero
     
-    public func startRecording(_ result: @escaping FlutterResult,_ path: String?,_ encoder : Int?,_ sampleRate : Int?,_ bitRate : Int?,_ fileNameFormat: String, _ useLegacy: Bool?, overrideAudioSession : Bool){
-        useLegacyNormalization = useLegacy ?? false
-        let settings = [
-            AVFormatIDKey: getEncoder(encoder ?? 0),
-            AVSampleRateKey: sampleRate ?? 44100,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-        ]
-        let settingsWithBitrate = [
-            AVEncoderBitRateKey: bitRate,
-            AVFormatIDKey: getEncoder(encoder ?? 0),
-            AVSampleRateKey: sampleRate ?? 44100,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-        ]
+    func startRecording(_ result: @escaping FlutterResult,_ recordingSettings: RecordingSettings){
+        useLegacyNormalization = recordingSettings.useLegacy ?? false
+        
+        var settings: [String: Any] = [
+                AVFormatIDKey: getEncoder(recordingSettings.encoder ?? 0),
+                AVSampleRateKey: recordingSettings.sampleRate ?? 44100,
+                AVNumberOfChannelsKey: 1,
+                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            ]
+        
+        if (recordingSettings.bitRate != nil) {
+            settings[AVEncoderBitRateKey] = recordingSettings.bitRate
+        }
+        
+        if ((recordingSettings.encoder ?? 0) == Constants.kAudioFormatLinearPCM) {
+            settings[AVLinearPCMBitDepthKey] = recordingSettings.linearPCMBitDepth
+            settings[AVLinearPCMIsBigEndianKey] = recordingSettings.linearPCMIsBigEndian
+            settings[AVLinearPCMIsFloatKey] = recordingSettings.linearPCMIsFloat
+        }
         
         let options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetooth]
-        if (path == nil) {
+        if (recordingSettings.path == nil) {
             let documentDirectory = getDocumentDirectory(result)
             let date = Date()
             let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = fileNameFormat
+            dateFormatter.dateFormat = Constants.fileNameFormat
             let fileName = dateFormatter.string(from: date) + ".m4a"
             self.path = "\(documentDirectory)/\(fileName)"
         } else {
-            self.path = path
+            self.path = recordingSettings.path
         }
         
         
         do {
-            if overrideAudioSession {
+            if recordingSettings.overrideAudioSession {
                 try AVAudioSession.sharedInstance().setCategory(.playAndRecord, options: options)
                 try AVAudioSession.sharedInstance().setActive(true)
             }
@@ -47,7 +51,7 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             if(audioUrl == nil){
                 result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise file URL", details: nil))
             }
-            audioRecorder = try AVAudioRecorder(url: audioUrl!, settings: bitRate != nil ? settingsWithBitrate as [String : Any] : settings as [String : Any])
+            audioRecorder = try AVAudioRecorder(url: audioUrl!, settings: settings as [String : Any])
             
             audioRecorder?.delegate = self
             audioRecorder?.isMeteringEnabled = true

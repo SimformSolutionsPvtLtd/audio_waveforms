@@ -16,6 +16,9 @@ class AudioWaveformsInterface {
     String? path,
     bool useLegacyNormalization = false,
     bool overrideAudioSession = true,
+    int? linearPCMBitDepth,
+    bool linearPCMIsBigEndian = false,
+    bool linearPCMIsFloat = false,
   }) async {
     final isRecording = await _methodChannel.invokeMethod(
       Constants.startRecording,
@@ -27,6 +30,9 @@ class AudioWaveformsInterface {
               Constants.bitRate: bitRate,
               Constants.useLegacyNormalization: useLegacyNormalization,
               Constants.overrideAudioSession: overrideAudioSession,
+              Constants.linearPCMBitDepth: linearPCMBitDepth,
+              Constants.linearPCMIsBigEndian: linearPCMIsBigEndian,
+              Constants.linearPCMIsFloat: linearPCMIsFloat,
             }
           : {
               Constants.useLegacyNormalization: useLegacyNormalization,

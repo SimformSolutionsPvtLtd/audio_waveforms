@@ -189,6 +189,9 @@ class RecorderController extends ChangeNotifier {
     IosEncoder? iosEncoder,
     int? sampleRate,
     int? bitRate,
+    int? linearPCMBitDepth,
+    bool linearPCMIsBigEndian = false,
+    bool linearPCMIsFloat = false,
   }) async {
     if (!_recorderState.isRecording) {
       await checkPermission();
@@ -226,6 +229,9 @@ class RecorderController extends ChangeNotifier {
             path: path,
             useLegacyNormalization: _useLegacyNormalization,
             overrideAudioSession: overrideAudioSession,
+            linearPCMBitDepth: linearPCMBitDepth,
+            linearPCMIsBigEndian: linearPCMIsBigEndian,
+            linearPCMIsFloat: linearPCMIsFloat,
           );
           if (_isRecording) {
             _setRecorderState(RecorderState.recording);
