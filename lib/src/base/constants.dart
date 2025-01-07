@@ -50,4 +50,7 @@ class Constants {
   static const String overrideAudioSession = "overrideAudioSession";
   static const String resultFilePath = "resultFilePath";
   static const String resultDuration = "resultDuration";
+  static const String linearPCMBitDepth = 'linearPCMBitDepth';
+  static const String linearPCMIsBigEndian = 'linearPCMIsBigEndian';
+  static const String linearPCMIsFloat = 'linearPCMIsFloat';
 }
