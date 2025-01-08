@@ -223,7 +223,7 @@ class PlayerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// A function to stop player. After calling this.
+  /// A function to stop player.
   Future<void> stopPlayer() async {
     final isStopped =
         await AudioWaveformsInterface.instance.stopPlayer(playerKey);

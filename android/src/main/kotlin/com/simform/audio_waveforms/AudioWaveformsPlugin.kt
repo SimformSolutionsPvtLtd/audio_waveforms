@@ -27,11 +27,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var recorder: MediaRecorder? = null
     private var activity: Activity? = null
     private lateinit var audioRecorder: AudioRecorder
-    private var path: String? = null
-    private var encoder: Int = 0
-    private var outputFormat: Int = 0
-    private var sampleRate: Int = 44100
-    private var bitRate: Int? = null
+    private var recorderSettings = RecorderSettings(path = null, bitRate = null)
     private lateinit var applicationContext: Context
     private var audioPlayers = mutableMapOf<String, AudioPlayer?>()
     private var extractors = mutableMapOf<String, WaveformExtractor?>()
@@ -48,12 +44,19 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         when (call.method) {
             Constants.initRecorder -> {
-                path = call.argument(Constants.path) as String?
-                encoder = (call.argument(Constants.encoder) as Int?) ?: 0
-                outputFormat = (call.argument(Constants.outputFormat) as Int?) ?: 0
-                sampleRate = (call.argument(Constants.sampleRate) as Int?) ?: 44100
-                bitRate = (call.argument(Constants.bitRate) as Int?)
-                checkPathAndInitialiseRecorder(result, encoder, outputFormat, sampleRate, bitRate)
+                val arguments = call.arguments;
+                if (arguments != null && arguments is Map<*, *>) {
+                    @Suppress("UNCHECKED_CAST")
+                    recorderSettings =
+                        RecorderSettings.fromJson(json = arguments as Map<String, Any?>)
+
+                    checkPathAndInitialiseRecorder(
+                        result,
+                        recorderSettings
+                    )
+                } else {
+                    result.error(Constants.LOG_TAG, "Failed to initialise Recorder", "Invalid Arguments")
+                }
             }
 
             Constants.startRecording -> {
@@ -63,7 +66,11 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             }
 
             Constants.stopRecording -> {
-                audioRecorder.stopRecording(result, recorder, path!!)
+                audioRecorder.stopRecording(
+                    result,
+                    recorder,
+                    recorderSettings.path!!
+                )
                 recorder = null
             }
 
@@ -79,10 +86,10 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 if (key != null) {
                     initPlayer(key)
                     audioPlayers[key]?.preparePlayer(
-                            result,
-                            audioPath,
-                            volume?.toFloat(),
-                            frequency?.toLong(),
+                        result,
+                        audioPath,
+                        volume?.toFloat(),
+                        frequency?.toLong(),
                     )
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
@@ -207,46 +214,36 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     private fun checkPathAndInitialiseRecorder(
-            result: Result,
-            encoder: Int,
-            outputFormat: Int,
-            sampleRate: Int,
-            bitRate: Int?
+        result: Result,
+        recorderSettings: RecorderSettings
     ) {
         try {
             recorder = MediaRecorder()
         } catch (e: Exception) {
             Log.e(Constants.LOG_TAG, "Failed to initialise Recorder")
         }
-        if (path == null) {
+        if (recorderSettings.path == null) {
             val outputDir = activity?.cacheDir
             val outputFile: File?
-            val dateTimeInstance = SimpleDateFormat(Constants.fileNameFormat, Locale.US)
+            val dateTimeInstance =
+                SimpleDateFormat(Constants.fileNameFormat, Locale.US)
             val currentDate = dateTimeInstance.format(Date())
             try {
                 outputFile = File.createTempFile(currentDate, ".m4a", outputDir)
-                path = outputFile.path
+                recorderSettings.path = outputFile.path
                 audioRecorder.initRecorder(
-                        path!!,
-                        result,
-                        recorder,
-                        encoder,
-                        outputFormat,
-                        sampleRate,
-                        bitRate
+                    result,
+                    recorder,
+                    recorderSettings,
                 )
             } catch (e: IOException) {
                 Log.e(Constants.LOG_TAG, "Failed to create file")
             }
         } else {
             audioRecorder.initRecorder(
-                    path!!,
-                    result,
-                    recorder,
-                    encoder,
-                    outputFormat,
-                    sampleRate,
-                    bitRate
+                result,
+                recorder,
+                recorderSettings,
             )
         }
     }

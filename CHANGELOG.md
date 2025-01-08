@@ -3,6 +3,8 @@
 - Fixed [#386](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/386) - On permission denied isRecording flag changed
 - Fixed [#384](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/384) - Provide a callback of drag,tap,start and end details on user gesture
 - Fixed [#309](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/309) - Added support for Liner PCM codec in iOS
+- Fixed [#291](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/291) - Codec issue while recording audio on android
+- Fixed wrong codec selection on the platform side on both Android and iOS.
 
 ## 1.2.0
 
