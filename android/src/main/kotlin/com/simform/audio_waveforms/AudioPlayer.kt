@@ -189,6 +189,11 @@ class AudioPlayer(
 
     fun setFinishMode(result: MethodChannel.Result, releaseModeType: Int?) {
         try {
+            if (releaseModeType == null) {
+                result.success(false)
+                return
+            }
+
             releaseModeType?.let {
                 when (releaseModeType) {
                     0 -> {
@@ -209,6 +214,7 @@ class AudioPlayer(
                 }
             }
 
+            result.success(true)
         } catch (e: Exception) {
             result.error(Constants.LOG_TAG, "Can not set the release mode", e.toString())
         }
