@@ -22,23 +22,23 @@ object Constants {
 
 
     /** encoder */
-    const val acc = 1
-    const val aac_eld = 2
-    const val he_aac = 3
-    const val opus = 6
-    const val vorbis = 7
+    const val acc = 0
+    const val aac_eld = 1
+    const val he_aac = 2
+    const val opus = 5
+    const val vorbis = 6
 
     /** output format */
-    const val mpeg4 = 1
-    const val three_gpp = 2
-    const val ogg = 3
-    const val webm = 6
-    const val mpeg_2_ts = 7
-    const val aac_adts = 8
+    const val mpeg4 = 0
+    const val three_gpp = 1
+    const val ogg = 2
+    const val webm = 5
+    const val mpeg_2_ts = 6
+    const val aac_adts = 7
 
     /** common */
-    const val amr_nb = 4
-    const val amr_wb = 5
+    const val amr_nb = 3
+    const val amr_wb = 4
 
     const val preparePlayer = "preparePlayer"
     const val startPlayer = "startPlayer"

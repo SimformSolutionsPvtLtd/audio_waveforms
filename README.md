@@ -133,7 +133,7 @@ Widget build(BuildContext context) {
 #### Function to control recording and waveforms
 1. record
    ```dart
-   recorderController.record(); // If path isn't provided by default sets current date time as file name m4a is used as file extension.
+   recorderController.record(); // If a path isn't provided, by default, the current date and time are set as the file name; m4a is used as the file extension.
    ```
 2. pause
    ```dart
@@ -174,9 +174,9 @@ Widget build(BuildContext context) {
    Reported duration is in **milliseconds**.
 #### Other available parameters
 ```dart
-recorderController.waveData; // The waveform data in form of normalised peak power for Ios and normalised peak amplitude for Android. The values are between 0.0 and 1.0.
+recorderController.waveData; // The waveform data is in the form of normalized peak power for iOS and normalized peak amplitude for Android. The values are between 0.0 and 1.0.
 recorderController.elapsedDuration; // Recorded duration of the file.
-recorderController.recordedDuration; // Duration of recorded audio file when recording has been stopped. Until recording has been stopped, this duration will be zero(Duration.zero). Also, once new recording is started this duration will be reset to zero.
+recorderController.recordedDuration; // Duration of recorded audio file when recording has been stopped. Until recording has been stopped, this duration will be zero (Duration.zero). Also, once a new recording is started, this duration will be reset to zero.
 recorderController.hasPermission; // If we have microphone permission or not.
 recorderController.isRecording; // If the recorder is currently recording.
 recorderController.recorderState; // Current state of the recorder.
@@ -301,16 +301,16 @@ AudioFileWaveforms(
 
 #### Listening to events from the player
 ```dart
-playerController.onPlayerStateChanged.listen((state) {}); // Provides events when the player state changes.
-playerController.onCurrentDurationChanged.listen((duration) {}); // Provides events when audio is sought to any duration.
+playerController.onPlayerStateChanged.listen((state) {}); // Triggers events when the player state changes.
+playerController.onCurrentDurationChanged.listen((duration) {}); // Triggers events when the audio playback position is adjusted to a specific duration.
 playerController.onCurrentExtractedWaveformData.listen((data) {}); // Provides latest data while extracting the waveforms.
 playerController.onExtractionProgress.listen((progress) {}); // Provides progress of the waveform extractions.
-playerController.onCompletion.listen((_){}); // Provides events every time audio file is finished playing.  
+playerController.onCompletion.listen((_){}); // Triggers events every time when an audio file is finished playing.  
 ```
 #### Getting the current or maximum duration of the audio file
 ```dart
 final fileLengthInDuration = await playerController.getDuration(DurationType.max);
-final currentDuration = await playerController.getDuration(DurationType.current); // This is where file is paused or an in progress audio files current duration.
+final currentDuration = await playerController.getDuration(DurationType.current); // Provides the current duration where the file is in a paused or in-progress state.
 ```
 #### The types of waveforms
 1. fitWidth
@@ -346,7 +346,7 @@ final currentDuration = await playerController.getDuration(DurationType.current)
 ```dart
 playerController.updateFrequency = UpdateFrequency.high;
 ```
-There are 3 modes low, medium and high. Setting **updateFrequency** to `high` will update current progress of the playing file faster(every 50ms) which will mame waveform seek animation smooth and `low` makes slower(every 200ms) which could make seek animation a little laggy. You can update this according to device configuration.
+There are 3 modes low, medium and high. Setting **updateFrequency** to `high` will update current progress of the playing file faster(every 50ms) which will make waveform seek animation smooth and `low` makes slower(every 200ms) which could make seek animation a little laggy. You can update this according to device configuration.
 
 #### Releasing resources of native player
 ```dart
