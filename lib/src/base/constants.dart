@@ -39,6 +39,7 @@ class Constants {
   static const String current = "current";
   static const String onCurrentDuration = "onCurrentDuration";
   static const String stopAllPlayers = "stopAllPlayers";
+  static const String pauseAllPlayers = "pauseAllPlayers";
   static const String onDidFinishPlayingAudio = "onDidFinishPlayingAudio";
   static const String extractWaveformData = "extractWaveformData";
   static const String noOfSamples = "noOfSamples";

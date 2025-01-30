@@ -13,7 +13,6 @@ import androidx.core.app.ActivityCompat
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 import java.io.IOException
-import java.lang.IllegalStateException
 import kotlin.math.log10
 
 private const val LOG_TAG = "AudioWaveforms"
@@ -62,7 +61,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     fun stopRecording(result: MethodChannel.Result, recorder: MediaRecorder?, path: String) {
         try {
-            val hashMap : HashMap<String,Any?> = HashMap()
+            val hashMap: HashMap<String, Any?> = HashMap()
             try {
                 recorder?.stop()
 
@@ -132,9 +131,9 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
+            requestCode: Int,
+            permissions: Array<out String>,
+            grantResults: IntArray
     ): Boolean {
         return if (requestCode == RECORD_AUDIO_REQUEST_CODE) {
             successCallback?.onSuccess(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
@@ -146,7 +145,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     private fun isPermissionGranted(activity: Activity?): Boolean {
         val result =
-            ActivityCompat.checkSelfPermission(activity!!, permissions[0])
+                ActivityCompat.checkSelfPermission(activity!!, permissions[0])
         return result == PackageManager.PERMISSION_GRANTED
     }
 
@@ -155,8 +154,8 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         if (!isPermissionGranted(activity)) {
             activity?.let {
                 ActivityCompat.requestPermissions(
-                    it, permissions,
-                    RECORD_AUDIO_REQUEST_CODE
+                        it, permissions,
+                        RECORD_AUDIO_REQUEST_CODE
                 )
             }
         } else {
@@ -179,6 +178,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                     MediaRecorder.AudioEncoder.AAC
                 }
             }
+
             Constants.vorbis -> return MediaRecorder.AudioEncoder.VORBIS
 
             else -> return MediaRecorder.AudioEncoder.AAC
@@ -202,6 +202,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             Constants.amr_nb -> return MediaRecorder.OutputFormat.AMR_NB
             Constants.webm ->
                 return MediaRecorder.OutputFormat.WEBM
+
             Constants.mpeg_2_ts -> {
                 return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     MediaRecorder.OutputFormat.MPEG_2_TS
@@ -210,6 +211,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                     MediaRecorder.OutputFormat.MPEG_4
                 }
             }
+
             Constants.aac_adts -> return MediaRecorder.OutputFormat.AAC_ADTS
             else -> return MediaRecorder.OutputFormat.MPEG_4
         }

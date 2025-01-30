@@ -314,14 +314,36 @@ class PlayerController extends ChangeNotifier {
     super.dispose();
   }
 
-  /// This method is to free all players [resources] all at once.
+  /// Frees [resources] used by all players simultaneously.
   ///
-  /// This method will close the stream and free resources taken by all
-  /// players. This method will not dispose controller.
-  Future<void> stopAllPlayers() async {
+  /// This method closes the stream and releases resources allocated by all
+  /// players. Note that it does not dispose of the controller.
+  ///
+  /// Returns `true` if all players stop successfully, otherwise returns `false`.
+  Future<bool> stopAllPlayers() async {
     PlatformStreams.instance.dispose();
-    await AudioWaveformsInterface.instance.stopAllPlayers();
-    PlatformStreams.instance.playerControllerFactory.clear();
+    var isAllPlayersStopped =
+        await AudioWaveformsInterface.instance.stopAllPlayers();
+    if (isAllPlayersStopped) {
+      PlatformStreams.instance.playerControllerFactory
+          .forEach((playKey, controller) {
+        controller._setPlayerState(PlayerState.stopped);
+      });
+    }
+    return isAllPlayersStopped;
+  }
+
+  /// Pauses all the players. Works similar to stopAllPlayer.
+  Future<bool> pauseAllPlayers() async {
+    var isAllPlayersPaused =
+        await AudioWaveformsInterface.instance.pauseAllPlayers();
+    if (isAllPlayersPaused) {
+      PlatformStreams.instance.playerControllerFactory
+          .forEach((playKey, controller) {
+        controller._setPlayerState(PlayerState.paused);
+      });
+    }
+    return isAllPlayersPaused;
   }
 
   /// Sets [_shouldRefresh] flag with provided boolean parameter.

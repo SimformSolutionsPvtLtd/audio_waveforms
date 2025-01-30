@@ -69,6 +69,7 @@ object Constants {
 
     const val resultFilePath = "resultFilePath"
     const val resultDuration = "resultDuration"
+    const val pauseAllPlayers = "pauseAllPlayers"
 }
 
 enum class FinishMode(val value: Int) {

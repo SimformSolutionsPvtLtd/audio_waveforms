@@ -7,7 +7,6 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
-
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -18,7 +17,8 @@ import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 
 /** AudioWaveformsPlugin */
@@ -55,13 +55,17 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                         recorderSettings
                     )
                 } else {
-                    result.error(Constants.LOG_TAG, "Failed to initialise Recorder", "Invalid Arguments")
+                    result.error(
+                        Constants.LOG_TAG,
+                        "Failed to initialise Recorder",
+                        "Invalid Arguments"
+                    )
                 }
             }
 
             Constants.startRecording -> {
                 val useLegacyNormalization =
-                        (call.argument(Constants.useLegacyNormalization) as Boolean?) ?: false
+                    (call.argument(Constants.useLegacyNormalization) as Boolean?) ?: false
                 audioRecorder.startRecorder(result, recorder, useLegacyNormalization)
             }
 
@@ -77,7 +81,12 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Constants.pauseRecording -> audioRecorder.pauseRecording(result, recorder)
             Constants.resumeRecording -> audioRecorder.resumeRecording(result, recorder)
             Constants.getDecibel -> audioRecorder.getDecibel(result, recorder)
-            Constants.checkPermission -> audioRecorder.checkPermission(result, activity, result::success)
+            Constants.checkPermission -> audioRecorder.checkPermission(
+                result,
+                activity,
+                result::success
+            )
+
             Constants.preparePlayer -> {
                 val audioPath = call.argument(Constants.path) as String?
                 val volume = call.argument(Constants.volume) as Double?
@@ -109,7 +118,12 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Constants.stopPlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
-                    audioPlayers[key]?.stop(result)
+                    try {
+                        audioPlayers[key]?.stop()
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error(Constants.LOG_TAG, "Failed to stop player", e.message)
+                    }
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
@@ -118,7 +132,12 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Constants.pausePlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
-                    audioPlayers[key]?.pause(result)
+                    try {
+                        audioPlayers[key]?.pause()
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error(Constants.LOG_TAG, "Failed to pause player", e.message)
+                    }
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
@@ -140,8 +159,8 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     }
                 } else {
                     Log.e(
-                            Constants.LOG_TAG,
-                            "Minimum android O is required for seekTo function to works"
+                        Constants.LOG_TAG,
+                        "Minimum android O is required for seekTo function to works"
                     )
                 }
             }
@@ -168,7 +187,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
             Constants.getDuration -> {
                 val type =
-                        if ((call.argument(Constants.durationType) as Int?) == 0) DurationType.Current else DurationType.Max
+                    if ((call.argument(Constants.durationType) as Int?) == 0) DurationType.Current else DurationType.Max
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
                     audioPlayers[key]?.getDuration(result, type)
@@ -183,10 +202,10 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 val noOfSample = call.argument(Constants.noOfSamples) as Int?
                 if (key != null) {
                     createOrUpdateExtractor(
-                            playerKey = key,
-                            result = result,
-                            path = path,
-                            noOfSamples = noOfSample ?: 100,
+                        playerKey = key,
+                        result = result,
+                        path = path,
+                        noOfSamples = noOfSample ?: 100,
                     )
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
@@ -194,11 +213,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             }
 
             Constants.stopAllPlayers -> {
-                for ((key, _) in audioPlayers) {
-                    audioPlayers[key]?.stop(result)
-                    audioPlayers[key] = null
-                }
-                result.success(true)
+                stopAllPlayer(result)
             }
 
             Constants.finishMode -> {
@@ -207,6 +222,10 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 key?.let {
                     audioPlayers[it]?.setFinishMode(result, releaseType)
                 }
+            }
+
+            Constants.pauseAllPlayers -> {
+                pauseAllPlayer(result)
             }
 
             else -> result.notImplemented()
@@ -251,9 +270,9 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private fun initPlayer(playerKey: String) {
         if (audioPlayers[playerKey] == null) {
             val newPlayer = AudioPlayer(
-                    context = applicationContext,
-                    channel = channel,
-                    playerKey = playerKey,
+                context = applicationContext,
+                channel = channel,
+                playerKey = playerKey,
             )
             audioPlayers[playerKey] = newPlayer
         }
@@ -261,30 +280,30 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     private fun createOrUpdateExtractor(
-            playerKey: String,
-            noOfSamples: Int,
-            path: String?,
-            result: Result,
+        playerKey: String,
+        noOfSamples: Int,
+        path: String?,
+        result: Result,
     ) {
         if (path == null) {
             result.error(Constants.LOG_TAG, "Path can't be null", "")
             return
         }
         extractors[playerKey] = WaveformExtractor(
-                context = applicationContext,
-                methodChannel = channel,
-                expectedPoints = noOfSamples,
-                key = playerKey,
-                path = path,
-                result = result,
-                extractorCallBack = object : ExtractorCallBack {
-                    override fun onProgress(value: Float) {
-                        if (value == 1.0F) {
-                            result.success(extractors[playerKey]?.sampleData)
-                        }
+            context = applicationContext,
+            methodChannel = channel,
+            expectedPoints = noOfSamples,
+            key = playerKey,
+            path = path,
+            result = result,
+            extractorCallBack = object : ExtractorCallBack {
+                override fun onProgress(value: Float) {
+                    if (value == 1.0F) {
+                        result.success(extractors[playerKey]?.sampleData)
                     }
-
                 }
+
+            }
         )
         extractors[playerKey]?.startDecode()
         extractors[playerKey]?.stop()
@@ -317,6 +336,29 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         activity = null
         if (pluginBinding != null) {
             pluginBinding!!.removeRequestPermissionsResultListener(this.audioRecorder)
+        }
+    }
+
+    private fun stopAllPlayer(result: MethodChannel.Result) {
+        try {
+            for ((key, _) in audioPlayers) {
+                audioPlayers[key]?.stop()
+                audioPlayers[key] = null
+            }
+            result.success(true)
+        } catch (e: Exception) {
+            result.error(Constants.LOG_TAG, "Failed to stop players", e.message)
+        }
+    }
+
+    private fun pauseAllPlayer(result: MethodChannel.Result) {
+        try {
+            for ((key, _) in audioPlayers) {
+                audioPlayers[key]?.pause()
+            }
+            result.success(true)
+        } catch (e: Exception) {
+            result.error(Constants.LOG_TAG, "Failed to pause players", e.message)
         }
     }
 }
