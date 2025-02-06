@@ -129,7 +129,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
 
     func seekTo(_ time: Int?, _ result: @escaping FlutterResult) {
         if(time != nil) {
-            player?.currentTime = Double(time! / 1000)
+            player?.currentTime = TimeInterval(time! / 1000)
             sendCurrentDuration()
             result(true)
         } else {
