@@ -8,6 +8,7 @@
 - Fixed [#389](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/389) - Wrong codec selection on the platform side on iOS
 - Fixed [#325](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/325) - Added feature to pause all player controller at once.
 - Fixed [#373](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/373) - Getting error on dispose
+- Fixed [#395](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/395) - Live wave gradient not getting applied
 
 ## 1.2.0
 

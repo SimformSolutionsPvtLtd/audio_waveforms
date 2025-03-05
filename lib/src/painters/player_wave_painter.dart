@@ -37,7 +37,7 @@ class PlayerWavePainter extends CustomPainter {
           ..color = playerWaveStyle.liveWaveColor
           ..strokeWidth = playerWaveStyle.waveThickness
           ..strokeCap = playerWaveStyle.waveCap
-          ..shader = playerWaveStyle.fixedWaveGradient,
+          ..shader = playerWaveStyle.liveWaveGradient,
         emptySpace = playerWaveStyle.spacing,
         middleLinePaint = Paint()
           ..color = playerWaveStyle.seekLineColor
