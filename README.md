@@ -394,7 +394,10 @@ PlayerWaveStyle(
 
 <table>
   <tr>
-    <td align="center"><a href="https://github.com/Ujas-Majithiya"><img src="https://avatars.githubusercontent.com/u/56400956?v=4" width="100px;" alt=""/><br /><sub><b>Ujas Majithiya</b></sub></a></td>
+    <td align="center"><a href="https://github.com/Ujas-Majithiya"><img src="https://avatars.githubusercontent.com/u/56400956?s=100" width="100px;" alt=""/><br /><sub><b>Ujas Majithiya</b></sub></a></td>
     <td align="center"><a href="https://github.com/DevarshRanpara"><img src="https://avatars.githubusercontent.com/u/26064415?s=100" width="100px;" alt=""/><br /><sub><b>Devarsh Ranpara</b></sub></a></td>
+    <td align="center"><a href="https://github.com/jayakbari1"><img src="https://avatars.githubusercontent.com/u/67188121?s=100" width="100px;" alt=""/><br /><sub><b>Jay Akbari</b></sub></a></td>
+    <td align="center"><a href="https://github.com/himanshu447"><img src="https://avatars.githubusercontent.com/u/35589687?s=100" width="100px;" alt=""/><br /><sub><b>Himanshu Gandhi</b></sub></a></td>
+    <td align="center"><a href="https://github.com/ManojPadia"><img src="https://avatars.githubusercontent.com/u/69233459?s=100" width="100px;" alt=""/><br /><sub><b>Manoj Padia</b></sub></a></td>
   </tr>
 </table>
