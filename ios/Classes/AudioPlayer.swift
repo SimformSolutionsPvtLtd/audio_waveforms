@@ -145,6 +145,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         }else{
             self.finishMode = FinishMode.stop
         }
+        result(true)
     }
 
     func startListening() {
