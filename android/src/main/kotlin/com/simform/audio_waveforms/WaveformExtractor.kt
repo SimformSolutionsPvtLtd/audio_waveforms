@@ -137,6 +137,9 @@ class WaveformExtractor(
                         }
 
                         if (info.isEof()) {
+                            updateProgress()
+                            val rms = sqrt(sampleSum / perSamplePoints).toFloat()
+                            sendProgress(rms)
                             stop()
                         }
                     }
@@ -160,31 +163,17 @@ class WaveformExtractor(
     private var sampleCount = 0L
     private var sampleSum = 0.0
 
-    private fun rms(value: Float) {
+    private fun handleBufferDivision(value: Float) {
         if (sampleCount == perSamplePoints) {
-            currentProgress++
-            progress = currentProgress / expectedPoints
+            updateProgress()
 
             // Discard redundant values and release resources
             if (progress > 1.0F) {
                 stop()
                 return
             }
-
-            val rms = sqrt(sampleSum / perSamplePoints)
-            sampleData.add(rms.toFloat())
-            extractorCallBack.onProgress(progress)
-            sampleCount = 0
-            sampleSum = 0.0
-
-            val args: MutableMap<String, Any?> = HashMap()
-            args[Constants.waveformData] = sampleData
-            args[Constants.progress] = progress
-            args[Constants.playerKey] = key
-            methodChannel.invokeMethod(
-                Constants.onCurrentExtractedWaveformData,
-                args
-            )
+            val rms = sqrt(sampleSum / perSamplePoints).toFloat()
+            sendProgress(rms)
         }
 
         sampleCount++
@@ -193,11 +182,11 @@ class WaveformExtractor(
 
     private fun handle8bit(size: Int, buf: ByteBuffer) {
         repeat(size / if (channels == 2) 2 else 1) {
-            val result = buf.get().toInt() / 128f
+            val result = buf.get().toInt() / Constants.EIGHT_BITS
             if (channels == 2) {
                 buf.get()
             }
-            rms(result)
+            handleBufferDivision(result)
         }
     }
 
@@ -205,12 +194,12 @@ class WaveformExtractor(
         repeat(size / if (channels == 2) 4 else 2) {
             val first = buf.get().toInt()
             val second = buf.get().toInt() shl 8
-            val value = (first or second) / 32767f
+            val value = (first or second) / Constants.SIXTEEN_BITS
             if (channels == 2) {
                 buf.get()
                 buf.get()
             }
-            rms(value)
+            handleBufferDivision(value)
         }
     }
 
@@ -220,15 +209,36 @@ class WaveformExtractor(
             val second = buf.get().toLong() shl 8
             val third = buf.get().toLong() shl 16
             val forth = buf.get().toLong() shl 24
-            val value = (first or second or third or forth) / 2147483648f
+            val value = (first or second or third or forth) / Constants.THIRTY_TWO_BITS
             if (channels == 2) {
                 buf.get()
                 buf.get()
                 buf.get()
                 buf.get()
             }
-            rms(value)
+            handleBufferDivision(value)
         }
+    }
+
+    private fun updateProgress() {
+        currentProgress++
+        progress = currentProgress / expectedPoints
+    }
+
+    private fun sendProgress(rms: Float) {
+        sampleData.add(rms)
+        extractorCallBack.onProgress(progress)
+        sampleCount = 0
+        sampleSum = 0.0
+
+        val args: MutableMap<String, Any?> = HashMap()
+        args[Constants.waveformData] = sampleData
+        args[Constants.progress] = progress
+        args[Constants.playerKey] = key
+        methodChannel.invokeMethod(
+            Constants.onCurrentExtractedWaveformData,
+            args
+        )
     }
 
     fun stop() {
