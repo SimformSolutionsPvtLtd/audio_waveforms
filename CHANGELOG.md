@@ -5,6 +5,8 @@
 - Fixed [#390](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/390) - Setting continuousWaveform to false not working
 - Feature [#415](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/415) - Add stop extraction method and asynchronous extraction of waveform in ios
 - Feature [#204](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/204) - Move play head position with waveform gesture `onTapDown`.
+- Chore [#375](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/375) - Don't send error if already sent
+- Chore [#376](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/376) - Preemptively account for invalid input buffer
 - **BREAKING:** Fixed [#412](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/412) - Calling preparePlayer again does not cancel old waveform extraction.
 - **BREAKING:** Feature [#416](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/416) - Add waveform extraction controller.
 - **BREAKING:** Rename `tapUpUpdateDetails` to `onTapUp`.
