@@ -1,3 +1,8 @@
+## 1.4.0(unreleased)
+
+- Chore [#375](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/375) - Don't send error if already sent
+- Chore [#376](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/376) - Preemptively account for invalid input buffer
+
 ## 1.3.0
 
 - Fixed [#386](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/386) - On permission denied isRecording flag changed
