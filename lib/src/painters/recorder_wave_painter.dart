@@ -106,10 +106,11 @@ class RecorderWavePainter extends CustomPainter {
       pushBack();
       revertClearLabelCall();
     }
-    for (var i = 0; i < waveData.length; i++) {
-      ///wave gradient
-      if (gradient != null) _waveGradient();
 
+    // Wave gradient
+    if (gradient != null) _waveGradient();
+
+    for (var i = 0; i < waveData.length; i++) {
       if (((spacing * i) + dragOffset.dx + spacing >
               size.width / (extendWaveform ? 1 : 2) + totalBackDistance.dx) &&
           callPushback) {
@@ -200,7 +201,6 @@ class RecorderWavePainter extends CustomPainter {
   }
 
   void _drawWave(Canvas canvas, Size size, int i) {
-    final halfWidth = size.width * 0.5;
     final height = size.height;
     final dx =
         -totalBackDistance.dx + dragOffset.dx + (spacing * i) - initialPosition;
@@ -209,11 +209,19 @@ class RecorderWavePainter extends CustomPainter {
     final lowerDy =
         height + (showBottom ? scaledWaveHeight : 0) - bottomPadding;
 
-    // To remove unnecessary rendering, we will only draw waves whose position
-    // is less then double of half width which is max width and half width from
-    // 0 is negative direction have some buffer on left side.
-    if (dx > -halfWidth && dx < halfWidth * 2) {
-      canvas.drawLine(Offset(dx, upperDy), Offset(dx, lowerDy), _wavePaint);
+    // We will check here for starting position [dx]
+    // to be grater than 0 and
+    // the dx cannot be greater than canvas width
+    // This condition will ensure that only visible
+    // portions of waves are being drawn to user
+    // and [dx > 0] will ensure only fully visible waves are drawn,
+    // if any wave is half visible this will cut out that wave too.
+    if (dx > 0 && dx < size.width) {
+      canvas.drawLine(
+        Offset(dx, upperDy),
+        Offset(dx, lowerDy),
+        _wavePaint,
+      );
     }
   }
 
