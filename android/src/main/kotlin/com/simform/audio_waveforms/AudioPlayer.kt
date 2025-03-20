@@ -38,8 +38,10 @@ class AudioPlayer(
             }
             val uri = Uri.parse(path)
             val mediaItem = MediaItem.fromUri(uri)
+            stop()
+            player?.clearMediaItems()
             player = ExoPlayer.Builder(appContext).build()
-            player?.addMediaItem(mediaItem)
+            player?.setMediaItem(mediaItem)
             player?.prepare()
             playerListener = object : Player.Listener {
 
