@@ -268,7 +268,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     private fun initPlayer(playerKey: String) {
-        if (audioPlayers[playerKey] == null) {
+        if (!audioPlayers.containsKey(playerKey)) {
             val newPlayer = AudioPlayer(
                 context = applicationContext,
                 channel = channel,
@@ -289,6 +289,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             result.error(Constants.LOG_TAG, "Path can't be null", "")
             return
         }
+        extractors[playerKey]?.stop()
         extractors[playerKey] = WaveformExtractor(
             context = applicationContext,
             methodChannel = channel,
@@ -306,7 +307,6 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             }
         )
         extractors[playerKey]?.startDecode()
-        extractors[playerKey]?.stop()
     }
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
