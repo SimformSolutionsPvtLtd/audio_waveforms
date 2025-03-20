@@ -29,6 +29,8 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
                 return
             }
             do {
+                stopPlayer()
+                player = nil
                 player = try AVAudioPlayer(contentsOf: audioUrl!)
                 do {
                     if overrideAudioSession {

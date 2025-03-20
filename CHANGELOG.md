@@ -1,3 +1,8 @@
+## 2.0.0 (Unreleased)
+
+- Fixed [#350](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/350) - Left most visible wave is clipped in half when recording.
+- **BREAKING:** Fixed [#412](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/412) - Calling preparePlayer again does not cancel old waveform extraction.
+
 ## 1.3.0
 
 - Fixed [#386](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/386) - On permission denied isRecording flag changed
