@@ -204,6 +204,13 @@ class AudioWaveformsInterface {
     return List<double>.from(result ?? []);
   }
 
+  /// Stops current executing waveform extraction, if any.
+  Future<void> stopWaveformExtraction(String key) async {
+    return await _methodChannel.invokeMethod(Constants.stopExtraction, {
+      Constants.playerKey: key,
+    });
+  }
+
   Future<bool> stopAllPlayers() async {
     var result = await _methodChannel.invokeMethod(Constants.stopAllPlayers);
     return result ?? false;
