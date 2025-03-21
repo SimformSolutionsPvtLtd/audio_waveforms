@@ -46,9 +46,9 @@ Add description to your microphone usage in `ios/Runner/Info.plist`,
 <key>NSMicrophoneUsageDescription</key>
 <string>Add your own description.</string>
 ```
-This plugin requires ios 12.0 or higher. So add this line to your `Podfile`.
+This plugin requires ios 13.0 or higher. So add this line to your `Podfile`.
 ```
-platform :ios, '12.0'
+platform :ios, '13.0'
 ```
 </details>
 
@@ -297,6 +297,15 @@ AudioFileWaveforms(
   ...
   waveformData: waveformData,
 );
+```
+
+In case if you want to stop waveform extraction in between, you can call `controller.stopWaveformExtraction()` to stop it, there is no need to call this method if you are calling `controller.preparePlayer()` as it will automatically stop previous waveform extraction.
+
+```dart
+playerController.extractWaveformData(path: '../audioFile.mp3');
+
+/// When you want to stop extraction in between call
+playerController.stopWaveformExtraction();
 ```
 
 #### Listening to events from the player

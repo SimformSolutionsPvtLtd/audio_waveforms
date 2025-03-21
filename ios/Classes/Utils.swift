@@ -67,6 +67,7 @@ struct Constants {
     static let linearPCMIsBigEndian = "linearPCMIsBigEndian";
     static let linearPCMIsFloat = "linearPCMIsFloat";
     static let pauseAllPlayers = "pauseAllPlayers"
+    static let stopExtraction = "stopExtraction"
 }
 
 

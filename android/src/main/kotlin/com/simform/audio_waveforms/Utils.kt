@@ -4,6 +4,7 @@ enum class DurationType { Current, Max }
 
 object Constants {
 
+    // TODO: Update all const to uppercase
     const val initRecorder = "initRecorder"
     const val startRecording = "startRecording"
     const val stopRecording = "stopRecording"
@@ -66,6 +67,7 @@ object Constants {
     const val waveformData = "waveformData"
     const val useLegacyNormalization = "useLegacyNormalization"
     const val updateFrequency = "updateFrequency"
+    const val STOP_EXTRACTION = "stopExtraction"
 
     const val resultFilePath = "resultFilePath"
     const val resultDuration = "resultDuration"
