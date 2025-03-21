@@ -66,6 +66,7 @@ object Constants {
     const val waveformData = "waveformData"
     const val useLegacyNormalization = "useLegacyNormalization"
     const val updateFrequency = "updateFrequency"
+    const val STOP_EXTRACTION = "stopExtraction"
 
     const val resultFilePath = "resultFilePath"
     const val resultDuration = "resultDuration"

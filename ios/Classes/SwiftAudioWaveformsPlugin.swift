@@ -144,14 +144,30 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
             }
             result(true)
         case Constants.extractWaveformData:
-            let key = args?[Constants.playerKey] as? String
+            guard let key = args?[Constants.playerKey] as? String else {
+                result(
+                    FlutterError(
+                        code: Constants.audioWaveforms,
+                        message: "Can not get waveform data",
+                        details: "Player key is null"
+                    )
+                )
+                break
+            }
             let path = args?[Constants.path] as? String
             let noOfSamples = args?[Constants.noOfSamples] as? Int
-            if(key != nil) {
-                createOrUpdateExtractor(playerKey: key!, result: result, path: path, noOfSamples: noOfSamples)
-            } else {
+            createOrUpdateExtractor(
+                playerKey: key,
+                result: result,
+                path: path,
+                noOfSamples: noOfSamples
+            )
+        case Constants.stopExtraction:
+            guard let key = args?[Constants.playerKey] as? String else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Can not get waveform data", details: "Player key is null"))
+                break
             }
+            extractors[key]?.cancel()
         case Constants.pauseAllPlayers:
             for(playerKey,_) in audioPlayers {
                 audioPlayers[playerKey]?.pausePlayer()
@@ -182,11 +198,15 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
                 }
                 let newExtractor = try WaveformExtractor(url: audioUrl!, flutterResult: result, channel: flutterChannel)
                 extractors[playerKey] = newExtractor
-                let data = newExtractor.extractWaveform(samplesPerPixel: noOfSamples, playerKey: playerKey)
-                newExtractor.cancel()
-                if(newExtractor.progress == 1.0) {
-                    let waveformData = newExtractor.getChannelMean(data: data!)
-                    result(waveformData)
+                Task {
+                    let data = await newExtractor
+                        .extractWaveform(samplesPerPixel: noOfSamples, playerKey: playerKey)
+                    if(newExtractor.progress == 1.0) {
+                        let waveformData = newExtractor.getChannelMean(data: data!)
+                        DispatchQueue.main.async {
+                            result(waveformData)
+                        }
+                    }
                 }
             } catch {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Failed to decode audio file", details: nil))
