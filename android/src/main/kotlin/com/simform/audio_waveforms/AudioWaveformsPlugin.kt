@@ -208,8 +208,16 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                         noOfSamples = noOfSample ?: 100,
                     )
                 } else {
-                    result.error(Constants.LOG_TAG, "Player key can't be null", "")
+                    result.error(Constants.LOG_TAG, "Waveform key can't be null", "")
                 }
+            }
+
+            Constants.STOP_EXTRACTION -> {
+                val key = call.argument(Constants.playerKey) as String?
+                key?.let {
+                    extractors[it]?.stop()
+                    result.success(true)
+                } ?: result.error(Constants.LOG_TAG, "Waveform key can't be null", "")
             }
 
             Constants.stopAllPlayers -> {
