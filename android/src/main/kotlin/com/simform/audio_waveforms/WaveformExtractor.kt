@@ -28,8 +28,6 @@ class WaveformExtractor(
     private var progress = 0F
     private var currentProgress = 0F
 
-    @Volatile
-    private var started = false
     private val finishCount = CountDownLatch(1)
     private var inputEof = false
     private var sampleRate = 0
@@ -234,8 +232,6 @@ class WaveformExtractor(
     }
 
     fun stop() {
-        if (!started) return
-        started = false
         decoder?.stop()
         decoder?.release()
         extractor?.release()
