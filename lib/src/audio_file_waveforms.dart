@@ -137,6 +137,9 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
 
   PlayerController get playerController => widget.playerController;
 
+  WaveformExtractionController get waveformExtraction =>
+      playerController.waveformExtraction;
+
   @override
   void initState() {
     super.initState();
@@ -166,13 +169,13 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     if (widget.waveformData.isNotEmpty) {
       _addWaveformData(widget.waveformData);
     } else {
-      if (playerController.waveformData.isNotEmpty) {
-        _addWaveformData(playerController.waveformData);
+      if (waveformExtraction.waveformData.isNotEmpty) {
+        _addWaveformData(waveformExtraction.waveformData);
       }
       if (!widget.continuousWaveform) {
         playerController.addListener(_addWaveformDataFromController);
       } else {
-        onCurrentExtractedWaveformData = playerController
+        onCurrentExtractedWaveformData = waveformExtraction
             .onCurrentExtractedWaveformData
             .listen(_addWaveformData);
       }
@@ -251,7 +254,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   }
 
   void _addWaveformDataFromController() =>
-      _addWaveformData(playerController.waveformData);
+      _addWaveformData(waveformExtraction.waveformData);
 
   void _updateGrowAnimationProgress() {
     if (mounted) {
@@ -360,8 +363,8 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   /// This initialises variable in [initState] so that everytime current duration
   /// gets updated it doesn't re assign them to same values.
   void _initialiseVariables() {
-    if (playerController.waveformData.isEmpty) {
-      playerController.waveformData.addAll(widget.waveformData);
+    if (waveformExtraction.waveformData.isEmpty) {
+      waveformExtraction.waveformData.addAll(widget.waveformData);
     }
     showSeekLine = false;
     margin = widget.margin;

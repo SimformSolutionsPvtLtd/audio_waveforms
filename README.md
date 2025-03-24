@@ -288,10 +288,12 @@ Widget build(BuildContext context) {
    ``` 
    
 #### Saving resources by precalculating the waveforms
-You can precalculate waveforms by using `playerController.extractWaveformData()`.
-This function gives back list of doubles which you can directly set into `AudioFileWaveforms` widget. Since calculating waveforms is expensive process, you can save this data somewhere and use it again when same file is used. 
+You can precalculate waveforms by using `playerController.waveformExtraction.extractWaveformData()`.
+This function gives back list of doubles which you can directly set into `AudioFileWaveforms` widget. Since calculating waveforms is expensive process, you can save this data somewhere and use it again when same file is used.
+
+If you only want to `extractWaveformData` without `playerController` you can do that using `WaveformExtractionController` [see more details here](#waveform-extraction-controller).
 ```dart
-final waveformData = await playerController.extractWaveformData(path: '../audioFile.mp3');
+final waveformData = await playerController.waveformExtraction.extractWaveformData(path: '../audioFile.mp3');
 
 AudioFileWaveforms(
   ...
@@ -299,21 +301,21 @@ AudioFileWaveforms(
 );
 ```
 
-In case if you want to stop waveform extraction in between, you can call `controller.stopWaveformExtraction()` to stop it, there is no need to call this method if you are calling `controller.preparePlayer()` as it will automatically stop previous waveform extraction.
+In case if you want to stop waveform extraction in between, you can call `controller.waveformExtraction.stopWaveformExtraction()` to stop it, there is no need to call this method if you are calling `controller.preparePlayer()` as it will automatically stop previous waveform extraction.
 
 ```dart
-playerController.extractWaveformData(path: '../audioFile.mp3');
+playerController.waveformExtraction.extractWaveformData(path: '../audioFile.mp3');
 
 /// When you want to stop extraction in between call
-playerController.stopWaveformExtraction();
+playerController.waveformExtraction.stopWaveformExtraction();
 ```
 
 #### Listening to events from the player
 ```dart
 playerController.onPlayerStateChanged.listen((state) {}); // Triggers events when the player state changes.
 playerController.onCurrentDurationChanged.listen((duration) {}); // Triggers events when the audio playback position is adjusted to a specific duration.
-playerController.onCurrentExtractedWaveformData.listen((data) {}); // Provides latest data while extracting the waveforms.
-playerController.onExtractionProgress.listen((progress) {}); // Provides progress of the waveform extractions.
+playerController.waveformExtraction.onCurrentExtractedWaveformData.listen((data) {}); // Provides latest data while extracting the waveforms.
+playerController.waveformExtraction.onExtractionProgress.listen((progress) {}); // Provides progress of the waveform extractions.
 playerController.onCompletion.listen((_){}); // Triggers events every time when an audio file is finished playing.  
 ```
 #### Getting the current or maximum duration of the audio file
@@ -398,6 +400,34 @@ PlayerWaveStyle(
 ```
 - Waveform data we get is very small value so we can scale them according to the our need using `scaleFactor`.
 - If you want to provide some feedback when scrolling the waves then set `scrollScale` > 1.0.
+
+## Waveform Extraction Controller
+#### Creating waveform extraction controller
+If you only want to `extractWaveformData` without `PlayerController` you can do that using `WaveformExtractionController`.
+```dart
+final waveformExtraction = WaveformExtractionController();
+final waveformData = await waveformExtraction.extractWaveformData(path: '../audioFile.mp3');
+
+AudioFileWaveforms(
+  ...
+  waveformData: waveformData,
+);
+```
+
+In case if you want to stop waveform extraction you can do it by calling `stopWaveformExtraction()`, this will stop waveform extraction if waveform extraction is in progress.
+
+```dart
+waveformExtraction.extractWaveformData(path: '../audioFile.mp3');
+
+/// When you want to stop extraction in between call
+waveformExtraction.stopWaveformExtraction();
+```
+
+#### Listening to events from the WaveformExtractionController
+```dart
+waveformExtraction.onCurrentExtractedWaveformData.listen((data) {}); // Provides latest data while extracting the waveforms.
+waveformExtraction.onExtractionProgress.listen((progress) {}); // Provides progress of the waveform extractions.
+```
 
 ## Main Contributors
 

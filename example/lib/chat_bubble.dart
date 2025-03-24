@@ -109,7 +109,7 @@ class _WaveBubbleState extends State<WaveBubble> {
     );
     // Extracting waveform separately if index is odd.
     if (widget.index?.isOdd ?? false) {
-      controller
+      controller.waveformExtraction
           .extractWaveformData(
             path: widget.path ?? file!.path,
             noOfSamples:
