@@ -3,6 +3,7 @@
 - Fixed [#350](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/350) - Left most visible wave is clipped in half when recording.
 - **BREAKING:** Fixed [#412](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/412) - Calling preparePlayer again does not cancel old waveform extraction.
 - Feature [#415](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/415) - Add stop extraction method and asynchronous extraction of waveform in ios
+- **BREAKING:** Feature [#416](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/416) - Add waveform extraction controller.
 
 ## 1.3.0
 

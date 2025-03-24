@@ -10,12 +10,9 @@ import '../base/platform_streams.dart';
 import '../base/player_identifier.dart';
 
 part '../base/audio_waveforms_interface.dart';
+part 'waveform_extraction_controller.dart';
 
 class PlayerController extends ChangeNotifier {
-  final List<double> _waveformData = [];
-
-  List<double> get waveformData => _waveformData;
-
   PlayerState _playerState = PlayerState.stopped;
 
   /// Provides current state of the player
@@ -34,6 +31,14 @@ class PlayerController extends ChangeNotifier {
 
   /// An unique key string associated with [this] player only
   final playerKey = shortHash(UniqueKey());
+
+  /// An [WaveformExtractionController] instance which is bound
+  /// with [PlayerController]
+  /// using [playerKey] and [WaveformExtractionController._extractorKey]
+  ///
+  /// It can be used to extract waveform data, stop extraction
+  /// or listen to waveform data changed and progress.
+  late final waveformExtraction = WaveformExtractionController._(playerKey);
 
   final bool _shouldClearLabels = false;
 
@@ -78,15 +83,6 @@ class PlayerController extends ChangeNotifier {
   /// every 200 milliseconds. Emitted duration is in milliseconds.
   Stream<int> get onCurrentDurationChanged =>
       PlatformStreams.instance.onDurationChanged.filter(playerKey);
-
-  /// A stream to get current extracted waveform data. This stream will emit
-  /// list of doubles which are waveform data point.
-  Stream<List<double>> get onCurrentExtractedWaveformData =>
-      PlatformStreams.instance.onCurrentExtractedWaveformData.filter(playerKey);
-
-  /// A stream to get current progress of waveform extraction.
-  Stream<double> get onExtractionProgress =>
-      PlatformStreams.instance.onExtractionProgress.filter(playerKey);
 
   /// A stream to get events when audio is finished playing.
   Stream<void> get onCompletion =>
@@ -148,12 +144,14 @@ class PlayerController extends ChangeNotifier {
     }
 
     if (shouldExtractWaveform) {
-      extractWaveformData(
+      waveformExtraction
+          .extractWaveformData(
         path: path,
         noOfSamples: noOfSamples,
-      ).then(
+      )
+          .then(
         (value) {
-          waveformData
+          waveformExtraction.waveformData
             ..clear()
             ..addAll(value);
           notifyListeners();
@@ -161,40 +159,6 @@ class PlayerController extends ChangeNotifier {
       );
     }
     notifyListeners();
-  }
-
-  /// Extracts waveform data from provided audio file path.
-  /// [noOfSamples] indicates number of extracted data points. This will
-  /// determine number of bars in the waveform.
-  ///
-  /// This function will decode whole audio file and will calculate RMS
-  /// according to provided number of samples. So it may take a while to fully
-  /// decode audio file, specifically on android.
-  ///
-  /// For example, an audio file of 58 min and about 18 MB of size took about
-  /// 4 minutes to decode on android while the same file took about 6-7 seconds
-  /// on IOS.
-  ///
-  /// Providing less number if sample doesn't make a difference because it
-  /// still have to decode whole file.
-  ///
-  /// noOfSamples defaults to 100.
-  Future<List<double>> extractWaveformData({
-    required String path,
-    int noOfSamples = 100,
-  }) async {
-    final result = await AudioWaveformsInterface.instance.extractWaveformData(
-      key: playerKey,
-      path: path,
-      noOfSamples: noOfSamples,
-    );
-    return result;
-  }
-
-  /// Stops current waveform extraction, if any.
-  Future<void> stopWaveformExtraction() async {
-    return await AudioWaveformsInterface.instance
-        .stopWaveformExtraction(playerKey);
   }
 
   /// A function to start the player to play/resume the audio.
