@@ -51,10 +51,10 @@ class AudioWaveformsInterface {
   }
 
   ///platform call to stop recording
-  Future<Map<String, dynamic>> stop() async {
-    Map<Object?, Object?> audioInfo =
+  Future<bool> stop() async {
+    final audioInfo =
         await _methodChannel.invokeMethod(Constants.stopRecording);
-    return audioInfo.cast<String, dynamic>();
+    return true;
   }
 
   ///platform call to resume recording.

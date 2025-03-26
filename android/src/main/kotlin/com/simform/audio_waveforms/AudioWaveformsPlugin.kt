@@ -32,6 +32,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var audioPlayers = mutableMapOf<String, AudioPlayer?>()
     private var extractors = mutableMapOf<String, WaveformExtractor?>()
     private var pluginBinding: ActivityPluginBinding? = null
+    private var record: Record = Record()
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, Constants.methodChannelName)
@@ -50,10 +51,16 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     recorderSettings =
                         RecorderSettings.fromJson(json = arguments as Map<String, Any?>)
 
-                    checkPathAndInitialiseRecorder(
-                        result,
-                        recorderSettings
+                    println(
+                        recorderSettings.path
                     )
+                    if (recorderSettings.path != null)
+                        record.initRecorder(recorderSettings.path!!)
+                    result.success(true)
+//                    checkPathAndInitialiseRecorder(
+//                        result,
+//                        recorderSettings
+//                    )
                 } else {
                     result.error(
                         Constants.LOG_TAG,
@@ -66,20 +73,34 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Constants.startRecording -> {
                 val useLegacyNormalization =
                     (call.argument(Constants.useLegacyNormalization) as Boolean?) ?: false
-                audioRecorder.startRecorder(result, recorder, useLegacyNormalization)
+                record.start()
+                result.success(true)
+//                audioRecorder.startRecorder(result, recorder, useLegacyNormalization)
             }
 
             Constants.stopRecording -> {
-                audioRecorder.stopRecording(
-                    result,
-                    recorder,
-                    recorderSettings.path!!
-                )
-                recorder = null
+                record.stop()
+                result.success(true)
+//                audioRecorder.stopRecording(
+//                    result,
+//                    recorder,
+//                    recorderSettings.path!!
+//                )
+//                recorder = null
             }
 
-            Constants.pauseRecording -> audioRecorder.pauseRecording(result, recorder)
-            Constants.resumeRecording -> audioRecorder.resumeRecording(result, recorder)
+            Constants.pauseRecording -> {
+                record.pause()
+                result.success(false)
+//                audioRecorder.pauseRecording(result, recorder)
+            }
+
+            Constants.resumeRecording -> {
+                record.resume()
+                result.success(true)
+//                audioRecorder.resumeRecording(result, recorder)
+            }
+
             Constants.getDecibel -> audioRecorder.getDecibel(result, recorder)
             Constants.checkPermission -> audioRecorder.checkPermission(
                 result,

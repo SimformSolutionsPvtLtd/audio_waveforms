@@ -84,3 +84,7 @@ enum class FinishMode(val value: Int) {
 fun interface RequestPermissionsSuccessCallback {
     fun onSuccess(results: Boolean?)
 }
+
+enum class RecorderState {
+    Initialised, Recording, Paused, Stopped, Disposed
+}

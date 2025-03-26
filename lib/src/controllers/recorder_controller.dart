@@ -283,20 +283,22 @@ class RecorderController extends ChangeNotifier {
   /// left of for previous recording.
   Future<String?> stop([bool callReset = true]) async {
     if (_recorderState.isRecording || _recorderState.isPaused) {
-      final audioInfo = await AudioWaveformsInterface.instance.stop();
-      _isRecording = false;
-      _timer?.cancel();
-      _recorderTimer?.cancel();
-      if (audioInfo[Constants.resultDuration] != null) {
-        final duration = audioInfo[Constants.resultDuration];
-
-        _recordedDuration = Duration(milliseconds: duration);
-        _recordedFileDurationController.add(recordedDuration);
-      }
-      _elapsedDuration = Duration.zero;
-      _setRecorderState(RecorderState.stopped);
-      if (callReset) reset();
-      return audioInfo[Constants.resultFilePath];
+     await AudioWaveformsInterface.instance.stop();
+      // audioInfo;
+      // _isRecording = false;
+      // _timer?.cancel();
+      // _recorderTimer?.cancel();
+      // if (audioInfo[Constants.resultDuration] != null) {
+      //   final duration = audioInfo[Constants.resultDuration];
+      //
+      //   _recordedDuration = Duration(milliseconds: duration);
+      //   _recordedFileDurationController.add(recordedDuration);
+      // }
+      // _elapsedDuration = Duration.zero;
+      // _setRecorderState(RecorderState.stopped);
+      // if (callReset) reset();
+      // return audioInfo[Constants.resultFilePath];
+      return '';
     }
 
     notifyListeners();

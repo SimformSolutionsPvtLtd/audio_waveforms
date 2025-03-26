@@ -4,6 +4,7 @@ import UIKit
 public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     
     final var audioRecorder = AudioRecorder()
+    final var recorder = Recorder()
     var audioPlayers = [String: AudioPlayer]()
     var extractors = [String: WaveformExtractor]()
     var flutterChannel: FlutterMethodChannel
@@ -31,15 +32,20 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Invalid Arguments", details: nil))
                 return
             }
-            audioRecorder.startRecording(result, RecordingSettings.fromJson((args)))
+                recorder.startRecording()
+//            audioRecorder.startRecording(result, RecordingSettings.fromJson((args)))
             break
         case Constants.pauseRecording:
-            audioRecorder.pauseRecording(result)
+                recorder.pauseRecording()
+//            audioRecorder.pauseRecording(result)
             break
         case Constants.resumeRecording:
-            audioRecorder.resumeRecording(result)
+                recorder.resumeRecording()
+//            audioRecorder.resumeRecording(result)
+                break;
         case Constants.stopRecording:
-            audioRecorder.stopRecording(result)
+                recorder.stopRecording()
+//            audioRecorder.stopRecording(result)
             break
         case Constants.getDecibel:
             audioRecorder.getDecibel(result)
