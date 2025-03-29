@@ -74,6 +74,10 @@ class AudioFileWaveforms extends StatefulWidget {
   /// Provides a callback when tapping on the waveform.
   final Function(TapUpDetails)? tapUpUpdateDetails;
 
+  final bool seekOnTapUp;
+
+  final GestureTapDownCallback? onTapDown;
+
   /// Generate waveforms from audio file. You play those audio file using
   /// [PlayerController].
   ///
@@ -102,6 +106,8 @@ class AudioFileWaveforms extends StatefulWidget {
     this.onDragEnd,
     this.dragUpdateDetails,
     this.tapUpUpdateDetails,
+    this.seekOnTapUp = true,
+    this.onTapDown,
   });
 
   @override
@@ -217,10 +223,15 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
       child: GestureDetector(
         onHorizontalDragUpdate:
             widget.enableSeekGesture ? _handleDragGestures : null,
-        onTapUp: widget.enableSeekGesture ? _handleScrubberSeekStart : null,
+        onTapUp: widget.enableSeekGesture && widget.seekOnTapUp
+            ? _handleOnTapUp
+            : null,
         onHorizontalDragStart:
             widget.enableSeekGesture ? _handleHorizontalDragStart : null,
         onHorizontalDragEnd: widget.enableSeekGesture ? _handleOnDragEnd : null,
+        onTapDown: widget.enableSeekGesture && !widget.seekOnTapUp
+            ? _handleOnTapDown
+            : null,
         child: ClipPath(
           // TODO: Update extraClipperHeight when duration labels are added
           clipper: WaveClipper(extraClipperHeight: 0),
@@ -308,13 +319,23 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   }
 
   /// This method handles tap seek gesture
-  void _handleScrubberSeekStart(TapUpDetails details) {
+  void _handleOnTapUp(TapUpDetails details) {
     _proportion = details.localPosition.dx / widget.size.width;
     var seekPosition = playerController.maxDuration * _proportion;
 
     playerController.seekTo(seekPosition.toInt());
 
     widget.tapUpUpdateDetails?.call(details);
+  }
+
+  /// This method handles tap seek gesture
+  void _handleOnTapDown(TapDownDetails details) {
+    _proportion = details.localPosition.dx / widget.size.width;
+    var seekPosition = playerController.maxDuration * _proportion;
+
+    playerController.seekTo(seekPosition.toInt());
+
+    widget.onTapDown?.call(details);
   }
 
   ///This method handles horizontal scrolling of the wave
