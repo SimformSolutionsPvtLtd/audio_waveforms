@@ -8,6 +8,8 @@ class AudioWaveformsInterface {
   static const MethodChannel _methodChannel =
       MethodChannel(Constants.methodChannelName);
 
+  final EventChannel _eventChannel = EventChannel('onBufferData');
+
   ///platform call to start recording
   Future<bool> record({
     required RecorderSettings recorderSetting,
@@ -51,10 +53,10 @@ class AudioWaveformsInterface {
   }
 
   ///platform call to stop recording
-  Future<bool> stop() async {
-    final audioInfo =
+  Future<Map<String, dynamic>> stop() async {
+    Map<Object?, Object?> audioInfo =
         await _methodChannel.invokeMethod(Constants.stopRecording);
-    return true;
+    return audioInfo.cast<String, dynamic>();
   }
 
   ///platform call to resume recording.
@@ -237,8 +239,17 @@ class AudioWaveformsInterface {
             PlayerIdentifier<double>(key, progress),
           );
           break;
+        case "onBufferData":
+          print(call.arguments['buffer']);
+          break;
       }
     });
+
+    _eventChannel.receiveBroadcastStream().listen(
+      (event) {
+        print(event);
+      },
+    );
   }
 
   PlayerState getPlayerState(int finishModel) {

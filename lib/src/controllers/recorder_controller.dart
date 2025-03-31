@@ -4,6 +4,7 @@ import 'dart:math' show max;
 
 import 'package:flutter/material.dart';
 
+import '../base/platform_streams.dart';
 import '/src/base/utils.dart';
 import '../base/constants.dart';
 import '../models/recorder_settings.dart';
@@ -135,6 +136,9 @@ class RecorderController extends ChangeNotifier {
   /// 1.0.0 release.
   RecorderController({bool useLegacyNormalization = false}) {
     _useLegacyNormalization = useLegacyNormalization;
+    // if (!PlatformStreams.instance.isInitialised) {
+    //   PlatformStreams.instance.init();
+    // }
   }
 
   /// A ValueNotifier which provides current position of scrolled waveform with
@@ -283,22 +287,20 @@ class RecorderController extends ChangeNotifier {
   /// left of for previous recording.
   Future<String?> stop([bool callReset = true]) async {
     if (_recorderState.isRecording || _recorderState.isPaused) {
-     await AudioWaveformsInterface.instance.stop();
-      // audioInfo;
-      // _isRecording = false;
-      // _timer?.cancel();
-      // _recorderTimer?.cancel();
-      // if (audioInfo[Constants.resultDuration] != null) {
-      //   final duration = audioInfo[Constants.resultDuration];
-      //
-      //   _recordedDuration = Duration(milliseconds: duration);
-      //   _recordedFileDurationController.add(recordedDuration);
-      // }
-      // _elapsedDuration = Duration.zero;
-      // _setRecorderState(RecorderState.stopped);
-      // if (callReset) reset();
-      // return audioInfo[Constants.resultFilePath];
-      return '';
+      final audioInfo = await AudioWaveformsInterface.instance.stop();
+      _isRecording = false;
+      _timer?.cancel();
+      _recorderTimer?.cancel();
+      if (audioInfo[Constants.resultDuration] != null) {
+        final duration = audioInfo[Constants.resultDuration];
+
+        _recordedDuration = Duration(milliseconds: duration);
+        _recordedFileDurationController.add(recordedDuration);
+      }
+      _elapsedDuration = Duration.zero;
+      _setRecorderState(RecorderState.stopped);
+      if (callReset) reset();
+      return audioInfo[Constants.resultFilePath];
     }
 
     notifyListeners();

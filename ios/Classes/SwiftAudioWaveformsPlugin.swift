@@ -3,8 +3,7 @@ import UIKit
 
 public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     
-    final var audioRecorder = AudioRecorder()
-    final var recorder = Recorder()
+    final var audioRecorder : AudioRecorder?
     var audioPlayers = [String: AudioPlayer]()
     var extractors = [String: WaveformExtractor]()
     var flutterChannel: FlutterMethodChannel
@@ -21,6 +20,7 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: Constants.methodChannelName, binaryMessenger: registrar.messenger())
         let instance = SwiftAudioWaveformsPlugin(registrar: registrar, flutterChannel: channel)
+        instance.audioRecorder = AudioRecorder(messenger: registrar.messenger())
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
     
@@ -28,30 +28,28 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         let args = call.arguments as? Dictionary<String, Any>
         switch call.method {
         case Constants.startRecording:
+            if audioRecorder == nil {
+                result(FlutterError(code: Constants.audioWaveforms, message: "Recorder isn't initialised", details: nil))
+            }
             guard let args = call.arguments as? Dictionary<String, Any> else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Invalid Arguments", details: nil))
                 return
             }
-                recorder.startRecording()
-//            audioRecorder.startRecording(result, RecordingSettings.fromJson((args)))
+            audioRecorder?.startRecording(result, RecordingSettings.fromJson((args)))
             break
         case Constants.pauseRecording:
-                recorder.pauseRecording()
-//            audioRecorder.pauseRecording(result)
+            audioRecorder?.pauseRecording(result)
             break
         case Constants.resumeRecording:
-                recorder.resumeRecording()
-//            audioRecorder.resumeRecording(result)
-                break;
+            audioRecorder?.resumeRecording(result)
         case Constants.stopRecording:
-                recorder.stopRecording()
-//            audioRecorder.stopRecording(result)
+            audioRecorder?.stopRecording(result)
             break
         case Constants.getDecibel:
-            audioRecorder.getDecibel(result)
+            audioRecorder?.getDecibel(result)
             break
         case Constants.checkPermission:
-            audioRecorder.checkHasPermission(result)
+            audioRecorder?.checkHasPermission(result)
             break
         case Constants.preparePlayer:
             let key = args?[Constants.playerKey] as? String

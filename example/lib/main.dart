@@ -47,18 +47,13 @@ class _HomeState extends State<Home> {
 
   void _getDir() async {
     appDirectory = await getApplicationDocumentsDirectory();
-    path = "${appDirectory.path}/rfg.pcm";
+    path = "${appDirectory.path}/rrr3.m4a";
     isLoading = false;
     setState(() {});
   }
 
   void _initialiseControllers() {
-    recorderController = RecorderController()
-      ..androidEncoder = AndroidEncoder.aac
-      // ..updateFrequency = Duration(milliseconds: 10)
-      ..androidOutputFormat = AndroidOutputFormat.mpeg4
-      ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
-      ..sampleRate = 44100;
+    recorderController = RecorderController();
   }
 
   void _pickFile() async {
@@ -157,7 +152,8 @@ class _HomeState extends State<Home> {
                                         showMiddleLine: false,
                                       ),
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12.0),
+                                        borderRadius:
+                                            BorderRadius.circular(12.0),
                                         color: const Color(0xFF1E1B26),
                                       ),
                                       padding: const EdgeInsets.only(left: 18),
@@ -168,7 +164,8 @@ class _HomeState extends State<Home> {
                                       height: 50,
                                       decoration: BoxDecoration(
                                         color: const Color(0xFF1E1B26),
-                                        borderRadius: BorderRadius.circular(12.0),
+                                        borderRadius:
+                                            BorderRadius.circular(12.0),
                                       ),
                                       padding: const EdgeInsets.only(left: 18),
                                       margin: const EdgeInsets.symmetric(
@@ -217,11 +214,7 @@ class _HomeState extends State<Home> {
                             iconSize: 28,
                           ),
                           IconButton(
-                            onPressed: () {
-                              recorderController.stop();
-                              isLoading = false;
-                              setState(() {});
-                            },
+                            onPressed: _startOrStopRecording,
                             icon: const Icon(Icons.stop),
                             color: Colors.white,
                             iconSize: 28,
@@ -238,22 +231,32 @@ class _HomeState extends State<Home> {
 
   void _startOrStopRecording() async {
     try {
-      // if (isRecording) {
-      //   recorderController.reset();
-      //
-      //   path = await recorderController.stop(false);
-      //   paths.add(path!);
-      //
-      //   if (path != null) {
-      //     isRecordingCompleted = true;
-      //     debugPrint(path);
-      //     debugPrint("Recorded file size: ${File(path!).lengthSync()}");
-      //   }
-      // } else {
-      //   await recorderController.record(path: path); // Path is optional
-      // }
-      print('dasdadd');
-      await recorderController.record(path: path); // Path is optional
+      if (isRecording) {
+        //   recorderController.reset();
+        //
+        path = await recorderController.stop(false);
+        paths.add(path!);
+        //
+        //   if (path != null) {
+        //     isRecordingCompleted = true;
+        //     debugPrint(path);
+        //     debugPrint("Recorded file size: ${File(path!).lengthSync()}");
+        //   }
+        // } else {
+        //   await recorderController.record(path: path); // Path is optional
+      } else {
+        print('dasdadd');
+        await recorderController.record(
+          path: path,
+          recorderSettings: const RecorderSettings(
+            androidEncoderSettings: AndroidEncoderSettings(
+                androidEncoder: AndroidEncoder.opus,
+                androidOutputFormat: AndroidOutputFormat.ogg),
+            sampleRate: 44100,
+            bitRate: 128000,
+          ),
+        );
+      } // Path is optional
     } catch (e) {
       debugPrint(e.toString());
     } finally {

@@ -34,7 +34,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var pluginBinding: ActivityPluginBinding? = null
     private var record: Record = Record()
 
-    override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, Constants.methodChannelName)
         channel.setMethodCallHandler(this)
         audioRecorder = AudioRecorder()
@@ -42,7 +42,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+    override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             Constants.initRecorder -> {
                 val arguments = call.arguments;
@@ -54,13 +54,15 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     println(
                         recorderSettings.path
                     )
-                    if (recorderSettings.path != null)
-                        record.initRecorder(recorderSettings.path!!)
-                    result.success(true)
-//                    checkPathAndInitialiseRecorder(
-//                        result,
-//                        recorderSettings
-//                    )
+                    if (recorderSettings.path != null) {
+                        record.initRecorder(recorderSettings)
+
+//                        checkPathAndInitialiseRecorder(
+//                            result,
+//                            recorderSettings
+//                        )
+                        result.success(true)
+                    }
                 } else {
                     result.error(
                         Constants.LOG_TAG,
@@ -74,31 +76,35 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 val useLegacyNormalization =
                     (call.argument(Constants.useLegacyNormalization) as Boolean?) ?: false
                 record.start()
-                result.success(true)
+
 //                audioRecorder.startRecorder(result, recorder, useLegacyNormalization)
+                result.success(true)
             }
 
             Constants.stopRecording -> {
                 record.stop()
-                result.success(true)
+
 //                audioRecorder.stopRecording(
 //                    result,
 //                    recorder,
 //                    recorderSettings.path!!
 //                )
-//                recorder = null
+                recorder = null
+                result.success(true)
             }
 
             Constants.pauseRecording -> {
                 record.pause()
-                result.success(false)
 //                audioRecorder.pauseRecording(result, recorder)
+
+                result.success(false)
             }
 
             Constants.resumeRecording -> {
                 record.resume()
-                result.success(true)
+
 //                audioRecorder.resumeRecording(result, recorder)
+                result.success(true)
             }
 
             Constants.getDecibel -> audioRecorder.getDecibel(result, recorder)

@@ -15,6 +15,7 @@ class RecorderSettings {
     this.iosEncoderSettings = const IosEncoderSetting(),
     this.sampleRate = 44100,
     this.bitRate,
+    this.enableAudioBufferStream = false,
   });
 
   /// Encoder settings for Android devices.
@@ -30,6 +31,9 @@ class RecorderSettings {
   /// Bit rate for encoding audio in bits per second (bps).
   /// Higher values provide better quality but larger file sizes.
   final int? bitRate;
+
+  /// Enable audio buffer stream for recording.
+  final bool enableAudioBufferStream;
 
   /// Converts the RecorderSettings instance to a JSON map for iOS.
   Map<String, dynamic> iosToJson({

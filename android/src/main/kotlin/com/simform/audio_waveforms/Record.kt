@@ -9,37 +9,50 @@ import java.io.FileOutputStream
 
 class Record {
     private var audioRecord: AudioRecord? = null
-    private var sampleRate = 44100 // Standard sample rate
     private var channelConfig: Int = AudioFormat.CHANNEL_IN_MONO
     private var audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT
-    private var bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+    private var bufferSize: Int? = null
     private var fileOutputStream: FileOutputStream? = null
     private var recorderState: RecorderState = RecorderState.Disposed
     private var filePath: String? = null
+    private var pcmFilePath: String? = null
     private var recordingThread: Thread? = null
+    private var audioEncoder = AudioEncoder()
+    private var recorderSettings: RecorderSettings? = null
 
     @SuppressLint("MissingPermission")
-    fun initRecorder(path: String) {
+    fun initRecorder(recorderSettings: RecorderSettings) {
+        filePath = recorderSettings.path
+        if (filePath == null) return
+        bufferSize =
+            AudioRecord.getMinBufferSize(recorderSettings.sampleRate, channelConfig, audioFormat)
+
+        if (bufferSize == AudioRecord.ERROR || bufferSize == AudioRecord.ERROR_BAD_VALUE) {
+            throw IllegalStateException("Invalid buffer size: $bufferSize")
+        }
         audioRecord = AudioRecord(
             MediaRecorder.AudioSource.MIC,
-            sampleRate,
+            recorderSettings.sampleRate,
             channelConfig,
             audioFormat,
-            bufferSize
+            bufferSize!!
         )
 
-        filePath = path
-        val file = File(path)
+
+        pcmFilePath = filePath!!.replaceAfterLast(".", "pcm")
+        val file = File(pcmFilePath!!)
         file.parentFile?.mkdirs()
         fileOutputStream = FileOutputStream(file)
 
+        this.recorderSettings = recorderSettings
         recorderState = RecorderState.Initialised
     }
 
     fun start() {
+        if (recorderSettings == null || bufferSize == null) return;
         audioRecord?.startRecording()
         recorderState = RecorderState.Recording
-        val buffer = ByteArray(bufferSize)
+        val buffer = ByteArray(bufferSize!!)
         recordingThread = Thread {
             while (recorderState == RecorderState.Recording || recorderState == RecorderState.Paused) {
                 if (recorderState == RecorderState.Recording) {
@@ -57,13 +70,19 @@ class Record {
 
     fun stop() {
         recorderState = RecorderState.Stopped
+        recordingThread?.interrupt()
         recordingThread?.join()
-//        filePath?.let {
-////            val wavPath = it.replace("pcm", "wav")
-////            AudioEncoder().convertPcmToWav(it, wavPath, sampleRate, 1, 64000)
-//            val accPath = it.replace("pcm", "m4a")
-//            AudioEncoder().convertPCMToM4A(it, accPath, bufferSize)
-//        }
+        filePath?.let {
+            if (recorderSettings != null) {
+                audioEncoder.encodeByType(
+                    pcmFilePath = pcmFilePath!!,
+                    outputPath = it,
+                    outputFormat = OutputFormat.MPEG_4,
+                    sampleRate = recorderSettings!!.sampleRate,
+                    bitRate = recorderSettings!!.bitRate,
+                )
+            }
+        }
 
         release()
     }
