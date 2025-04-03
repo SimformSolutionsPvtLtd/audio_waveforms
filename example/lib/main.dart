@@ -47,7 +47,7 @@ class _HomeState extends State<Home> {
 
   void _getDir() async {
     appDirectory = await getApplicationDocumentsDirectory();
-    path = "${appDirectory.path}/rrr3.m4a";
+    path = "${appDirectory.path}/3he.aac";
     isLoading = false;
     setState(() {});
   }
@@ -245,7 +245,6 @@ class _HomeState extends State<Home> {
         // } else {
         //   await recorderController.record(path: path); // Path is optional
       } else {
-        print('dasdadd');
         await recorderController.record(
           path: path,
           recorderSettings: const RecorderSettings(
@@ -253,7 +252,7 @@ class _HomeState extends State<Home> {
                 androidEncoder: AndroidEncoder.opus,
                 androidOutputFormat: AndroidOutputFormat.ogg),
             sampleRate: 44100,
-            bitRate: 128000,
+            bitRate: 192000,
           ),
         );
       } // Path is optional

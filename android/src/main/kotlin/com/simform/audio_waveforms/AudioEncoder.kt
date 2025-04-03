@@ -92,97 +92,7 @@ class AudioEncoder {
         wavOutputStream.close()
     }
 
-    fun convertPCMToM4A(
-        inputPCMPath: String,
-        outputM4APath: String,
-        bufferSize: Int,
-        sampleRate: Int
-    ) {
-        val mediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
-        val format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, sampleRate, 1)
-        format.setInteger(MediaFormat.KEY_BIT_RATE, 128000)
-        format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
-        format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, bufferSize)
-
-        mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        mediaCodec.start()
-
-        val mediaMuxer = MediaMuxer(outputM4APath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-
-        val inputFile = File(inputPCMPath)
-        val inputStream = FileInputStream(inputFile)
-        val bufferInfo = MediaCodec.BufferInfo()
-
-        var isMuxerStarted = false
-        var trackIndex = -1
-        val tempBuffer = ByteArray(bufferSize)
-
-        var bytesRead: Int
-
-        // Read until the end of the file
-        while (inputStream.read(tempBuffer).also { bytesRead = it } != -1) {
-            val inputBufferIndex = mediaCodec.dequeueInputBuffer(10000)
-            if (inputBufferIndex >= 0) {
-                val inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex)
-                inputBuffer?.clear()
-                inputBuffer?.put(tempBuffer, 0, bytesRead)
-
-                mediaCodec.queueInputBuffer(
-                    inputBufferIndex,
-                    0,
-                    bytesRead,
-                    System.nanoTime() / 1000,
-                    0
-                )
-            }
-
-            var outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 10000)
-            while (outputBufferIndex >= 0) {
-                val outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex) ?: continue
-
-                if (!isMuxerStarted) {
-                    val outputFormat = mediaCodec.outputFormat
-                    trackIndex = mediaMuxer.addTrack(outputFormat)
-                    mediaMuxer.start()
-                    isMuxerStarted = true
-                }
-
-                bufferInfo.presentationTimeUs = System.nanoTime() / 1000
-                mediaMuxer.writeSampleData(trackIndex, outputBuffer, bufferInfo)
-                mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
-
-                outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 10000)
-            }
-        }
-
-        // Send end-of-stream signal
-        val inputBufferIndex = mediaCodec.dequeueInputBuffer(10000)
-        if (inputBufferIndex >= 0) {
-            mediaCodec.queueInputBuffer(
-                inputBufferIndex,
-                0,
-                0,
-                0,
-                MediaCodec.BUFFER_FLAG_END_OF_STREAM
-            )
-        }
-
-        // Process remaining output buffers
-        var outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 10000)
-        while (outputBufferIndex >= 0) {
-            val outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex) ?: continue
-            bufferInfo.presentationTimeUs = System.nanoTime() / 1000
-            mediaMuxer.writeSampleData(trackIndex, outputBuffer, bufferInfo)
-            mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
-            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 10000)
-        }
-
-        mediaCodec.stop()
-        mediaCodec.release()
-        mediaMuxer.stop()
-        mediaMuxer.release()
-        inputStream.close()
-    }
+    var isEncodingComplete = false
 
     fun convertPCMToEncodedAudio(
         inputPCMPath: String,
@@ -193,11 +103,12 @@ class AudioEncoder {
     ) {
         val bufferSize = outputFormat.bufferSize
         val mimeType = outputFormat.mimeType
-        val outputFormat = outputFormat
         val mediaCodec = MediaCodec.createEncoderByType(mimeType)
         val format = MediaFormat.createAudioFormat(mimeType, sampleRate, 1)
-        if (bitRate != null) {
-            format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
+
+        bitRate?.let {
+            println("Bitrate: $it")
+            format.setInteger(MediaFormat.KEY_BIT_RATE, it)
         }
 
         if (mimeType == MediaFormat.MIMETYPE_AUDIO_AAC) {
@@ -206,9 +117,9 @@ class AudioEncoder {
                 MediaCodecInfo.CodecProfileLevel.AACObjectLC
             )
         }
+
         format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, bufferSize)
         mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        mediaCodec.start()
 
         val inputFile = File(inputPCMPath)
         val inputStream = FileInputStream(inputFile)
@@ -221,7 +132,6 @@ class AudioEncoder {
         var trackIndex = -1
         var isMuxerStarted = false
 
-        // **Initialize MediaMuxer for MP4, 3GP, WebM**
         if (outputFormat == OutputFormat.MPEG_4 ||
             outputFormat == OutputFormat.THREE_GPP ||
             outputFormat == OutputFormat.WEBM
@@ -229,7 +139,6 @@ class AudioEncoder {
             mediaMuxer = MediaMuxer(outputPath, outputFormat.toAndroidOutputFormat)
         }
 
-        // **Add file headers for AMR or AAC_ADTS**
         if (outputFormat == OutputFormat.AMR_NB) {
             outputStream.write("#!AMR\n".toByteArray()) // AMR-NB Header
         } else if (outputFormat == OutputFormat.AMR_WB) {
@@ -237,115 +146,126 @@ class AudioEncoder {
         }
 
         val tempBuffer = ByteArray(bufferSize)
-        var bytesRead: Int
 
-        while (inputStream.read(tempBuffer).also { bytesRead = it } != -1) {
-            val inputBufferIndex = mediaCodec.dequeueInputBuffer(10000)
-            if (inputBufferIndex >= 0) {
-                val inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex)
-                inputBuffer?.clear()
-                inputBuffer?.put(tempBuffer, 0, bytesRead)
+        mediaCodec.setCallback(object : MediaCodec.Callback() {
+            override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
+                if (isEncodingComplete) return
 
-                mediaCodec.queueInputBuffer(
-                    inputBufferIndex,
-                    0,
-                    bytesRead,
-                    System.nanoTime() / 1000,
-                    0
-                )
+                val inputBuffer = codec.getInputBuffer(index) ?: return
+                inputBuffer.clear()
+                val bytesRead = inputStream.read(tempBuffer)
+
+                if (bytesRead > 0) {
+                    inputBuffer.put(tempBuffer, 0, bytesRead)
+                    codec.queueInputBuffer(index, 0, bytesRead, System.nanoTime() / 1000, 0)
+                } else {
+                    codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                    isEncodingComplete = true
+                }
             }
 
-            var outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 10000)
-            while (outputBufferIndex >= 0) {
-                val outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex) ?: continue
-                val encodedData = ByteArray(bufferInfo.size)
+            override fun onOutputBufferAvailable(
+                codec: MediaCodec,
+                index: Int,
+                info: MediaCodec.BufferInfo
+            ) {
+                val outputBuffer = codec.getOutputBuffer(index) ?: return
+                outputBuffer.position(0)
+
+                val encodedData = ByteArray(info.size)
                 outputBuffer.get(encodedData)
+
+                if (info.isEof()) {
+                    stopEncoding(codec, mediaMuxer, outputStream, inputStream)
+                    return
+                }
 
                 if (outputFormat == OutputFormat.MPEG_4 ||
                     outputFormat == OutputFormat.THREE_GPP ||
                     outputFormat == OutputFormat.WEBM
                 ) {
-                    // **Write to MediaMuxer**
                     if (!isMuxerStarted) {
                         trackIndex = mediaMuxer!!.addTrack(mediaCodec.outputFormat)
                         mediaMuxer.start()
                         isMuxerStarted = true
                     }
-                    bufferInfo.presentationTimeUs = System.nanoTime() / 1000
+                    bufferInfo.set(0, info.size, info.presentationTimeUs, info.flags)
                     mediaMuxer?.writeSampleData(trackIndex, outputBuffer, bufferInfo)
                 } else if (outputFormat == OutputFormat.AAC_ADTS) {
-                    // **Write ADTS Header + Data for AAC**
-                    outputStream.write(addADTSPacket(encodedData.size))
+                    outputStream.write(addADTSPacket(encodedData.size, sampleRate, 1))
                     outputStream.write(encodedData)
                 } else {
-                    // **Write raw encoded data (AMR)**
                     outputStream.write(encodedData)
                 }
 
-                mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
-                outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 10000)
-            }
-        }
-
-        // **Send End-of-Stream signal**
-        val inputBufferIndex = mediaCodec.dequeueInputBuffer(10000)
-        if (inputBufferIndex >= 0) {
-            mediaCodec.queueInputBuffer(
-                inputBufferIndex,
-                0,
-                0,
-                0,
-                MediaCodec.BUFFER_FLAG_END_OF_STREAM
-            )
-        }
-
-        // **Process remaining output**
-        var outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 10000)
-        while (outputBufferIndex >= 0) {
-            val outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex) ?: continue
-            val encodedData = ByteArray(bufferInfo.size)
-            outputBuffer.get(encodedData)
-
-            if (outputFormat == OutputFormat.MPEG_4 ||
-                outputFormat == OutputFormat.THREE_GPP ||
-                outputFormat == OutputFormat.WEBM
-            ) {
-                bufferInfo.presentationTimeUs = System.nanoTime() / 1000
-                mediaMuxer?.writeSampleData(trackIndex, outputBuffer, bufferInfo)
-            } else if (outputFormat == OutputFormat.AAC_ADTS) {
-                outputStream.write(addADTSPacket(encodedData.size))
-                outputStream.write(encodedData)
-            } else {
-                outputStream.write(encodedData)
+                codec.releaseOutputBuffer(index, false)
             }
 
-            mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
-            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 10000)
-        }
+            override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {
+                println("Encoding error: ${e.message}")
+            }
 
-        mediaCodec.stop()
-        mediaCodec.release()
+            override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {
+                if ((outputFormat == OutputFormat.MPEG_4 ||
+                            outputFormat == OutputFormat.THREE_GPP ||
+                            outputFormat == OutputFormat.WEBM) && !isMuxerStarted
+                ) {
+                    trackIndex = mediaMuxer!!.addTrack(format)
+                    mediaMuxer.start()
+                    isMuxerStarted = true
+                }
+            }
+        })
+
+        mediaCodec.start()
+    }
+
+    private fun stopEncoding(
+        codec: MediaCodec,
+        mediaMuxer: MediaMuxer?,
+        outputStream: FileOutputStream,
+        inputStream: FileInputStream
+    ) {
+        codec.stop()
+        codec.release()
         mediaMuxer?.stop()
         mediaMuxer?.release()
         outputStream.close()
         inputStream.close()
+        println("Encoding completed successfully!")
     }
 
     /**
      * **Adds ADTS Header for AAC Files**
      */
-    fun addADTSPacket(dataLength: Int): ByteArray {
+    fun addADTSPacket(dataLength: Int, sampleRate: Int, channelConfig: Int): ByteArray {
         val packet = ByteArray(7)
         val profile = 2  // AAC LC
-        val freqIdx = 4  // 44100 Hz
-        val chanCfg = 1  // Mono
+        val frameLength = dataLength + 7
+
+        val freqIdx = when (sampleRate) {
+            96000 -> 0
+            88200 -> 1
+            64000 -> 2
+            48000 -> 3
+            44100 -> 4
+            32000 -> 5
+            24000 -> 6
+            22050 -> 7
+            16000 -> 8
+            12000 -> 9
+            11025 -> 10
+            8000 -> 11
+            7350 -> 12
+            else -> 4 // Default to 44100 Hz
+        }
 
         packet[0] = 0xFF.toByte()
-        packet[1] = 0xF1.toByte()
-        packet[2] = ((profile - 1) shl 6 or (freqIdx shl 2) or (chanCfg shr 2)).toByte()
-        packet[3] = ((chanCfg and 3) shl 6 or (dataLength shr 11)).toByte()
-        packet[4] = (dataLength shr 3).toByte()
-        packet[5] = ((dataLength and 7) shl 5 or 0x1F).toByte()
+        packet[1] = 0xF9.toByte()
+        packet[2] = ((profile - 1 shl 6) + (freqIdx shl 2) + (channelConfig shr 2)).toByte()
+        packet[3] = ((channelConfig and 3 shl 6) + (frameLength shr 11)).toByte()
+        packet[4] = (frameLength and 0x7FF shr 3).toByte()
+        packet[5] = ((frameLength and 7 shl 5) + 0x1F).toByte()
         packet[6] = 0xFC.toByte()
 
         return packet

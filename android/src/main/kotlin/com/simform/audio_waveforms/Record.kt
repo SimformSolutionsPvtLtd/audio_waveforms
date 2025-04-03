@@ -77,7 +77,7 @@ class Record {
                 audioEncoder.encodeByType(
                     pcmFilePath = pcmFilePath!!,
                     outputPath = it,
-                    outputFormat = OutputFormat.MPEG_4,
+                    outputFormat = OutputFormat.AAC_ADTS,
                     sampleRate = recorderSettings!!.sampleRate,
                     bitRate = recorderSettings!!.bitRate,
                 )

@@ -1,5 +1,6 @@
 package com.simform.audio_waveforms
 
+import android.media.MediaFormat
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
@@ -101,10 +102,10 @@ enum class OutputFormat {
 
     val mimeType: String
         get() = when (this) {
-            AAC_ADTS -> "audio/aac"
-            AMR_NB -> "audio/3gpp"
-            AMR_WB -> "audio/amr-wb"
-            MPEG_4 -> "audio/mp4a-latm"
+            AAC_ADTS -> MediaFormat.MIMETYPE_AUDIO_AAC
+            AMR_NB -> MediaFormat.MIMETYPE_AUDIO_AMR_NB
+            AMR_WB -> MediaFormat.MIMETYPE_AUDIO_AMR_WB
+            MPEG_4 -> MediaFormat.MIMETYPE_AUDIO_AAC
             OGG -> "audio/ogg"
             THREE_GPP -> "audio/3gpp"
             WEBM -> "audio/webm"
@@ -146,24 +147,22 @@ enum class OutputFormat {
 
 
 enum class Encoder {
-    AAC, AAC_ELD, HE_AAC, AMR_NB, AMR_WB, OPUS, VORBIS;
+    WAV, AAC_LC, AAC_HC, AAC_ELD, AMR_NB, AMR_WB, OPUS;
 
     val toAndroidEncoder: Int
         get() = when (this) {
-            AAC -> MediaRecorder.AudioEncoder.AAC
+            WAV -> 0
+            AAC_LC -> MediaRecorder.AudioEncoder.AAC
+            AAC_HC -> MediaRecorder.AudioEncoder.HE_AAC
             AAC_ELD -> MediaRecorder.AudioEncoder.AAC_ELD
-            HE_AAC -> MediaRecorder.AudioEncoder.HE_AAC
             AMR_NB -> MediaRecorder.AudioEncoder.AMR_NB
             AMR_WB -> MediaRecorder.AudioEncoder.AMR_WB
             OPUS -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     MediaRecorder.AudioEncoder.OPUS
                 } else {
-                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
-                    MediaRecorder.AudioEncoder.AAC
+                    throw Exception(" Minimum android Q is required for OPUS encoder.")
                 }
             }
-
-            VORBIS -> MediaRecorder.AudioEncoder.VORBIS
         }
 }
