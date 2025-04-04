@@ -184,26 +184,28 @@ class AudioPlayer(
 
     fun setFinishMode(result: MethodChannel.Result, releaseModeType: Int?) {
         try {
-            releaseModeType?.let {
-                when (releaseModeType) {
-                    0 -> {
-                        this.finishMode = FinishMode.Loop
-                    }
+            when (releaseModeType) {
+                0 -> {
+                    this.finishMode = FinishMode.Loop
+                }
 
-                    1 -> {
-                        this.finishMode = FinishMode.Pause
-                    }
+                1 -> {
+                    this.finishMode = FinishMode.Pause
+                }
 
-                    2 -> {
-                        this.finishMode = FinishMode.Stop
-                    }
+                2 -> {
+                    this.finishMode = FinishMode.Stop
+                }
 
-                    else -> {
-                        throw Exception("Invalid Finish mode")
-                    }
+                null -> {
+                    throw Exception("Release mode is null")
+                }
+
+                else -> {
+                    throw Exception("Invalid Finish mode")
                 }
             }
-
+            result.success(null)
         } catch (e: Exception) {
             result.error(Constants.LOG_TAG, "Can not set the release mode", e.toString())
         }
