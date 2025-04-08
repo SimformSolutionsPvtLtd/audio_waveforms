@@ -1,9 +1,11 @@
 ## 2.0.0 (Unreleased)
 
 - Fixed [#350](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/350) - Left most visible wave is clipped in half when recording.
-- **BREAKING:** Fixed [#412](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/412) - Calling preparePlayer again does not cancel old waveform extraction.
 - Feature [#415](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/415) - Add stop extraction method and asynchronous extraction of waveform in ios
+- Feature [#204](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/204) - Move play head position with waveform gesture `onTapDown`.
+- **BREAKING:** Fixed [#412](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/412) - Calling preparePlayer again does not cancel old waveform extraction.
 - **BREAKING:** Feature [#416](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/416) - Add waveform extraction controller.
+- **BREAKING:** Rename `tapUpUpdateDetails` to `onTapUp`.
 - **BREAKING:**
   - Remove duplicate parameters from RecorderController.
   - Add `RecorderSettings` model for all the recording settings.
@@ -11,7 +13,7 @@
 ## 1.3.0
 
 - Fixed [#386](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/386) - On permission denied isRecording flag changed
-- Fixed [#384](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/384) - Provide a callback of drag,tap,start and end details on user gesture
+- Fixed [#384](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/384) - Provide a callback of drag, tap, start and end details on user gesture
 - Fixed [#309](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/309) - Added support for Liner PCM codec in iOS
 - Fixed [#291](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/291) - Codec issue while recording audio on android
 - Fixed [#391](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/391) - Wrong codec selection on the platform side on Android

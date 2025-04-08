@@ -71,8 +71,20 @@ class AudioFileWaveforms extends StatefulWidget {
   /// Provides a callback on drag updates.
   final Function(DragUpdateDetails)? dragUpdateDetails;
 
-  /// Provides a callback when tapping on the waveform.
-  final Function(TapUpDetails)? tapUpUpdateDetails;
+  /// Provides a callback when pointer has stopped contacting the screen.
+  /// This handler will still provide callback when [seekOnTapUp] is set to `false`.
+  final Function(TapUpDetails)? onTapUp;
+
+  /// When set to true, seek gesture will be performed when pointer is lifted
+  /// from the screen otherwise seek gesture will be performed when pointer has
+  /// stopped contacting the screen.
+  ///
+  /// The continuous seek gesture aren't affected by this flag.
+  final bool seekOnTapUp;
+
+  /// Provides a callback when pointer has started contacting the screen.
+  /// This handler will still provide callback when [seekOnTapUp] is set to `true`.
+  final GestureTapDownCallback? onTapDown;
 
   /// Generate waveforms from audio file. You play those audio file using
   /// [PlayerController].
@@ -101,7 +113,9 @@ class AudioFileWaveforms extends StatefulWidget {
     this.onDragStart,
     this.onDragEnd,
     this.dragUpdateDetails,
-    this.tapUpUpdateDetails,
+    this.onTapUp,
+    this.seekOnTapUp = true,
+    this.onTapDown,
   });
 
   @override
@@ -217,10 +231,11 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
       child: GestureDetector(
         onHorizontalDragUpdate:
             widget.enableSeekGesture ? _handleDragGestures : null,
-        onTapUp: widget.enableSeekGesture ? _handleScrubberSeekStart : null,
+        onTapUp: widget.enableSeekGesture ? _handleOnTapUp : null,
         onHorizontalDragStart:
             widget.enableSeekGesture ? _handleHorizontalDragStart : null,
         onHorizontalDragEnd: widget.enableSeekGesture ? _handleOnDragEnd : null,
+        onTapDown: widget.enableSeekGesture ? _handleOnTapDown : null,
         child: ClipPath(
           // TODO: Update extraClipperHeight when duration labels are added
           clipper: WaveClipper(extraClipperHeight: 0),
@@ -308,13 +323,23 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   }
 
   /// This method handles tap seek gesture
-  void _handleScrubberSeekStart(TapUpDetails details) {
+  void _handleOnTapUp(TapUpDetails details) {
+    widget.onTapUp?.call(details);
+    if (!widget.seekOnTapUp) return;
     _proportion = details.localPosition.dx / widget.size.width;
     var seekPosition = playerController.maxDuration * _proportion;
 
     playerController.seekTo(seekPosition.toInt());
+  }
 
-    widget.tapUpUpdateDetails?.call(details);
+  /// This method handles tap seek gesture
+  void _handleOnTapDown(TapDownDetails details) {
+    widget.onTapDown?.call(details);
+    if (widget.seekOnTapUp) return;
+    _proportion = details.localPosition.dx / widget.size.width;
+    var seekPosition = playerController.maxDuration * _proportion;
+
+    playerController.seekTo(seekPosition.toInt());
   }
 
   ///This method handles horizontal scrolling of the wave
