@@ -7,7 +7,13 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var useLegacyNormalization: Bool = false
     var audioUrl: URL?
     var recordedDuration: CMTime = CMTime.zero
-    
+    var flutterChannel: FlutterMethodChannel
+    var bytesStreamEngine: RecorderBytesStreamEngine
+    init(channel: FlutterMethodChannel){
+        flutterChannel = channel
+        bytesStreamEngine = RecorderBytesStreamEngine(channel: channel)
+    }
+
     func startRecording(_ result: @escaping FlutterResult,_ recordingSettings: RecordingSettings){
         useLegacyNormalization = recordingSettings.useLegacy ?? false
 
@@ -56,6 +62,7 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             audioRecorder?.delegate = self
             audioRecorder?.isMeteringEnabled = true
             audioRecorder?.record()
+            bytesStreamEngine.attach()
             result(true)
         } catch {
             result(FlutterError(code: Constants.audioWaveforms, message: "Failed to start recording", details: error.localizedDescription))
@@ -64,6 +71,7 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     
     public func stopRecording(_ result: @escaping FlutterResult) {
         audioRecorder?.stop()
+        bytesStreamEngine.detach()
         if(audioUrl != nil) {
             let asset = AVURLAsset(url:  audioUrl!)
             

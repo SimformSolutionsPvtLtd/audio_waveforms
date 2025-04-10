@@ -3,13 +3,14 @@ import UIKit
 
 public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     
-    final var audioRecorder = AudioRecorder()
+    final var audioRecorder :AudioRecorder
     var audioPlayers = [String: AudioPlayer]()
     var extractors = [String: WaveformExtractor]()
     var flutterChannel: FlutterMethodChannel
     
     init(registrar: FlutterPluginRegistrar, flutterChannel: FlutterMethodChannel) {
         self.flutterChannel = flutterChannel
+        audioRecorder = AudioRecorder(channel: flutterChannel)
         super.init()
     }
     
