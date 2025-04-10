@@ -7,15 +7,10 @@ class AndroidEncoderSettings {
   /// [androidEncoder] - Defines the encoder type for Android (default: AAC).
   /// [androidOutputFormat] - Specifies the output format for Android recordings (default: MPEG4).
   const AndroidEncoderSettings({
-    this.androidEncoder = AndroidEncoder.aac,
-    this.androidOutputFormat = AndroidOutputFormat.mpeg4,
+    this.androidEncoder = AndroidEncoder.aacLc,
   });
 
   /// Encoder type for Android recordings.
-  /// Default is AAC.
+  /// Default is aacLc.
   final AndroidEncoder androidEncoder;
-
-  /// Output format for Android recordings.
-  /// Default is MPEG4.
-  final AndroidOutputFormat androidOutputFormat;
 }

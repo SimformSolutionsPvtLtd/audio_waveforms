@@ -34,6 +34,7 @@ class PlatformStreams {
         StreamController<PlayerIdentifier<double>>.broadcast();
     _completionController =
         StreamController<PlayerIdentifier<void>>.broadcast();
+    _recordingAmplitudeController = StreamController<double>.broadcast();
     _recordedBytesController = StreamController<Uint8List>.broadcast();
     await AudioWaveformsInterface.instance.setMethodCallHandler();
   }
@@ -53,6 +54,7 @@ class PlatformStreams {
   Stream<PlayerIdentifier<void>> get onCompletion =>
       _completionController.stream;
 
+  Stream<double> get onAmplitude => _recordingAmplitudeController.stream;
   Stream<Uint8List> get onRecordedBytes => _recordedBytesController.stream;
 
   late StreamController<PlayerIdentifier<int>> _currentDurationController;
@@ -61,6 +63,7 @@ class PlatformStreams {
       _extractedWaveformDataController;
   late StreamController<PlayerIdentifier<double>> _extractionProgressController;
   late StreamController<PlayerIdentifier<void>> _completionController;
+  late StreamController<double> _recordingAmplitudeController;
   late StreamController<Uint8List> _recordedBytesController;
 
   void addCurrentDurationEvent(PlayerIdentifier<int> playerIdentifier) {
@@ -94,6 +97,11 @@ class PlatformStreams {
     }
   }
 
+  void addAmplitudeEvent(double event) {
+    if (_recordingAmplitudeController.isClosed) return;
+    _recordingAmplitudeController.add(event);
+  }
+
   void addRecordedBytes(Uint8List event) {
     if (_recordedBytesController.isClosed) return;
     _recordedBytesController.add(event);
@@ -104,6 +112,7 @@ class PlatformStreams {
     _playerStateController.close();
     _extractedWaveformDataController.close();
     _completionController.close();
+    _recordingAmplitudeController.close();
     _recordedBytesController.close();
     AudioWaveformsInterface.instance.removeMethodCallHandler();
     isInitialised = false;

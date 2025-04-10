@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:io' show Platform;
-import 'dart:math' show max;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import '../base/platform_streams.dart';
 import '/src/base/utils.dart';
 import '../base/constants.dart';
+import '../base/platform_streams.dart';
 import '../models/recorder_settings.dart';
 import 'player_controller.dart';
 
@@ -16,23 +15,6 @@ class RecorderController extends ChangeNotifier {
   final _platformStream = PlatformStreams.instance;
 
   final List<double> _waveData = [];
-
-  /// At which rate waveform needs to be updated
-  Duration updateFrequency = const Duration(milliseconds: 100);
-
-  /// Db we get from native is too high so in Android it the value is
-  /// subtracted and in IOS value added.
-  @Deprecated(
-    '\nThis is legacy normalizationFactor which was removed'
-    ' in 1.0.0 release. Only use this if you are using legacy normalization',
-  )
-  double normalizationFactor = Platform.isAndroid ? 60 : 40;
-
-  /// Current maximum peak power for ios and peak amplitude android.
-  double _maxPeak = Platform.isIOS ? 1 : 32786.0;
-
-  /// Current min value.
-  double _currentMin = 0;
 
   /// Current list of scaled waves. For IOS, this list contains normalised
   /// peak power and for Android, this list contains normalised peak
@@ -87,8 +69,6 @@ class RecorderController extends ChangeNotifier {
 
   bool _isDisposed = false;
 
-  bool _useLegacyNormalization = false;
-
   /// Provides currently recorded audio duration. Use [onCurrentDuration]
   /// stream to get latest events duration.
   Duration get elapsedDuration => _elapsedDuration;
@@ -136,15 +116,15 @@ class RecorderController extends ChangeNotifier {
   /// A stream to get bytes while recording audio.
   Stream<Uint8List> get onAudioChunks => _platformStream.onRecordedBytes;
 
+  StreamSubscription? _amplitudeStreamSubscription;
+
   /// A class having controls for recording audio and other useful handlers.
-  ///
-  /// Use [useLegacyNormalization] parameter to use normalization before
-  /// 1.0.0 release.
-  RecorderController({bool useLegacyNormalization = false}) {
-    _useLegacyNormalization = useLegacyNormalization;
+  RecorderController() {
     if (!_platformStream.isInitialised) {
       _platformStream.init();
     }
+    _amplitudeStreamSubscription =
+        PlatformStreams.instance.onAmplitude.listen(_updateOnNewAmplitude);
   }
 
   /// A ValueNotifier which provides current position of scrolled waveform with
@@ -214,7 +194,6 @@ class RecorderController extends ChangeNotifier {
           _isRecording = await AudioWaveformsInterface.instance.record(
             recorderSetting: recorderSettings,
             path: path,
-            useLegacyNormalization: _useLegacyNormalization,
             overrideAudioSession: overrideAudioSession,
           );
           if (_isRecording) {
@@ -330,10 +309,6 @@ class RecorderController extends ChangeNotifier {
     });
   }
 
-  /// Gets decibels from native
-  Future<double?> _getDecibel() async =>
-      await AudioWaveformsInterface.instance.getDecibel();
-
   /// Gets decibel by every defined frequency
   void _startTimer() {
     _recordedDuration = Duration.zero;
@@ -342,56 +317,10 @@ class RecorderController extends ChangeNotifier {
       _elapsedDuration += duration;
       _currentDurationController.add(elapsedDuration);
     });
-
-    _timer = Timer.periodic(
-      updateFrequency,
-      (timer) async {
-        var db = await _getDecibel();
-        if (db == null) {
-          _recorderState = RecorderState.stopped;
-          throw "Failed to get sound level";
-        }
-        if (_useLegacyNormalization) {
-          _normaliseLegacy(db);
-        } else {
-          _normalise(db);
-        }
-        notifyListeners();
-      },
-    );
   }
 
-  /// This is normalization is used before 1.0.0 release. From user
-  /// feedback we have brought it back util we find better way to normalise
-  /// db.
-  void _normaliseLegacy(double peak) {
-    if (Platform.isAndroid) {
-      waveData.add(peak - normalizationFactor);
-    } else {
-      if (peak == 0.0) {
-        waveData.add(0);
-      } else if (peak + normalizationFactor < 1) {
-        waveData.add(0);
-      } else {
-        waveData.add(peak + normalizationFactor);
-      }
-    }
-  }
-
-  /// Normalises the peak power for ios and peak amplitude for android
-  void _normalise(double peak) {
-    final absDb = peak.abs();
-    _maxPeak = max(absDb, _maxPeak);
-
-    // calculates min value
-    _currentMin = _waveData.fold(
-      0,
-      (previousValue, element) =>
-          element < previousValue ? element : previousValue,
-    );
-
-    final scaledWave = (absDb - _currentMin) / (_maxPeak - _currentMin);
-    _waveData.add(scaledWave);
+  void _updateOnNewAmplitude(double amplitude) {
+    _waveData.add(amplitude);
     notifyListeners();
   }
 
@@ -434,6 +363,7 @@ class RecorderController extends ChangeNotifier {
     _currentDurationController.close();
     _recorderStateController.close();
     _recordedFileDurationController.close();
+    _amplitudeStreamSubscription?.cancel();
     _recorderTimer?.cancel();
     _timer?.cancel();
     _timer = null;

@@ -56,5 +56,6 @@ class Constants {
   static const String linearPCMIsBigEndian = 'linearPCMIsBigEndian';
   static const String linearPCMIsFloat = 'linearPCMIsFloat';
   static const String onAudioChunk = 'onAudioChunk';
+  static const String normalisedRms = 'normalisedRms';
   static const String bytes = 'bytes';
 }
