@@ -8,13 +8,12 @@ class AudioWaveformsInterface {
   static const MethodChannel _methodChannel =
       MethodChannel(Constants.methodChannelName);
 
-  final EventChannel _eventChannel = EventChannel('onBufferData');
+  final EventChannel _eventChannel = const EventChannel('onBufferData');
 
   ///platform call to start recording
   Future<bool> record({
     required RecorderSettings recorderSetting,
     String? path,
-    bool useLegacyNormalization = false,
     bool overrideAudioSession = true,
   }) async {
     final isRecording = await _methodChannel.invokeMethod(
@@ -23,11 +22,8 @@ class AudioWaveformsInterface {
           ? recorderSetting.iosToJson(
               path: path,
               overrideAudioSession: overrideAudioSession,
-              useLegacyNormalization: useLegacyNormalization,
             )
-          : {
-              Constants.useLegacyNormalization: useLegacyNormalization,
-            },
+          : null,
     );
     return isRecording ?? false;
   }
@@ -239,15 +235,22 @@ class AudioWaveformsInterface {
             PlayerIdentifier<double>(key, progress),
           );
           break;
-        case "onBufferData":
-          print(call.arguments['buffer']);
+        case Constants.onAudioChunk:
+          var normalisedRms = call.arguments[Constants.normalisedRms];
+          var bytes = call.arguments[Constants.bytes];
+          if (normalisedRms is double) {
+            PlatformStreams.instance.addAmplitudeEvent(normalisedRms);
+          }
+          if (bytes is Uint8List) {
+            PlatformStreams.instance.addRecordedBytes(bytes);
+          }
           break;
       }
     });
 
     _eventChannel.receiveBroadcastStream().listen(
       (event) {
-        print(event);
+        // TODO: Handle event
       },
     );
   }

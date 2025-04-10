@@ -38,6 +38,13 @@ class _HomeState extends State<Home> {
   bool isLoading = true;
   late Directory appDirectory;
 
+  final settings = const RecorderSettings(
+    androidEncoderSettings:
+        AndroidEncoderSettings(androidEncoder: AndroidEncoder.wav),
+    sampleRate: 48000,
+    bitRate: 128000,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -47,7 +54,7 @@ class _HomeState extends State<Home> {
 
   void _getDir() async {
     appDirectory = await getApplicationDocumentsDirectory();
-    path = "${appDirectory.path}/3he.aac";
+    path = "${appDirectory.path}/vv.wav";
     isLoading = false;
     setState(() {});
   }
@@ -234,7 +241,7 @@ class _HomeState extends State<Home> {
       if (isRecording) {
         //   recorderController.reset();
         //
-        path = await recorderController.stop(false);
+        path = await recorderController.stop(true);
         paths.add(path!);
         //
         //   if (path != null) {
@@ -247,13 +254,7 @@ class _HomeState extends State<Home> {
       } else {
         await recorderController.record(
           path: path,
-          recorderSettings: const RecorderSettings(
-            androidEncoderSettings: AndroidEncoderSettings(
-                androidEncoder: AndroidEncoder.opus,
-                androidOutputFormat: AndroidOutputFormat.ogg),
-            sampleRate: 44100,
-            bitRate: 192000,
-          ),
+          recorderSettings: settings,
         );
       } // Path is optional
     } catch (e) {

@@ -106,8 +106,6 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 showDurationLabel: widget.waveStyle.showDurationLabel,
                 durationLinesColor: widget.waveStyle.durationLinesColor,
                 durationStyle: widget.waveStyle.durationStyle,
-                updateFrequecy: const Duration(seconds: 1).inMilliseconds /
-                    widget.recorderController.updateFrequency.inMilliseconds,
                 durationTextPadding: widget.waveStyle.durationTextPadding,
                 durationLinesHeight: widget.waveStyle.durationLinesHeight,
                 labelSpacing: widget.waveStyle.labelSpacing,

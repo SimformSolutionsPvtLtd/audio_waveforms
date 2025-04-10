@@ -1,6 +1,8 @@
 package com.simform.audio_waveforms
 
+import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.media.MediaMuxer
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
@@ -16,36 +18,14 @@ object Constants {
     const val stopRecording = "stopRecording"
     const val pauseRecording = "pauseRecording"
     const val resumeRecording = "resumeRecording"
-    const val getDecibel = "getDecibel"
     const val checkPermission = "checkPermission"
     const val path = "path"
     const val LOG_TAG = "AudioWaveforms"
     const val methodChannelName = "simform_audio_waveforms_plugin/methods"
     const val encoder = "encoder"
-    const val outputFormat = "outputFormat"
     const val sampleRate = "sampleRate"
     const val bitRate = "bitRate"
     const val fileNameFormat = "dd-MM-yy-hh-mm-ss"
-
-
-    /** encoder */
-    const val acc = 0
-    const val aac_eld = 1
-    const val he_aac = 2
-    const val opus = 5
-    const val vorbis = 6
-
-    /** output format */
-    const val mpeg4 = 0
-    const val three_gpp = 1
-    const val ogg = 2
-    const val webm = 5
-    const val mpeg_2_ts = 6
-    const val aac_adts = 7
-
-    /** common */
-    const val amr_nb = 3
-    const val amr_wb = 4
 
     const val preparePlayer = "preparePlayer"
     const val startPlayer = "startPlayer"
@@ -71,17 +51,21 @@ object Constants {
     const val noOfSamples = "noOfSamples"
     const val onCurrentExtractedWaveformData = "onCurrentExtractedWaveformData"
     const val waveformData = "waveformData"
-    const val useLegacyNormalization = "useLegacyNormalization"
     const val updateFrequency = "updateFrequency"
     const val STOP_EXTRACTION = "stopExtraction"
 
     const val resultFilePath = "resultFilePath"
     const val resultDuration = "resultDuration"
     const val pauseAllPlayers = "pauseAllPlayers"
+    const val ENCODER_THREAD = "EncoderThread"
+    const val AAC_FILE_EXTENSION = "aac"
 
 
+    // TODO: make user can set this in future
     const val CHANNEL: Int = 1
     const val BIT_PER_SAMPLE: Int = 16
+
+    const val RECORD_AUDIO_REQUEST_CODE = 1001
 }
 
 enum class FinishMode(val value: Int) {
@@ -97,72 +81,79 @@ enum class RecorderState {
     Initialised, Recording, Paused, Stopped, Disposed
 }
 
-enum class OutputFormat {
-    AAC_ADTS, AMR_NB, AMR_WB, MPEG_4, OGG, THREE_GPP, WEBM, WAV;
+enum class Encoder {
+    WAV, AAC_LC, AAC_HE, AAC_ELD, AMR_NB, AMR_WB, OPUS;
 
     val mimeType: String
         get() = when (this) {
-            AAC_ADTS -> MediaFormat.MIMETYPE_AUDIO_AAC
+            WAV -> MediaFormat.MIMETYPE_AUDIO_RAW
+            AAC_LC, AAC_HE, AAC_ELD -> MediaFormat.MIMETYPE_AUDIO_AAC
             AMR_NB -> MediaFormat.MIMETYPE_AUDIO_AMR_NB
             AMR_WB -> MediaFormat.MIMETYPE_AUDIO_AMR_WB
-            MPEG_4 -> MediaFormat.MIMETYPE_AUDIO_AAC
-            OGG -> "audio/ogg"
-            THREE_GPP -> "audio/3gpp"
-            WEBM -> "audio/webm"
-            WAV -> "audio/wav"
-        }
-
-    val toAndroidOutputFormat: Int
-        get() = when (this) {
-            AAC_ADTS -> MediaRecorder.OutputFormat.AAC_ADTS
-            AMR_NB -> MediaRecorder.OutputFormat.AMR_NB
-            AMR_WB -> MediaRecorder.OutputFormat.AMR_WB
-            MPEG_4 -> MediaRecorder.OutputFormat.MPEG_4
-            OGG -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    MediaRecorder.OutputFormat.OGG
-                } else {
-                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
-                    MediaRecorder.OutputFormat.MPEG_4
-                }
-            }
-
-            THREE_GPP -> MediaRecorder.OutputFormat.THREE_GPP
-            WEBM -> MediaRecorder.OutputFormat.WEBM
-            WAV -> MediaRecorder.OutputFormat.MPEG_4
+            OPUS -> MediaFormat.MIMETYPE_AUDIO_OPUS
         }
 
     val bufferSize: Int
         get() = when (this) {
-            AAC_ADTS -> 2048
+            AAC_LC -> 2048
+            AAC_HE -> 2048
+            AAC_ELD -> 2048
             AMR_NB -> 1024
             AMR_WB -> 2048
-            MPEG_4 -> 2048
-            OGG -> 4096
-            THREE_GPP -> 1024
-            WEBM -> 4096
-            WAV -> 4096
+            WAV -> 8192
+            OPUS -> 2048
         }
-}
 
-
-enum class Encoder {
-    WAV, AAC_LC, AAC_HC, AAC_ELD, AMR_NB, AMR_WB, OPUS;
-
-    val toAndroidEncoder: Int
+    val toOutputFormat: Int
         get() = when (this) {
-            WAV -> 0
-            AAC_LC -> MediaRecorder.AudioEncoder.AAC
-            AAC_HC -> MediaRecorder.AudioEncoder.HE_AAC
-            AAC_ELD -> MediaRecorder.AudioEncoder.AAC_ELD
-            AMR_NB -> MediaRecorder.AudioEncoder.AMR_NB
-            AMR_WB -> MediaRecorder.AudioEncoder.AMR_WB
+            WAV -> throw IllegalArgumentException("Illegal format selection.")
+            AAC_LC, AAC_HE, AAC_ELD -> MediaRecorder.OutputFormat.MPEG_4
+            AMR_NB -> MediaRecorder.OutputFormat.AMR_NB
+            AMR_WB -> MediaRecorder.OutputFormat.AMR_WB
             OPUS -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    MediaRecorder.AudioEncoder.OPUS
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG
                 } else {
-                    throw Exception(" Minimum android Q is required for OPUS encoder.")
+                    throw Exception("Minimum android Q is required for $this encoder.")
                 }
             }
+        }
+
+    val useMediaMuxer: Boolean
+        get() = when (this) {
+            WAV, AMR_NB, AMR_WB -> false
+            AAC_LC, AAC_HE, AAC_ELD, OPUS -> true
+        }
+
+    val aacProfile: Int?
+        get() = when (this) {
+            AAC_LC -> MediaCodecInfo.CodecProfileLevel.AACObjectLC
+            AAC_HE -> MediaCodecInfo.CodecProfileLevel.AACObjectHE
+            AAC_ELD -> MediaCodecInfo.CodecProfileLevel.AACObjectELD
+            else -> null
+        }
+
+    companion object {
+        fun fromString(value: String?): Encoder {
+            return try {
+                if (value == null) {
+                    Log.e(LOG_TAG, "Encoder type is null. Defaulting to AAC_LC.")
+                    return AAC_LC
+                }
+                valueOf(value)
+            } catch (_: IllegalArgumentException) {
+                Log.e(LOG_TAG, "Invalid encoder type: $value. Defaulting to AAC_LC.")
+                AAC_LC
+            }
+        }
+    }
+
+    val encodeForWav: Boolean
+        get() {
+            return this == WAV
+        }
+    val isAAC: Boolean
+        get() {
+            return this == AAC_LC || this == AAC_HE || this == AAC_ELD
         }
 }

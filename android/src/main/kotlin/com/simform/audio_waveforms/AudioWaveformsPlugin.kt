@@ -5,7 +5,6 @@ import android.content.Context
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
-import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -27,12 +26,12 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var recorder: MediaRecorder? = null
     private var activity: Activity? = null
     private lateinit var audioRecorder: AudioRecorder
-    private var recorderSettings = RecorderSettings(path = null, bitRate = null)
+    private var recorderSettings = RecorderSettings(path = null)
     private lateinit var applicationContext: Context
     private var audioPlayers = mutableMapOf<String, AudioPlayer?>()
     private var extractors = mutableMapOf<String, WaveformExtractor?>()
     private var pluginBinding: ActivityPluginBinding? = null
-    private var record: Record = Record()
+    private var record: AudioRecorder = AudioRecorder()
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, Constants.methodChannelName)
@@ -45,73 +44,29 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             Constants.initRecorder -> {
-                val arguments = call.arguments;
-                if (arguments != null && arguments is Map<*, *>) {
-                    @Suppress("UNCHECKED_CAST")
-                    recorderSettings =
-                        RecorderSettings.fromJson(json = arguments as Map<String, Any?>)
-
-                    println(
-                        recorderSettings.path
-                    )
-                    if (recorderSettings.path != null) {
-                        record.initRecorder(recorderSettings)
-
-//                        checkPathAndInitialiseRecorder(
-//                            result,
-//                            recorderSettings
-//                        )
-                        result.success(true)
-                    }
+                val arguments = call.arguments
+                if (arguments is Map<*, *>) {
+                    recorderSettings = RecorderSettings.fromJson(arguments)
+                    checkPathAndInitialiseRecorder(result, recorderSettings)
                 } else {
                     result.error(
-                        Constants.LOG_TAG,
-                        "Failed to initialise Recorder",
-                        "Invalid Arguments"
+                        Constants.LOG_TAG, "Failed to initialise Recorder", "Invalid Arguments"
                     )
                 }
             }
 
-            Constants.startRecording -> {
-                val useLegacyNormalization =
-                    (call.argument(Constants.useLegacyNormalization) as Boolean?) ?: false
-                record.start()
-
-//                audioRecorder.startRecorder(result, recorder, useLegacyNormalization)
-                result.success(true)
-            }
+            Constants.startRecording -> record.start(result)
 
             Constants.stopRecording -> {
-                record.stop()
-
-//                audioRecorder.stopRecording(
-//                    result,
-//                    recorder,
-//                    recorderSettings.path!!
-//                )
+                record.stop(result)
                 recorder = null
-                result.success(true)
             }
 
-            Constants.pauseRecording -> {
-                record.pause()
-//                audioRecorder.pauseRecording(result, recorder)
+            Constants.pauseRecording -> record.pause(result)
 
-                result.success(false)
-            }
-
-            Constants.resumeRecording -> {
-                record.resume()
-
-//                audioRecorder.resumeRecording(result, recorder)
-                result.success(true)
-            }
-
-            Constants.getDecibel -> audioRecorder.getDecibel(result, recorder)
+            Constants.resumeRecording -> record.resume(result)
             Constants.checkPermission -> audioRecorder.checkPermission(
-                result,
-                activity,
-                result::success
+                result, activity, result::success
             )
 
             Constants.preparePlayer -> {
@@ -267,39 +222,24 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun checkPathAndInitialiseRecorder(
-        result: Result,
-        recorderSettings: RecorderSettings
+        result: Result, recorderSettings: RecorderSettings
     ) {
-        try {
-            recorder = MediaRecorder()
-        } catch (e: Exception) {
-            Log.e(Constants.LOG_TAG, "Failed to initialise Recorder")
-        }
         if (recorderSettings.path == null) {
             val outputDir = activity?.cacheDir
             val outputFile: File?
-            val dateTimeInstance =
-                SimpleDateFormat(Constants.fileNameFormat, Locale.US)
+            val dateTimeInstance = SimpleDateFormat(Constants.fileNameFormat, Locale.US)
             val currentDate = dateTimeInstance.format(Date())
             try {
                 outputFile = File.createTempFile(currentDate, ".m4a", outputDir)
                 recorderSettings.path = outputFile.path
-                audioRecorder.initRecorder(
-                    result,
-                    recorder,
-                    recorderSettings,
-                )
             } catch (e: IOException) {
-                Log.e(Constants.LOG_TAG, "Failed to create file")
+                result.error(Constants.LOG_TAG, "Failed to create file", e.message)
+                return
             }
-        } else {
-            audioRecorder.initRecorder(
-                result,
-                recorder,
-                recorderSettings,
-            )
         }
+        record.initRecorder(recorderSettings, channel, result)
     }
 
     private fun initPlayer(playerKey: String) {
@@ -339,12 +279,11 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     }
                 }
 
-            }
-        )
+            })
         extractors[playerKey]?.startDecode()
     }
 
-    override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
     }
 
@@ -374,7 +313,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
     }
 
-    private fun stopAllPlayer(result: MethodChannel.Result) {
+    private fun stopAllPlayer(result: Result) {
         try {
             for ((key, _) in audioPlayers) {
                 audioPlayers[key]?.stop()
@@ -386,7 +325,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
     }
 
-    private fun pauseAllPlayer(result: MethodChannel.Result) {
+    private fun pauseAllPlayer(result: Result) {
         try {
             for ((key, _) in audioPlayers) {
                 audioPlayers[key]?.pause()

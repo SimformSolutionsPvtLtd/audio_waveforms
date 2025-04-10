@@ -1,141 +1,48 @@
 package com.simform.audio_waveforms
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.media.AudioFormat
+import android.media.AudioRecord
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
 import android.media.MediaRecorder
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
+import com.simform.audio_waveforms.Constants.LOG_TAG
+import com.simform.audio_waveforms.encoders.*
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
-import java.io.IOException
-import kotlin.math.log10
-
-private const val LOG_TAG = "AudioWaveforms"
-private const val RECORD_AUDIO_REQUEST_CODE = 1001
+import java.io.File
+import kotlin.math.sqrt
 
 class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
-    private var useLegacyNormalization = false
+    private var audioRecord: AudioRecord? = null
+    private var channelConfig: Int = AudioFormat.CHANNEL_IN_MONO
+    private var audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT
+    private var bufferSize: Int? = null
+    private var recorderState: RecorderState = RecorderState.Disposed
+    private var filePath: String? = null
+    private var recordingThread: Thread? = null
+    private var recorderSettings: RecorderSettings? = null
+    private var encoder: Encoder? = null
+    lateinit var channel: MethodChannel
+    private var commonEncoder = CommonEncoder()
+    private var wavEncoder: WavEncoder? = null
     private var successCallback: RequestPermissionsSuccessCallback? = null
 
-    fun getDecibel(result: MethodChannel.Result, recorder: MediaRecorder?) {
-        if (useLegacyNormalization) {
-            val db = 20 * log10(((recorder?.maxAmplitude?.toDouble() ?: (0.0 / 32768.0))))
-            if (db == Double.NEGATIVE_INFINITY) {
-                Log.d(LOG_TAG, "Microphone might be turned off")
-            } else {
-                result.success(db)
-            }
-        } else {
-            result.success(recorder?.maxAmplitude?.toDouble() ?: 0.0)
-        }
-    }
-
-    fun initRecorder(
-        result: MethodChannel.Result,
-        recorder: MediaRecorder?,
-        recorderSettings: RecorderSettings
-    ) {
-        recorder?.apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(getOutputFormat(recorderSettings.outputFormat))
-            setAudioEncoder(getEncoder(recorderSettings.encoder))
-            setAudioSamplingRate(recorderSettings.sampleRate)
-            if (recorderSettings.bitRate != null) {
-                setAudioEncodingBitRate(recorderSettings.bitRate)
-            }
-            setOutputFile(recorderSettings.path)
-            try {
-                recorder.prepare()
-                result.success(true)
-            } catch (e: IOException) {
-                Log.e(LOG_TAG, "Failed to stop initialize recorder")
-            }
-        }
-    }
-
-    fun stopRecording(result: MethodChannel.Result, recorder: MediaRecorder?, path: String) {
-        try {
-            val hashMap: HashMap<String, Any?> = HashMap()
-            try {
-                recorder?.stop()
-
-                val duration = getDuration(path)
-
-                hashMap[Constants.resultFilePath] = path
-                hashMap[Constants.resultDuration] = duration
-            } catch (e: RuntimeException) {
-                // Stop was called immediately after start which causes stop() call to fail.
-                hashMap[Constants.resultFilePath] = null
-                hashMap[Constants.resultDuration] = -1
-            }
-
-            recorder?.apply {
-                reset()
-                release()
-            }
-
-            result.success(hashMap)
-        } catch (e: IllegalStateException) {
-            Log.e(LOG_TAG, "Failed to stop recording")
-        }
-    }
-
-    private fun getDuration(path: String): Int {
-        val mediaMetadataRetriever = MediaMetadataRetriever()
-        try {
-            mediaMetadataRetriever.setDataSource(path)
-            val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION)
-            return duration?.toInt() ?: -1
-        } catch (e: Exception) {
-            Log.e(LOG_TAG, "Failed to get recording duration")
-        } finally {
-            mediaMetadataRetriever.release()
-        }
-        return -1
-    }
-
-    fun startRecorder(result: MethodChannel.Result, recorder: MediaRecorder?, useLegacy: Boolean) {
-        try {
-            useLegacyNormalization = useLegacy
-            recorder?.start()
-            result.success(true)
-        } catch (e: IllegalStateException) {
-            Log.e(LOG_TAG, "Failed to start recording")
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun pauseRecording(result: MethodChannel.Result, recorder: MediaRecorder?) {
-        try {
-            recorder?.pause()
-            result.success(false)
-        } catch (e: IllegalStateException) {
-            Log.e(LOG_TAG, "Failed to pause recording")
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun resumeRecording(result: MethodChannel.Result, recorder: MediaRecorder?) {
-        try {
-            recorder?.resume()
-            result.success(true)
-        } catch (e: IllegalStateException) {
-            Log.e(LOG_TAG, "Failed to resume recording")
-        }
-    }
-
     override fun onRequestPermissionsResult(
-            requestCode: Int,
-            permissions: Array<out String>,
-            grantResults: IntArray
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ): Boolean {
-        return if (requestCode == RECORD_AUDIO_REQUEST_CODE) {
+        return if (requestCode == Constants.RECORD_AUDIO_REQUEST_CODE) {
             successCallback?.onSuccess(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
             grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
         } else {
@@ -144,18 +51,18 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     }
 
     private fun isPermissionGranted(activity: Activity?): Boolean {
-        val result =
-                ActivityCompat.checkSelfPermission(activity!!, permissions[0])
+        val result = ActivityCompat.checkSelfPermission(activity!!, permissions[0])
         return result == PackageManager.PERMISSION_GRANTED
     }
 
-    fun checkPermission(result: MethodChannel.Result, activity: Activity?, successCallback: RequestPermissionsSuccessCallback) {
+    fun checkPermission(
+        result: Result, activity: Activity?, successCallback: RequestPermissionsSuccessCallback
+    ) {
         this.successCallback = successCallback
         if (!isPermissionGranted(activity)) {
             activity?.let {
                 ActivityCompat.requestPermissions(
-                        it, permissions,
-                        RECORD_AUDIO_REQUEST_CODE
+                    it, permissions, Constants.RECORD_AUDIO_REQUEST_CODE
                 )
             }
         } else {
@@ -163,57 +70,175 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         }
     }
 
-    private fun getEncoder(encoder: Int): Int {
-        when (encoder) {
-            Constants.acc -> return MediaRecorder.AudioEncoder.AAC
-            Constants.aac_eld -> return MediaRecorder.AudioEncoder.AAC_ELD
-            Constants.he_aac -> return MediaRecorder.AudioEncoder.HE_AAC
-            Constants.amr_nb -> return MediaRecorder.AudioEncoder.AMR_NB
-            Constants.amr_wb -> return MediaRecorder.AudioEncoder.AMR_WB
-            Constants.opus -> {
-                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    MediaRecorder.AudioEncoder.OPUS
-                } else {
-                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
-                    MediaRecorder.AudioEncoder.AAC
+    @RequiresApi(Build.VERSION_CODES.M)
+    @SuppressLint("MissingPermission")
+    fun initRecorder(
+        recorderSettings: RecorderSettings, channel: MethodChannel, result: Result
+    ) {
+        filePath = recorderSettings.path
+        if (filePath == null) return
+        this.channel = channel
+        bufferSize =
+            AudioRecord.getMinBufferSize(recorderSettings.sampleRate, channelConfig, audioFormat)
+
+        if (bufferSize == AudioRecord.ERROR || bufferSize == AudioRecord.ERROR_BAD_VALUE) {
+            result.error(
+                LOG_TAG,
+                "Invalid buffer size: $bufferSize",
+                null
+            )
+        }
+        try {
+            audioRecord = AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                recorderSettings.sampleRate,
+                channelConfig,
+                audioFormat,
+                bufferSize!!
+            )
+        } catch (e: Exception) {
+            result.error(
+                LOG_TAG,
+                "Error initializing AudioRecord: ${e.message}",
+                null
+            )
+            return
+        }
+        this.recorderSettings = recorderSettings
+        encoder = recorderSettings.encoder
+        recorderState = RecorderState.Initialised
+        result.success(true)
+    }
+
+    fun start(result: Result) {
+        if (recorderSettings == null || bufferSize == null) {
+            result.error(
+                LOG_TAG,
+                "recorder settings is null or bufferSize is null",
+                "recorderSettings: $recorderSettings, bufferSize: $bufferSize"
+            )
+            return
+        }
+        audioRecord?.startRecording()
+        recorderState = RecorderState.Recording
+        if (encoder?.encodeForWav == true) {
+            wavEncoder = WavEncoder(
+                wavFile = File(recorderSettings!!.path!!),
+                sampleRate = recorderSettings!!.sampleRate
+            )
+            wavEncoder?.start(result)
+        } else {
+            commonEncoder.initCodec(recorderSettings = recorderSettings!!, result = result) {
+                recordingThread?.join()
+            }
+        }
+        val buffer = ByteArray(bufferSize!!)
+        recordingThread = Thread {
+            while (recorderState == RecorderState.Recording || recorderState == RecorderState.Paused) {
+                if (recorderState == RecorderState.Recording) {
+                    val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+
+                    if (read > 0) {
+                        val audioData = buffer.copyOf(read)
+                        if (encoder?.encodeForWav == true) {
+                            wavEncoder?.writePcmData(audioData)
+                        } else {
+                            commonEncoder.queueInputBuffer(audioData)
+                        }
+                        val rms = calculateRms(audioData, read)
+                        sendBytesToFlutter(audioData, rms)
+                    }
                 }
             }
+            audioRecord?.stop()
 
-            Constants.vorbis -> return MediaRecorder.AudioEncoder.VORBIS
+        }
+        recordingThread?.start()
+        result.success(true)
+    }
 
-            else -> return MediaRecorder.AudioEncoder.AAC
+    fun stop(result: Result) {
+        try {
+            audioRecord?.stop()
+            recorderState = RecorderState.Stopped
+            if (encoder?.encodeForWav == true) {
+                wavEncoder?.stop(result)
+                recordingThread?.join()
+            } else {
+                commonEncoder.signalToStop()
+            }
+
+        } catch (e: Exception) {
+            result.error(LOG_TAG, e.message, "An error occurred while stopping the recorder")
+            return
+        }
+        release()
+
+        val duration = getDuration(recorderSettings?.path)
+        val hashMap = HashMap<String, Any?>()
+        hashMap[Constants.resultFilePath] = recorderSettings?.path
+        hashMap[Constants.resultDuration] = duration
+        result.success(hashMap)
+    }
+
+    private fun sendBytesToFlutter(chunk: ByteArray, rms: Double) {
+        val args: MutableMap<String, Any?> = HashMap()
+        args["normalisedRms"] = rms
+        args["bytes"] = chunk
+        Handler(Looper.getMainLooper()).post {
+            channel.invokeMethod("onAudioChunk", args)
         }
     }
 
-    private fun getOutputFormat(format: Int): Int {
-        when (format) {
-            Constants.mpeg4 -> return MediaRecorder.OutputFormat.MPEG_4
-            Constants.three_gpp -> return MediaRecorder.OutputFormat.THREE_GPP
-            Constants.ogg -> {
-                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    MediaRecorder.OutputFormat.OGG
-                } else {
-                    Log.e(LOG_TAG, "Minimum android Q is required, Setting Acc encoder.")
-                    MediaRecorder.OutputFormat.MPEG_4
-                }
-            }
+    private fun calculateRms(chunk: ByteArray, size: Int): Double {
+        var sum = 0.0
+        var count = 0
 
-            Constants.amr_wb -> return MediaRecorder.OutputFormat.AMR_WB
-            Constants.amr_nb -> return MediaRecorder.OutputFormat.AMR_NB
-            Constants.webm ->
-                return MediaRecorder.OutputFormat.WEBM
+        for (i in 0 until size step 2) {
+            val low = chunk[i].toInt() and 0xff
+            val high = chunk[i + 1].toInt()
+            val sample = (high shl 8) or low
 
-            Constants.mpeg_2_ts -> {
-                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    MediaRecorder.OutputFormat.MPEG_2_TS
-                } else {
-                    Log.e(LOG_TAG, "Minimum android Q is required, Setting MPEG_4 output format.")
-                    MediaRecorder.OutputFormat.MPEG_4
-                }
-            }
-
-            Constants.aac_adts -> return MediaRecorder.OutputFormat.AAC_ADTS
-            else -> return MediaRecorder.OutputFormat.MPEG_4
+            sum += sample * sample.toDouble()
+            count++
         }
+
+        val normalisedRms = sqrt(sum / count) / 32767.0
+        return normalisedRms
+    }
+
+    fun pause(result: Result) {
+        recorderState = RecorderState.Paused
+        result.success(false)
+    }
+
+    fun resume(result: Result) {
+        recorderState = RecorderState.Recording
+        result.success(false)
+    }
+
+    fun release() {
+        try {
+            audioRecord?.release()
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Error releasing AudioRecord: ${e.message}")
+        }
+
+        audioRecord = null
+        recorderState = RecorderState.Disposed
+    }
+
+    private fun getDuration(path: String?): Int {
+        val mediaMetadataRetriever = MediaMetadataRetriever()
+        try {
+            mediaMetadataRetriever.setDataSource(path)
+            val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION)
+            return duration?.toInt() ?: -1
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Error getting duration: ${e.message}")
+        } finally {
+            mediaMetadataRetriever.release()
+        }
+        return -1
     }
 }
