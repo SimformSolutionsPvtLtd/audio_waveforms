@@ -26,10 +26,10 @@ Below are platform specific setup for recording audio to be able work.
 <details>
 <summary>Android</summary>
 
-Change the minimum Android sdk version to 21 (or higher) in your `android/app/build.gradle` file.
+Change the minimum Android sdk version to 23 (or higher) in your `android/app/build.gradle` file.
 
 ```
-minSdkVersion 21
+minSdkVersion 23
 ```
 
 Add RECORD_AUDIO permission in `AndroidManifest.xml`

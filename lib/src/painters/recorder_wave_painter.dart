@@ -15,42 +15,6 @@ import '../base/utils.dart';
 ///
 ///-totalBackDistance.dx + dragOffset.dx
 class RecorderWavePainter extends CustomPainter {
-  final List<double> waveData;
-  final Color waveColor;
-  final bool showMiddleLine;
-  final double spacing;
-  final double initialPosition;
-  final bool showTop;
-  final bool showBottom;
-  final double bottomPadding;
-  final StrokeCap waveCap;
-  final Color middleLineColor;
-  final double middleLineThickness;
-  final Offset totalBackDistance;
-  final Offset dragOffset;
-  final double waveThickness;
-  final VoidCallback pushBack;
-  final bool callPushback;
-  final bool extendWaveform;
-  final bool showDurationLabel;
-  final bool showHourInDuration;
-  final double updateFrequecy;
-  final Paint _wavePaint;
-  final Paint _linePaint;
-  final Paint _durationLinePaint;
-  final TextStyle durationStyle;
-  final Color durationLinesColor;
-  final double durationTextPadding;
-  final double durationLinesHeight;
-  final double labelSpacing;
-  final Shader? gradient;
-  final bool shouldClearLabels;
-  final VoidCallback revertClearLabelCall;
-  final Function(int) setCurrentPositionDuration;
-  final bool shouldCalculateScrolledPosition;
-  final double scaleFactor;
-  final Duration currentlyRecordedDuration;
-
   RecorderWavePainter({
     required this.waveData,
     required this.waveColor,
@@ -69,7 +33,6 @@ class RecorderWavePainter extends CustomPainter {
     required this.pushBack,
     required this.callPushback,
     required this.extendWaveform,
-    required this.updateFrequecy,
     required this.showHourInDuration,
     required this.showDurationLabel,
     required this.durationStyle,
@@ -94,6 +57,41 @@ class RecorderWavePainter extends CustomPainter {
         _durationLinePaint = Paint()
           ..strokeWidth = 3
           ..color = durationLinesColor;
+
+  final List<double> waveData;
+  final Color waveColor;
+  final bool showMiddleLine;
+  final double spacing;
+  final double initialPosition;
+  final bool showTop;
+  final bool showBottom;
+  final double bottomPadding;
+  final StrokeCap waveCap;
+  final Color middleLineColor;
+  final double middleLineThickness;
+  final Offset totalBackDistance;
+  final Offset dragOffset;
+  final double waveThickness;
+  final VoidCallback pushBack;
+  final bool callPushback;
+  final bool extendWaveform;
+  final bool showDurationLabel;
+  final bool showHourInDuration;
+  final Paint _wavePaint;
+  final Paint _linePaint;
+  final Paint _durationLinePaint;
+  final TextStyle durationStyle;
+  final Color durationLinesColor;
+  final double durationTextPadding;
+  final double durationLinesHeight;
+  final double labelSpacing;
+  final Shader? gradient;
+  final bool shouldClearLabels;
+  final VoidCallback revertClearLabelCall;
+  final Function(int) setCurrentPositionDuration;
+  final bool shouldCalculateScrolledPosition;
+  final double scaleFactor;
+  final Duration currentlyRecordedDuration;
   var _labelPadding = 0.0;
 
   final List<Label> _labels = [];
@@ -188,7 +186,7 @@ class RecorderWavePainter extends CustomPainter {
         ),
       );
     }
-    _labelPadding += spacing * updateFrequecy;
+    _labelPadding += spacing;
   }
 
   void _drawMiddleLine(Canvas canvas, Size size) {
@@ -232,7 +230,7 @@ class RecorderWavePainter extends CustomPainter {
   void _setScrolledDuration(Size size) {
     setCurrentPositionDuration(
         (((-totalBackDistance.dx + dragOffset.dx - (size.width / 2)) /
-                    (spacing * updateFrequecy)) *
+                    spacing) *
                 1000)
             .abs()
             .toInt());
