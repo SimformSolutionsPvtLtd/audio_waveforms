@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 import 'dart:math' show max;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../base/platform_streams.dart';
 import '/src/base/utils.dart';
 import '../base/constants.dart';
 import '../models/recorder_settings.dart';
@@ -11,6 +13,8 @@ import 'player_controller.dart';
 
 // ignore_for_file: deprecated_member_use_from_same_package
 class RecorderController extends ChangeNotifier {
+  final _platformStream = PlatformStreams.instance;
+
   final List<double> _waveData = [];
 
   /// At which rate waveform needs to be updated
@@ -129,12 +133,18 @@ class RecorderController extends ChangeNotifier {
   Stream<Duration> get onRecordingEnded =>
       _recordedFileDurationController.stream;
 
+  /// A stream to get bytes while recording audio.
+  Stream<Uint8List> get onAudioChunks => _platformStream.onRecordedBytes;
+
   /// A class having controls for recording audio and other useful handlers.
   ///
   /// Use [useLegacyNormalization] parameter to use normalization before
   /// 1.0.0 release.
   RecorderController({bool useLegacyNormalization = false}) {
     _useLegacyNormalization = useLegacyNormalization;
+    if (!_platformStream.isInitialised) {
+      _platformStream.init();
+    }
   }
 
   /// A ValueNotifier which provides current position of scrolled waveform with
