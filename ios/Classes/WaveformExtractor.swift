@@ -26,9 +26,15 @@ public class WaveformExtractor {
         }
     }
     public init(url: URL, flutterResult: @escaping FlutterResult, channel: FlutterMethodChannel) throws {
-        audioFile = try AVAudioFile(forReading: url)
         result = flutterResult
         self.flutterChannel = channel
+        do {
+            audioFile = try AVAudioFile(forReading: url)
+        } catch {
+            audioFile = nil
+            result(FlutterError(code: Constants.audioWaveforms, message: error.localizedDescription, details: "Couldn't initialise AVAudioFile from \(url.absoluteString)"))
+
+        }
     }
 
     deinit {
