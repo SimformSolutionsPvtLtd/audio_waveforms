@@ -1,83 +1,184 @@
-## Migration guide for release 0.1.5+1 to 1.0.0
+# Migration Guides
+#
+## Migrating from v0.x to v1.0
 
-From 1.0.0, waveform extraction has been reworked.
+### Breaking Changes
 
-## New extraction function
+1. **PlayerController Changes**
+   - The `playerController.preparePlayer()` method now returns a `Future<void>` instead of `void`
+   - Waveform extraction is now done through a separate controller: `playerController.waveformExtraction`
 
+2. **WaveformExtraction Changes**
+   - Waveform extraction functionality has been moved to its own controller
+   - The `extractWaveformData()` method is now accessed via `playerController.waveformExtraction.extractWaveformData()`
+
+### Migration Steps
+
+#### Updating Player Initialization
+
+**Before:**
 ```dart
-extractWaveformData(path: 'path', noOfSamples: 100);  
+playerController.preparePlayer(path: filePath);
+// Code that depends on player being ready
 ```
 
-## How to use?
-
-First, extract waveform sample data using the above function which will return waveform data. Or you
-can directly use `preparPlayer` function and it will by default extract the waveform data. This can
-be disabled by setting `shouldExtractWaveform` to false. You can access waveform data
-using `waveformData` parameter from PlayerController or use `onCurrentExtractedWaveformData`
-stream to get the latest waveform data.
-
-To extract the data first set the audio file path to `path` parameter and `noOfSamples` parameter will
-determine no of waveform data in the returned list. So effectively it will determine no of waveform
-bars.
-
-Now, if you want the shorter waveforms which will fit inside the given width then you can calculate
-no of samples by using `getSamplesForWidth` function from `PlayerWaveStyle`. This function requires
-width and it will calculate no of samples based width and spacing (which was set during
-the initialization PlayerWaveStyle instance).
-
-Now set this value like this,
+**After:**
 ```dart
-final samples = getSamplesForWidth(200);
-extractWaveformData(path: 'path', noOfSamples: samples);
+await playerController.preparePlayer(path: filePath);
+// Code that depends on player being ready
 ```
-If you need longer waveform then you can pass any no of sample directly.
 
-If `preparePlayer` was used with `shouldExtractWaveform` enabled then `AudioFileWaveform` widget will
-directly receive the waveform data other wise you have to pass it manually.
+#### Updating Waveform Extraction
 
-Now let's create the widget,
+**Before:**
+```dart
+final waveformData = await playerController.extractWaveformData(path: filePath);
+```
+
+**After:**
+```dart
+final waveformData = await playerController.waveformExtraction.extractWaveformData(path: filePath);
+```
+
+#### Updating Event Listeners
+
+**Before:**
+```dart
+playerController.onCurrentExtractedWaveformData.listen((data) {
+  // Handle waveform data
+});
+
+playerController.onExtractionProgress.listen((progress) {
+  // Handle extraction progress
+});
+```
+
+**After:**
+```dart
+playerController.waveformExtraction.onCurrentExtractedWaveformData.listen((data) {
+  // Handle waveform data
+});
+
+playerController.waveformExtraction.onExtractionProgress.listen((progress) {
+  // Handle extraction progress
+});
+```
+
+## Migrating from v1.x to v2.0
+
+### Breaking Changes
+
+1. **Recorder Initialization**
+   - The `checkPermission()` method is now asynchronous and returns a `Future<bool>`
+
+2. **AudioFileWaveforms Widget**
+   - The `playerController` parameter is now required
+   - Added `waveformType` parameter with default value `WaveformType.fitWidth`
+
+3. **WaveStyle Changes**
+   - The `showDurationLabel` now defaults to `true`
+   - Added new parameters for customizing duration labels
+
+### Migration Steps
+
+#### Updating Recorder Initialization
+
+**Before:**
+```dart
+recorderController.checkPermission();
+if (recorderController.hasPermission) {
+  // Start recording
+}
+```
+
+**After:**
+```dart
+final hasPermission = await recorderController.checkPermission();
+if (hasPermission) {
+  // Start recording
+}
+```
+
+#### Updating AudioFileWaveforms Widget
+
+**Before:**
 ```dart
 AudioFileWaveforms(
-    size: Size(200, 100),
-    controller: controller,
-    waveformType: WaveformType.fitWidth,
-    continuousWaveform: true,
+  size: Size(300, 70),
+  playerController: playerController,
 );
 ```
-Now, there are two types of waveforms for this,
-1. fitWidth
-2. long
 
-* fitWidth -: These waveforms are preferable for limited with as above we used. With these waveforms,
-  we can seek through them with continuous drag gestures or tap gestures.
-
-* long -: These waveforms are preferable where waveform bars exceed the screen and need to be
-  scrolled to reach the end. With this waveform, we can seek through only by dragging them.
-
-Extracting the waveform data is a resource heavy task so it may take some time to extract. Now based on
-that, you can directly show the waveforms as soon as newer values get extracted by setting
-`continousWaveform` to true. If it's set to false then it will wait for the whole extraction process to
-complete.
-
-As extraction process is resource heavy, we can directly provide waveformData to `AudioFileWaveforms`
-widget and it will ignore the `continuousWaveform` flag and directly show the waveforms without any waiting.
-So the process will be as below,
+**After:**
 ```dart
-final waveformData = await extractWaveformData(path: 'path', noOfSamples: samples);
-    ...
 AudioFileWaveforms(
-        waveformData: waveformData,
+  controller: playerController,
+  size: Size(300, 70),
+  waveformType: WaveformType.fitWidth,
 );
 ```
 
-Now one last thing, as these waveformData have very small values, We can scale using scaleFactor.
-And to provide some scale feedback while scrolling we can use scrollScale to scale waves while scrolling
-and they will be scaled down to the original scale when scrolling ends.
+#### Updating WaveStyle
+
+**Before:**
 ```dart
-PlayerWaveStyle(
-    scaleFactor: 100,
-    scrollScale: 1.2,
+WaveStyle(
+  showDurationLabel: false,
+  spacing: 5.0,
 );
 ```
 
-To see the list of all parameters and detailed description of parameters visit [documentation](https://pub.dev/documentation/audio_waveforms/latest/audio_waveforms/audio_waveforms-library.html).
+**After:**
+```dart
+WaveStyle(
+  showDurationLabel: false,
+  spacing: 5.0,
+  durationStyle: DurationStyle.timeLeft,
+);
+```
+
+## Migrating from v2.x to v3.0
+
+### Breaking Changes
+
+1. **PlayerController Changes**
+   - Added `UpdateFrequency` enum to control update rate
+   - Changed default behavior of `continuousWaveform` to `true`
+
+2. **New API for Standalone Waveform Extraction**
+   - Added `WaveformExtractionController` class that can be used independently
+
+### Migration Steps
+
+#### Updating Player Controller
+
+**Before:**
+```dart
+playerController.preparePlayer(
+  path: filePath,
+  shouldExtractWaveform: true,
+);
+```
+
+**After:**
+```dart
+playerController.updateFrequency = UpdateFrequency.high;
+await playerController.preparePlayer(
+  path: filePath,
+  shouldExtractWaveform: true,
+);
+```
+
+#### Using Standalone Waveform Extraction
+
+**Before:**
+```dart
+final waveformData = await playerController.waveformExtraction.extractWaveformData(path: filePath);
+```
+
+**After:**
+You can still use the previous method, or use the standalone controller:
+```dart
+final waveformExtraction = WaveformExtractionController();
+final waveformData = await waveformExtraction.extractWaveformData(path: filePath);
+```
