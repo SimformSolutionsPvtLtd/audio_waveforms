@@ -127,7 +127,8 @@ class PlayerController extends ChangeNotifier {
   Future<void> preparePlayer({
     required String path,
     double? volume,
-    bool shouldExtractWaveform = true,
+    WaveformExtractionType waveformExtractionType =
+        WaveformExtractionType.noExtraction,
     int noOfSamples = 100,
   }) async {
     path = Uri.parse(path).path;
@@ -143,20 +144,30 @@ class PlayerController extends ChangeNotifier {
       _setPlayerState(PlayerState.initialized);
     }
 
-    if (shouldExtractWaveform) {
-      waveformExtraction
-          .extractWaveformData(
+    if (waveformExtractionType != WaveformExtractionType.noExtraction) {
+      final completer = Completer<void>();
+      waveformExtraction.extractWaveformData(
         path: path,
         noOfSamples: noOfSamples,
-      )
-          .then(
-        (value) {
-          waveformExtraction.waveformData
-            ..clear()
-            ..addAll(value);
-          notifyListeners();
-        },
       );
+
+      final sub =
+          waveformExtraction.onCurrentExtractedWaveformData.listen((values) {
+        waveformExtraction.waveformData
+          ..clear()
+          ..addAll(values);
+        if (noOfSamples == (values.length + 1)) {
+          completer.complete();
+        }
+      });
+      if (waveformExtractionType == WaveformExtractionType.extractSync) {
+        await completer.future;
+        sub.cancel();
+      } else {
+        completer.future.then(
+          (value) => sub.cancel(),
+        );
+      }
     }
     notifyListeners();
   }
