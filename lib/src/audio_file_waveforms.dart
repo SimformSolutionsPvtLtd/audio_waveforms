@@ -46,7 +46,8 @@ class AudioFileWaveforms extends StatefulWidget {
   /// If decoration is used then use color in it.
   final Color? backgroundColor;
 
-  /// Duration for animation. Defaults to 500 milliseconds.
+  /// Duration for animation. If set to Duration.zero, no animation will occur.
+  /// Defaults to 500 milliseconds.
   final Duration animationDuration;
 
   /// Curve for animation. Defaults to Curves.easeIn
@@ -144,18 +145,24 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   void initState() {
     super.initState();
     _initialiseVariables();
-    _growingWaveController = AnimationController(
-      vsync: this,
-      duration: widget.animationDuration,
-    );
-    _growAnimation = CurvedAnimation(
-      parent: _growingWaveController,
-      curve: widget.animationCurve,
-    );
 
-    _growingWaveController
-      ..forward()
-      ..addListener(_updateGrowAnimationProgress);
+    if (widget.animationDuration == Duration.zero) {
+      _growAnimationProgress = 1.0;
+    } else {
+      _growingWaveController = AnimationController(
+        vsync: this,
+        duration: widget.animationDuration,
+      );
+      _growAnimation = CurvedAnimation(
+        parent: _growingWaveController,
+        curve: widget.animationCurve,
+      );
+
+      _growingWaveController
+        ..forward()
+        ..addListener(_updateGrowAnimationProgress);
+    }
+
     onCurrentDurationSubscription =
         playerController.onCurrentDurationChanged.listen((event) {
       _seekProgress.value = event;
@@ -188,7 +195,11 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     onCurrentExtractedWaveformData?.cancel();
     onCompletionSubscription.cancel();
     playerController.removeListener(_addWaveformDataFromController);
-    _growingWaveController.dispose();
+
+    if (widget.animationDuration != Duration.zero) {
+      _growingWaveController.dispose();
+    }
+
     super.dispose();
   }
 
