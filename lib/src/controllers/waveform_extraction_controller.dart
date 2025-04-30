@@ -29,7 +29,7 @@ class WaveformExtractionController {
 
   /// This returns waveform data which can be used by [AudioFileWaveforms]
   /// to display waveforms.
-  List<double> get waveformData => _waveformData.toList();
+  List<double> get waveformData => _waveformData;
 
   /// A stream to get current extracted waveform data. This stream will emit
   /// list of doubles which are waveform data point.
