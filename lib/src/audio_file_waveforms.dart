@@ -203,6 +203,42 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(AudioFileWaveforms oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Vérifier si les waveformData ont changé
+    if (widget.waveformData != oldWidget.waveformData) {
+      if (widget.waveformData.isNotEmpty) {
+        _addWaveformData(widget.waveformData);
+      }
+    }
+    
+    // Vérifier si d'autres propriétés importantes ont changé
+    if (widget.playerWaveStyle != oldWidget.playerWaveStyle ||
+        widget.size != oldWidget.size ||
+        widget.waveformType != oldWidget.waveformType) {
+      if (mounted) setState(() {});
+    }
+    
+    // Mettre à jour les variables si nécessaire
+    if (widget.margin != oldWidget.margin ||
+        widget.padding != oldWidget.padding ||
+        widget.decoration != oldWidget.decoration ||
+        widget.backgroundColor != oldWidget.backgroundColor ||
+        widget.animationDuration != oldWidget.animationDuration ||
+        widget.animationCurve != oldWidget.animationCurve ||
+        widget.clipBehavior != oldWidget.clipBehavior) {
+      margin = widget.margin;
+      padding = widget.padding;
+      decoration = widget.decoration;
+      backgroundColor = widget.backgroundColor;
+      animationDuration = widget.animationDuration;
+      animationCurve = widget.animationCurve;
+      clipBehavior = widget.clipBehavior;
+    }
+  }
+
   double _audioProgress = 0.0;
   double _cachedAudioProgress = 0.0;
 
