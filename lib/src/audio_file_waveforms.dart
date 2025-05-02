@@ -163,6 +163,8 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
         ..addListener(_updateGrowAnimationProgress);
     }
 
+    _initializeAudioProgress();
+
     onCurrentDurationSubscription =
         playerController.onCurrentDurationChanged.listen((event) {
       _seekProgress.value = event;
@@ -206,21 +208,21 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   @override
   void didUpdateWidget(AudioFileWaveforms oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Vérifier si les waveformData ont changé
     if (widget.waveformData != oldWidget.waveformData) {
       if (widget.waveformData.isNotEmpty) {
         _addWaveformData(widget.waveformData);
       }
     }
-    
+
     // Vérifier si d'autres propriétés importantes ont changé
     if (widget.playerWaveStyle != oldWidget.playerWaveStyle ||
         widget.size != oldWidget.size ||
         widget.waveformType != oldWidget.waveformType) {
       if (mounted) setState(() {});
     }
-    
+
     // Mettre à jour les variables si nécessaire
     if (widget.margin != oldWidget.margin ||
         widget.padding != oldWidget.padding ||
@@ -452,5 +454,17 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
         setState(() {});
       }
     });
+  }
+
+  Future<void> _initializeAudioProgress() async {
+    if (playerController.playerState == PlayerState.paused &&
+        playerController.maxDuration > 0) {
+      final currentPosition =
+          await playerController.getDuration(DurationType.current);
+      if (currentPosition > 0) {
+        _seekProgress.value = currentPosition;
+        _updatePlayerPercent();
+      }
+    }
   }
 }
