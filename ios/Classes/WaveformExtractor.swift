@@ -110,7 +110,7 @@ public class WaveformExtractor {
                 )
             }
             
-            let progress = Float(i - startIndex + 1) / Float(endIndex - startIndex)
+            progress = Float(i - startIndex + 1) / Float(endIndex - startIndex)
             await sendWaveformDataToFlutter(
                 waveformStorage: waveformStorage,
                 progress: progress,
