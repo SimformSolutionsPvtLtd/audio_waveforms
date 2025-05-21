@@ -72,6 +72,15 @@ object Constants {
     const val resultFilePath = "resultFilePath"
     const val resultDuration = "resultDuration"
     const val pauseAllPlayers = "pauseAllPlayers"
+
+    /// Indicates 128 bits in a single channel for 8-bit PCM
+    const val EIGHT_BITS = 128f
+
+    /// Indicates 32767 bits in a single channel for 16-bit PCM
+    const val SIXTEEN_BITS = 32767f
+
+    /// Indicates 2147483648f bits in a single channel for 32-bit PCM
+    const val THIRTY_TWO_BITS = 2.14748365E9f
 }
 
 enum class FinishMode(val value: Int) {
