@@ -203,13 +203,14 @@ class AudioWaveformsInterface {
 
   Future<void> setMethodCallHandler() async {
     _methodChannel.setMethodCallHandler((call) async {
+      final instance = PlatformStreams.instance;
       switch (call.method) {
         case Constants.onCurrentDuration:
           var duration = call.arguments[Constants.current];
           var key = call.arguments[Constants.playerKey];
           if (duration.runtimeType == int) {
             var identifier = PlayerIdentifier<int>(key, duration);
-            PlatformStreams.instance.addCurrentDurationEvent(identifier);
+            instance.addCurrentDurationEvent(identifier);
           }
           break;
         case Constants.onDidFinishPlayingAudio:
@@ -218,11 +219,10 @@ class AudioWaveformsInterface {
               getPlayerState(call.arguments[Constants.finishType]);
           var stateIdentifier = PlayerIdentifier<PlayerState>(key, playerState);
           var completionIdentifier = PlayerIdentifier<void>(key, null);
-          PlatformStreams.instance.addCompletionEvent(completionIdentifier);
-          PlatformStreams.instance.addPlayerStateEvent(stateIdentifier);
-          if (PlatformStreams.instance.playerControllerFactory[key] != null) {
-            PlatformStreams.instance.playerControllerFactory[key]
-                ?._playerState = playerState;
+          instance.addCompletionEvent(completionIdentifier);
+          instance.addPlayerStateEvent(stateIdentifier);
+          if (instance.playerControllerFactory[key] != null) {
+            instance.playerControllerFactory[key]?._playerState = playerState;
           }
           break;
         case Constants.onCurrentExtractedWaveformData:
@@ -230,12 +230,18 @@ class AudioWaveformsInterface {
           var progress = call.arguments[Constants.progress];
           var waveformData =
               List<double>.from(call.arguments[Constants.waveformData]);
-          PlatformStreams.instance.addExtractedWaveformDataEvent(
+          instance.addExtractedWaveformDataEvent(
             PlayerIdentifier<List<double>>(key, waveformData),
           );
-          PlatformStreams.instance.addExtractionProgress(
+          instance.addExtractionProgress(
             PlayerIdentifier<double>(key, progress),
           );
+          break;
+        case Constants.onAudioChunk:
+          var bytes = call.arguments[Constants.bytes];
+          if (bytes is Uint8List) {
+            instance.addRecordedBytes(bytes);
+          }
           break;
       }
     });
