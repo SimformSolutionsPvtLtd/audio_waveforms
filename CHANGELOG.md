@@ -1,6 +1,7 @@
 ## 2.0.0 (Unreleased)
 
 - Fixed [#350](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/350) - Left most visible wave is clipped in half when recording.
+- Fixed [#397](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/397) - iOS crashes at `extractWaveform` instead provide error log
 - Fixed [#390](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/390) - Setting continuousWaveform to false not working
 - Feature [#415](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/415) - Add stop extraction method and asynchronous extraction of waveform in ios
 - Feature [#204](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/204) - Move play head position with waveform gesture `onTapDown`.
