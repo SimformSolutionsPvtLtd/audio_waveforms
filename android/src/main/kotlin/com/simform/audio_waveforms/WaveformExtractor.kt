@@ -35,6 +35,7 @@ class WaveformExtractor(
     private var pcmEncodingBit = 16
     private var totalSamples = 0L
     private var perSamplePoints = 0L
+    private var isReplySubmitted = false
 
     private fun getFormat(path: String): MediaFormat? {
         val mediaExtractor = MediaExtractor()
@@ -62,13 +63,23 @@ class WaveformExtractor(
                 it.configure(format, null, null, 0)
                 it.setCallback(object : MediaCodec.Callback() {
                     override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
-                        if (inputEof) return
+                        if (inputEof || index < 0) return
                         val extractor = extractor ?: return
                         codec.getInputBuffer(index)?.let { buf ->
                             val size = extractor.readSampleData(buf, 0)
-                            if (size > 0) {
-                                codec.queueInputBuffer(index, 0, size, extractor.sampleTime, 0)
-                                extractor.advance()
+                            val sampleTime = extractor.sampleTime
+                            if (size > 0 && sampleTime >= 0) {
+                                try {
+                                    codec.queueInputBuffer(index, 0, size, sampleTime, 0)
+                                    extractor.advance()
+                                } catch (e: Exception) {
+                                    inputEof = true
+                                    result.error(
+                                        Constants.LOG_TAG,
+                                        e.message,
+                                        "Invalid input buffer."
+                                    )
+                                }
                             } else {
                                 codec.queueInputBuffer(
                                     index,
@@ -104,12 +115,15 @@ class WaveformExtractor(
                     }
 
                     override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {
-                        result.error(
-                            Constants.LOG_TAG,
-                            e.message,
-                            "An error is thrown while decoding the audio file"
-                        )
-                        finishCount.countDown()
+                        if (!isReplySubmitted) {
+                            result.error(
+                                Constants.LOG_TAG,
+                                e.message,
+                                "An error is thrown while decoding the audio file"
+                            )
+                            isReplySubmitted = true
+                            finishCount.countDown()
+                        }
                     }
 
                     override fun onOutputBufferAvailable(
@@ -149,11 +163,14 @@ class WaveformExtractor(
             }
 
         } catch (e: Exception) {
-            result.error(
-                Constants.LOG_TAG,
-                e.message,
-                "An error is thrown before decoding the audio file"
-            )
+            if (!isReplySubmitted) {
+                result.error(
+                    Constants.LOG_TAG,
+                    e.message,
+                    "An error is thrown before decoding the audio file"
+                )
+                isReplySubmitted = true
+            }
         }
 
 
