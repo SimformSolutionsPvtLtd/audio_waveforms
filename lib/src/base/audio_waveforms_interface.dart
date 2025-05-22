@@ -12,7 +12,6 @@ class AudioWaveformsInterface {
   Future<bool> record({
     required RecorderSettings recorderSetting,
     String? path,
-    bool useLegacyNormalization = false,
     bool overrideAudioSession = true,
   }) async {
     final isRecording = await _methodChannel.invokeMethod(
@@ -21,11 +20,8 @@ class AudioWaveformsInterface {
           ? recorderSetting.iosToJson(
               path: path,
               overrideAudioSession: overrideAudioSession,
-              useLegacyNormalization: useLegacyNormalization,
             )
-          : {
-              Constants.useLegacyNormalization: useLegacyNormalization,
-            },
+          : null,
     );
     return isRecording ?? false;
   }
@@ -236,6 +232,16 @@ class AudioWaveformsInterface {
           PlatformStreams.instance.addExtractionProgress(
             PlayerIdentifier<double>(key, progress),
           );
+          break;
+        case Constants.onAudioChunk:
+          var normalisedRms = call.arguments[Constants.normalisedRms];
+          var bytes = call.arguments[Constants.bytes];
+          if (normalisedRms is double) {
+            PlatformStreams.instance.addAmplitudeEvent(normalisedRms);
+          }
+          if (bytes is Uint8List) {
+            PlatformStreams.instance.addRecordedBytes(bytes);
+          }
           break;
       }
     });
