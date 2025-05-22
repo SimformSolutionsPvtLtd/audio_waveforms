@@ -46,7 +46,8 @@ class AudioFileWaveforms extends StatefulWidget {
   /// If decoration is used then use color in it.
   final Color? backgroundColor;
 
-  /// Duration for animation. Defaults to 500 milliseconds.
+  /// Duration for animation. If set to Duration.zero, no animation will occur.
+  /// Defaults to 500 milliseconds.
   final Duration animationDuration;
 
   /// Curve for animation. Defaults to Curves.easeIn
@@ -158,18 +159,26 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   void initState() {
     super.initState();
     _initialiseVariables();
-    _growingWaveController = AnimationController(
-      vsync: this,
-      duration: widget.animationDuration,
-    );
-    _growAnimation = CurvedAnimation(
-      parent: _growingWaveController,
-      curve: widget.animationCurve,
-    );
 
-    _growingWaveController
-      ..forward()
-      ..addListener(_updateGrowAnimationProgress);
+    if (widget.animationDuration == Duration.zero) {
+      _growAnimationProgress = 1.0;
+    } else {
+      _growingWaveController = AnimationController(
+        vsync: this,
+        duration: widget.animationDuration,
+      );
+      _growAnimation = CurvedAnimation(
+        parent: _growingWaveController,
+        curve: widget.animationCurve,
+      );
+
+      _growingWaveController
+        ..forward()
+        ..addListener(_updateGrowAnimationProgress);
+    }
+
+    _initializeAudioProgress();
+
     onCurrentDurationSubscription =
         playerController.onCurrentDurationChanged.listen((event) {
       _seekProgress.value = event;
@@ -202,8 +211,48 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     onCurrentExtractedWaveformData?.cancel();
     onCompletionSubscription.cancel();
     playerController.removeListener(_addWaveformDataFromController);
-    _growingWaveController.dispose();
+
+    if (widget.animationDuration != Duration.zero) {
+      _growingWaveController.dispose();
+    }
+
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(AudioFileWaveforms oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Vérifier si les waveformData ont changé
+    if (widget.waveformData != oldWidget.waveformData) {
+      if (widget.waveformData.isNotEmpty) {
+        _addWaveformData(widget.waveformData);
+      }
+    }
+
+    // Vérifier si d'autres propriétés importantes ont changé
+    if (widget.playerWaveStyle != oldWidget.playerWaveStyle ||
+        widget.size != oldWidget.size ||
+        widget.waveformType != oldWidget.waveformType) {
+      if (mounted) setState(() {});
+    }
+
+    // Mettre à jour les variables si nécessaire
+    if (widget.margin != oldWidget.margin ||
+        widget.padding != oldWidget.padding ||
+        widget.decoration != oldWidget.decoration ||
+        widget.backgroundColor != oldWidget.backgroundColor ||
+        widget.animationDuration != oldWidget.animationDuration ||
+        widget.animationCurve != oldWidget.animationCurve ||
+        widget.clipBehavior != oldWidget.clipBehavior) {
+      margin = widget.margin;
+      padding = widget.padding;
+      decoration = widget.decoration;
+      backgroundColor = widget.backgroundColor;
+      animationDuration = widget.animationDuration;
+      animationCurve = widget.animationCurve;
+      clipBehavior = widget.clipBehavior;
+    }
   }
 
   double _audioProgress = 0.0;
@@ -430,5 +479,17 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
         setState(() {});
       }
     });
+  }
+
+  Future<void> _initializeAudioProgress() async {
+    if (playerController.playerState == PlayerState.paused &&
+        playerController.maxDuration > 0) {
+      final currentPosition =
+          await playerController.getDuration(DurationType.current);
+      if (currentPosition > 0) {
+        _seekProgress.value = currentPosition;
+        _updatePlayerPercent();
+      }
+    }
   }
 }

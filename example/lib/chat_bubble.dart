@@ -102,11 +102,18 @@ class _WaveBubbleState extends State<WaveBubble> {
     if (widget.index == null && widget.path == null && file?.path == null) {
       return;
     }
+    late final WaveformExtractionType waveformExtractionType;
+    if (widget.index != null) {
+      waveformExtractionType = widget.index!.isEven
+          ? WaveformExtractionType.extractAsync
+          : WaveformExtractionType.noExtraction;
+    } else {
+      waveformExtractionType = WaveformExtractionType.extractAsync;
+    }
     // Prepare player with extracting waveform if index is even.
     controller.preparePlayer(
-      path: widget.path ?? file!.path,
-      shouldExtractWaveform: widget.index?.isEven ?? true,
-    );
+        path: widget.path ?? file!.path,
+        waveformExtractionType: waveformExtractionType);
     // Extracting waveform separately if index is odd.
     if (widget.index?.isOdd ?? false) {
       controller.waveformExtraction
