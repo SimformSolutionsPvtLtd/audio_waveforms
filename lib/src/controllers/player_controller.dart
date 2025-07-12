@@ -130,7 +130,10 @@ class PlayerController extends ChangeNotifier {
     bool shouldExtractWaveform = true,
     int noOfSamples = 100,
   }) async {
-    //path = Uri.parse(path).path;//don't need this as it will break the url structure expected by Exoplayer
+    if (!path.startsWith('http://') || !path.startsWith('https://')) {
+      // Keep the full URL for remote files and strip for local files
+      path = Uri.parse(path).path;
+    }
     final isPrepared = await AudioWaveformsInterface.instance.preparePlayer(
       path: path,
       key: playerKey,
