@@ -206,24 +206,24 @@ class AudioWaveformsInterface {
       final instance = PlatformStreams.instance;
       switch (call.method) {
         case Constants.onCurrentDuration:
-          var duration = call.arguments[Constants.current];
-          var key = call.arguments[Constants.playerKey];
+          final duration = call.arguments[Constants.current];
+          final key = call.arguments[Constants.playerKey];
           if (duration.runtimeType == int) {
-            var identifier = PlayerIdentifier<int>(key, duration);
+            final identifier = PlayerIdentifier<int>(key, duration);
             instance.addCurrentDurationEvent(identifier);
           }
           break;
         case Constants.onDidFinishPlayingAudio:
-          var key = call.arguments[Constants.playerKey];
-          var playerState =
+          final key = call.arguments[Constants.playerKey];
+          final playerState =
               getPlayerState(call.arguments[Constants.finishType]);
-          var stateIdentifier = PlayerIdentifier<PlayerState>(key, playerState);
-          var completionIdentifier = PlayerIdentifier<void>(key, null);
-          instance.addCompletionEvent(completionIdentifier);
-          instance.addPlayerStateEvent(stateIdentifier);
-          if (instance.playerControllerFactory[key] != null) {
-            instance.playerControllerFactory[key]?._playerState = playerState;
-          }
+          final stateIdentifier =
+              PlayerIdentifier<PlayerState>(key, playerState);
+          final completionIdentifier = PlayerIdentifier<void>(key, null);
+          instance
+            ..addCompletionEvent(completionIdentifier)
+            ..addPlayerStateEvent(stateIdentifier)
+            ..playerControllerFactory[key]?._playerState = playerState;
           break;
         case Constants.onCurrentExtractedWaveformData:
           var key = call.arguments[Constants.playerKey];
@@ -238,10 +238,9 @@ class AudioWaveformsInterface {
           );
           break;
         case Constants.onAudioChunk:
-          var bytes = call.arguments[Constants.bytes];
-          if (bytes is Uint8List) {
-            instance.addRecordedBytes(bytes);
-          }
+          final bytes = call.arguments[Constants.bytes];
+          if (bytes is! Uint8List) break;
+          instance.addRecordedBytes(bytes);
           break;
       }
     });

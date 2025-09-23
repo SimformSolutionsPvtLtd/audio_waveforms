@@ -39,11 +39,12 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
                     }
                 } catch {
                     result(FlutterError(code: Constants.audioWaveforms, message: "Couldn't set audio session.", details: error.localizedDescription))
-
+                    return
                 }
                 
             } catch {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Failed to prepare player", details: error.localizedDescription))
+                return
             }
             player?.enableRate = true
             player?.rate = 1.0

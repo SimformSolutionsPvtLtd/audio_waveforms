@@ -95,16 +95,14 @@ class PlatformStreams {
   }
 
   void addRecordedBytes(Uint8List event) {
-    if (!_recordedBytesController.isClosed) {
-      _recordedBytesController.add(event);
-    }
+    if (_recordedBytesController.isClosed) return;
+    _recordedBytesController.add(event);
   }
 
   void dispose() {
     _currentDurationController.close();
     _playerStateController.close();
     _extractedWaveformDataController.close();
-    _currentDurationController.close();
     _completionController.close();
     _recordedBytesController.close();
     AudioWaveformsInterface.instance.removeMethodCallHandler();

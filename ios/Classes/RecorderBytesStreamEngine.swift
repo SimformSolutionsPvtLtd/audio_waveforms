@@ -28,7 +28,7 @@ class RecorderBytesStreamEngine {
         do {
             try audioEngine.start()
         } catch {
-//            result(FlutterError(code: Constants.audioWaveforms, message: "Error starting Audio Engine", details: error.localizedDescription))
+           result(FlutterError(code: Constants.audioWaveforms, message: "Error starting Audio Engine", details: error.localizedDescription))
         }
     }
 
@@ -63,9 +63,5 @@ class RecorderBytesStreamEngine {
                 Constants.bytes: buffer
             ])
         }
-    }
-
-    deinit {
-
     }
 }
