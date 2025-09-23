@@ -56,6 +56,7 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             
             if(audioUrl == nil){
                 result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise file URL", details: nil))
+                return
             }
             audioRecorder = try AVAudioRecorder(url: audioUrl!, settings: settings as [String : Any])
             
@@ -91,6 +92,9 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             }
         } else {
             sendResult(result, duration: Int(CMTime.zero.seconds))
+        }
+        if recordingSettings.overrideAudioSession {
+            try? AVAudioSession.sharedInstance().setActive(false)
         }
         audioRecorder = nil
     }
@@ -177,8 +181,10 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
         let ifExists = FileManager.default.fileExists(atPath: directory)
         if(directory.isEmpty){
             result(FlutterError(code: Constants.audioWaveforms, message: "The document directory path is empty", details: nil))
+            return ""
         } else if(!ifExists) {
             result(FlutterError(code: Constants.audioWaveforms, message: "The document directory does't exists", details: nil))
+            return ""
         }
         return directory
     }

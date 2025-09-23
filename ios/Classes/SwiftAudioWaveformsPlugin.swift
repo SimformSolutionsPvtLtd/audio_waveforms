@@ -2,8 +2,8 @@ import Flutter
 import UIKit
 
 public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
-    
-    final var audioRecorder :AudioRecorder
+
+    let audioRecorder: AudioRecorder
     var audioPlayers = [String: AudioPlayer]()
     var extractors = [String: WaveformExtractor]()
     var flutterChannel: FlutterMethodChannel
