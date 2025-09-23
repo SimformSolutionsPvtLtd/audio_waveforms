@@ -130,7 +130,14 @@ class PlayerController extends ChangeNotifier {
     bool shouldExtractWaveform = true,
     int noOfSamples = 100,
   }) async {
-    path = Uri.parse(path).path;
+    if (!path.startsWith('http')) {
+      // Keep the full URL for remote files and strip for local files
+      final uri = Uri.tryParse(path);
+      if (uri == null) {
+        throw ArgumentError('Invalid path format: $path');
+      }
+      path = uri.path;
+    }
     final isPrepared = await AudioWaveformsInterface.instance.preparePlayer(
       path: path,
       key: playerKey,

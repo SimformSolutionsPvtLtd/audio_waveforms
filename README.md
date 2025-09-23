@@ -260,7 +260,7 @@ Widget build(BuildContext context) {
 2. Loading from device storage
    - When you load a file from device storage, they are already in the memory so you can directly set the file path.    
 3. Loading from network
-   - Currently playing remote audio file isn't supported so first you will need to download it and then you can play it.  
+   - Just pass the URL. But make sure its HTTPs otherwise it will cause Cleartext HTTP traffic error.  
 4. Deciding if waveforms should be extracted with the preparePlayer
    ```dart
    playerController.preparePlayer(shouldExtractWaveform: true);
