@@ -5,13 +5,13 @@ import android.media.AudioFormat
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
-import android.net.Uri
 import android.os.Build
 import io.flutter.plugin.common.MethodChannel
 import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 import kotlin.math.pow
 import kotlin.math.sqrt
+import androidx.core.net.toUri
 
 class WaveformExtractor(
     private val path: String,
@@ -38,9 +38,12 @@ class WaveformExtractor(
     private var isReplySubmitted = false
 
     private fun getFormat(path: String): MediaFormat? {
+        if (path.isEmpty()) {
+            return null
+        }
         val mediaExtractor = MediaExtractor()
         this.extractor = mediaExtractor
-        val uri = Uri.parse(path)
+        val uri = path.toUri()
         mediaExtractor.setDataSource(context, uri, null)
         val trackCount = mediaExtractor.trackCount
         repeat(trackCount) {
@@ -131,6 +134,7 @@ class WaveformExtractor(
                         index: Int,
                         info: MediaCodec.BufferInfo
                     ) {
+                        if (index < 0 || decoder == null) return
                         if (info.size > 0) {
                             codec.getOutputBuffer(index)?.let { buf ->
                                 val size = info.size
