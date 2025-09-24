@@ -54,7 +54,7 @@ data class RecorderSettings(
                 path = json[Constants.path] as String?,
                 encoder = Encoder.fromString(json[Constants.encoder] as String?),
                 sampleRate = (json[Constants.sampleRate] as Int?) ?: 44100,
-                bitRate = json[Constants.bitRate] as Int
+                bitRate = json[Constants.bitRate] as Int? ?: 128000
             )
         }
     }

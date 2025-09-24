@@ -214,11 +214,11 @@ enum class Encoder {
      * For OPUS, uses OGG container format on Android Q and above.
      * 
      * @throws IllegalArgumentException if WAV is selected (uses raw PCM)
-     * @throws Exception if OPUS is selected on Android below Q
+     * @throws UnsupportedOperationException if OPUS is selected on Android below Q
      */
     val toOutputFormat: Int
         get() = when (this) {
-            WAV -> throw IllegalArgumentException("Illegal format selection.")
+            WAV -> throw IllegalArgumentException("WAV format does not support MediaRecorder output format.")
             AAC_LC, AAC_HE, AAC_ELD -> MediaRecorder.OutputFormat.MPEG_4
             AMR_NB -> MediaRecorder.OutputFormat.AMR_NB
             AMR_WB -> MediaRecorder.OutputFormat.AMR_WB
@@ -226,7 +226,7 @@ enum class Encoder {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG
                 } else {
-                    throw Exception("Minimum android Q is required for $this encoder.")
+                    throw UnsupportedOperationException("OPUS encoder requires Android API level 29 (Android Q) or higher.")
                 }
             }
         }
@@ -269,13 +269,13 @@ enum class Encoder {
          */
         fun fromString(value: String?): Encoder {
             return try {
-                if (value == null) {
-                    Log.e(LOG_TAG, "Encoder type is null. Defaulting to AAC_LC.")
+                if (value.isNullOrBlank()) {
+                    Log.w(LOG_TAG, "Encoder type is null or blank. Defaulting to AAC_LC.")
                     return AAC_LC
                 }
                 valueOf(value)
-            } catch (_: IllegalArgumentException) {
-                Log.e(LOG_TAG, "Invalid encoder type: $value. Defaulting to AAC_LC.")
+            } catch (e: IllegalArgumentException) {
+                Log.e(LOG_TAG, "Invalid encoder type: '$value'. Defaulting to AAC_LC.", e)
                 AAC_LC
             }
         }
