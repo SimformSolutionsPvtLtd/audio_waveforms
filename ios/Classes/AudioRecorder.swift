@@ -63,7 +63,7 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             audioRecorder?.delegate = self
             audioRecorder?.isMeteringEnabled = true
             audioRecorder?.record()
-            bytesStreamEngine.attach()
+            bytesStreamEngine.attach(result: result)
             result(true)
         } catch {
             result(FlutterError(code: Constants.audioWaveforms, message: "Failed to start recording", details: error.localizedDescription))
@@ -92,9 +92,6 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             }
         } else {
             sendResult(result, duration: Int(CMTime.zero.seconds))
-        }
-        if recordingSettings.overrideAudioSession {
-            try? AVAudioSession.sharedInstance().setActive(false)
         }
         audioRecorder = nil
     }

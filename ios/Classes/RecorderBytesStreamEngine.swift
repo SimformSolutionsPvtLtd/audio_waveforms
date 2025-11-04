@@ -7,6 +7,7 @@
 
 import Foundation
 import AVFAudio
+import Accelerate
 
 class RecorderBytesStreamEngine {
     private var audioEngine = AVAudioEngine()
@@ -17,12 +18,12 @@ class RecorderBytesStreamEngine {
         flutterChannel = channel
     }
 
-    func attach() {
+    func attach(result: @escaping FlutterResult) {
         let inputNode = audioEngine.inputNode
         audioFormat = inputNode.outputFormat(forBus: 0)
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: audioFormat) { (buffer, time) in
-            if let convertedBytes = self.convertToFlutterType(buffer) {
-                self.sendToFlutter(convertedBytes)
+            if let (convertedBytes, normalizedRms) = self.convertToFlutterType(buffer) {
+                self.sendToFlutter(convertedBytes, normalizedRms: normalizedRms)
             }
         }
         do {
@@ -37,30 +38,45 @@ class RecorderBytesStreamEngine {
         audioEngine.stop()
     }
 
-    private func convertToFlutterType(_ buffer: AVAudioPCMBuffer) -> FlutterStandardTypedData? {
+    private func convertToFlutterType(_ buffer: AVAudioPCMBuffer) -> (FlutterStandardTypedData, Double)? {
         guard let channelData = buffer.floatChannelData?[0] else { return nil }
         let frameLength = Int(buffer.frameLength)
 
         // Convert Float32 buffer to UInt8 (byte array)
         var audioSamples = [Float32](repeating: 0.0, count: frameLength)
+        var sumOfSquares: Float = 0.0
+
+
         for i in 0..<frameLength {
             audioSamples[i] = channelData[i]
+            sumOfSquares += channelData[i] * channelData[i]
         }
+
+        // Calculate RMS
+        var rms: Float = 0.0
+        vDSP_rmsqv(
+            audioSamples, 1, &rms,
+            vDSP_Length(frameLength)
+        )
+        
+        // Normalize RMS to 0-1 range (assuming max amplitude is 1.0 for Float32)
+        let normalizedRms = Double(min(rms, 1.0))
 
         let byteCount = frameLength * MemoryLayout<Float32>.size
         let byteBuffer = audioSamples.withUnsafeBufferPointer { bufferPointer in
             return Data(buffer: bufferPointer)
         }
         let convertedBuffer = FlutterStandardTypedData(bytes: byteBuffer)
-        return convertedBuffer
+        return (convertedBuffer, normalizedRms)
 
     }
 
-    private func sendToFlutter(_ buffer: FlutterStandardTypedData) {
+    private func sendToFlutter(_ buffer: FlutterStandardTypedData, normalizedRms: Double) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             flutterChannel.invokeMethod(Constants.onAudioChunk, arguments: [
-                Constants.bytes: buffer
+                Constants.bytes: buffer,
+                Constants.normalisedRms: normalizedRms
             ])
         }
     }
