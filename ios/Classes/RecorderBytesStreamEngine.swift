@@ -7,6 +7,7 @@
 
 import Foundation
 import AVFAudio
+import Accelerate
 
 class RecorderBytesStreamEngine {
     private var audioEngine = AVAudioEngine()
@@ -52,7 +53,11 @@ class RecorderBytesStreamEngine {
         }
 
         // Calculate RMS
-        let rms = sqrt(sumOfSquares / Float(frameLength))
+        var rms: Float = 0.0
+        vDSP_rmsqv(
+            audioSamples, 1, &rms,
+            vDSP_Length(frameLength)
+        )
         
         // Normalize RMS to 0-1 range (assuming max amplitude is 1.0 for Float32)
         let normalizedRms = Double(min(rms, 1.0))
