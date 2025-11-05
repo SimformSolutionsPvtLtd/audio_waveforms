@@ -1,4 +1,4 @@
-## 2.0.0 (Unreleased)
+## 2.0.0
 
 - Fixed [#350](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/350) - Left most visible wave is clipped in half when recording.
 - Fixed [#397](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/397) - iOS crashes at `extractWaveform` instead provide error log
