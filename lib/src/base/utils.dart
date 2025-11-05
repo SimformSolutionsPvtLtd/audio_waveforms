@@ -13,20 +13,7 @@ extension IntExtension on int {
 }
 
 /// State of recorder
-enum RecorderState {
-  initialized,
-  recording,
-  paused,
-  stopped;
-
-  bool get isRecording => this == RecorderState.recording;
-
-  bool get isInitialized => this == RecorderState.initialized;
-
-  bool get isPaused => this == RecorderState.paused;
-
-  bool get isStopped => this == RecorderState.stopped;
-}
+enum RecorderState { initialized, recording, paused, stopped }
 
 /// Android encoders.
 ///
@@ -36,17 +23,25 @@ enum RecorderState {
 /// Check [MediaRecorder.AudioEncoder](https://developer.android.com/reference/android/media/MediaRecorder.AudioEncoder)
 /// for more info.
 enum AndroidEncoder {
-  wav('WAV'),
-  aacLc('AAC_LC'),
-  aacHe('AAC_HE'),
-  aacEld('AAC_ELD'),
-  amrNb('AMR_NB'),
-  amrWb('AMR_WB'),
-  opus('OPUS');
+  wav,
+  aacLc,
+  aacHe,
+  aacEld,
+  amrNb,
+  amrWb,
+  opus;
 
-  const AndroidEncoder(this.nativeFormat);
-
-  final String nativeFormat;
+  String toNativeFormat() {
+    return switch (this) {
+      AndroidEncoder.wav => 'WAV',
+      AndroidEncoder.aacLc => 'AAC_LC',
+      AndroidEncoder.aacHe => 'AAC_HE',
+      AndroidEncoder.aacEld => 'AAC_ELD',
+      AndroidEncoder.amrNb => 'AMR_NB',
+      AndroidEncoder.amrWb => 'AMR_WB',
+      AndroidEncoder.opus => 'OPUS',
+    };
+  }
 }
 
 /// IOS encoders.
@@ -84,15 +79,7 @@ enum PlayerState {
   paused,
 
   /// when player is stopped. Default state of any player ([uninitialised]).
-  stopped;
-
-  bool get isPlaying => this == PlayerState.playing;
-
-  bool get isStopped => this == PlayerState.stopped;
-
-  bool get isInitialised => this == PlayerState.initialized;
-
-  bool get isPaused => this == PlayerState.paused;
+  stopped
 }
 
 /// There are two type duration which we can get while playing an audio.
@@ -144,13 +131,35 @@ enum WaveformType {
   /// pushed back and a middle line shows current progress.
   ///
   /// This waveform only allows seek with drag.
-  long;
+  long
+}
 
+extension WaveformTypeExtension on WaveformType {
   /// Check WaveformType is equals to fitWidth or not.
   bool get isFitWidth => this == WaveformType.fitWidth;
 
   /// Check WaveformType is equals to long or not.
   bool get isLong => this == WaveformType.long;
+}
+
+extension PlayerStateExtension on PlayerState {
+  bool get isPlaying => this == PlayerState.playing;
+
+  bool get isStopped => this == PlayerState.stopped;
+
+  bool get isInitialised => this == PlayerState.initialized;
+
+  bool get isPaused => this == PlayerState.paused;
+}
+
+extension RecorderStateExtension on RecorderState {
+  bool get isRecording => this == RecorderState.recording;
+
+  bool get isInitialized => this == RecorderState.initialized;
+
+  bool get isPaused => this == RecorderState.paused;
+
+  bool get isStopped => this == RecorderState.stopped;
 }
 
 /// Rate of updating the reported current duration.

@@ -214,11 +214,11 @@ enum class Encoder {
      * For OPUS, uses OGG container format on Android Q and above.
      * 
      * @throws IllegalArgumentException if WAV is selected (uses raw PCM)
-     * @throws UnsupportedOperationException if OPUS is selected on Android below Q
+     * @throws Exception if OPUS is selected on Android below Q
      */
     val toOutputFormat: Int
         get() = when (this) {
-            WAV -> throw IllegalArgumentException("WAV format does not support MediaRecorder output format.")
+            WAV -> throw IllegalArgumentException("Illegal format selection.")
             AAC_LC, AAC_HE, AAC_ELD -> MediaRecorder.OutputFormat.MPEG_4
             AMR_NB -> MediaRecorder.OutputFormat.AMR_NB
             AMR_WB -> MediaRecorder.OutputFormat.AMR_WB
@@ -226,10 +226,30 @@ enum class Encoder {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG
                 } else {
-                    throw UnsupportedOperationException("OPUS encoder requires Android API level 29 (Android Q) or higher.")
+                    throw Exception("Minimum android Q is required for $this encoder.")
                 }
             }
         }
+
+    /**
+     * Gets the appropriate MediaMuxer output format for this encoder
+     *
+     * This property is specifically for MediaMuxer, which uses different
+     * constants than MediaRecorder.OutputFormat.
+     */
+    val toMuxerOutputFormat: Int
+        get() = when (this) {
+            WAV, AMR_NB, AMR_WB -> throw IllegalArgumentException("MediaMuxer not used for this encoder.")
+            AAC_LC, AAC_HE, AAC_ELD -> MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4
+            OPUS -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG
+                } else {
+                    throw Exception("Minimum android Q is required for $this encoder.")
+                }
+            }
+        }
+
 
     /**
      * Indicates whether this encoder requires MediaMuxer
@@ -269,13 +289,13 @@ enum class Encoder {
          */
         fun fromString(value: String?): Encoder {
             return try {
-                if (value.isNullOrBlank()) {
-                    Log.w(LOG_TAG, "Encoder type is null or blank. Defaulting to AAC_LC.")
+                if (value == null) {
+                    Log.e(LOG_TAG, "Encoder type is null. Defaulting to AAC_LC.")
                     return AAC_LC
                 }
                 valueOf(value)
-            } catch (e: IllegalArgumentException) {
-                Log.e(LOG_TAG, "Invalid encoder type: '$value'. Defaulting to AAC_LC.", e)
+            } catch (_: IllegalArgumentException) {
+                Log.e(LOG_TAG, "Invalid encoder type: $value. Defaulting to AAC_LC.")
                 AAC_LC
             }
         }

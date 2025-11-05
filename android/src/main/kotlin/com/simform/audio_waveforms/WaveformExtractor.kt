@@ -6,6 +6,7 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.os.Build
+import android.util.Log
 import io.flutter.plugin.common.MethodChannel
 import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
@@ -189,22 +190,41 @@ class WaveformExtractor(
                         info: MediaCodec.BufferInfo
                     ) {
                         if (index < 0 || decoder == null) return
-                        if (info.size > 0) {
-                            codec.getOutputBuffer(index)?.let { buf ->
-                                val size = info.size
-                                buf.position(info.offset)
-                                when (pcmEncodingBit) {
-                                    8 -> {
-                                        handle8bit(size, buf)
-                                    }
-                                    16 -> {
-                                        handle16bit(size, buf)
-                                    }
-                                    32 -> {
-                                        handle32bit(size, buf)
+                        
+                        try {
+                            if (info.size > 0) {
+                                codec.getOutputBuffer(index)?.let { buf ->
+                                    try {
+                                        val size = info.size
+                                        // Set both position and limit to ensure buffer is accessible
+                                        buf.position(info.offset)
+                                        buf.limit(info.offset + info.size)
+                                        
+                                        when (pcmEncodingBit) {
+                                            8 -> {
+                                                handle8bit(size, buf)
+                                            }
+                                            16 -> {
+                                                handle16bit(size, buf)
+                                            }
+                                            32 -> {
+                                                handle32bit(size, buf)
+                                            }
+                                            else -> {
+                                                Log.e(Constants.LOG_TAG, "Unsupported PCM encoding bit: $pcmEncodingBit")
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e(Constants.LOG_TAG, "Error processing output buffer: ${e.message}")
                                     }
                                 }
+                            }
+                        } finally {
+                            // Always release the buffer, even if processing failed
+                            try {
                                 codec.releaseOutputBuffer(index, false)
+                            } catch (e: IllegalStateException) {
+                                Log.e(Constants.LOG_TAG, "Error releasing output buffer: ${e.message}")
                             }
                         }
 

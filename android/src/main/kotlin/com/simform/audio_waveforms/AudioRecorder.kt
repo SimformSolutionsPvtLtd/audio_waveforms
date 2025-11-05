@@ -24,10 +24,10 @@ import java.io.File
 import kotlin.math.sqrt
 
 class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
-    private val permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
+    private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     private var audioRecord: AudioRecord? = null
-    private val channelConfig: Int = AudioFormat.CHANNEL_IN_MONO
-    private val audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT
+    private var channelConfig: Int = AudioFormat.CHANNEL_IN_MONO
+    private var audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT
     private var bufferSize: Int? = null
     private var recorderState: RecorderState = RecorderState.Disposed
     private var filePath: String? = null
@@ -35,34 +35,24 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var recorderSettings: RecorderSettings? = null
     private var encoder: Encoder? = null
     lateinit var channel: MethodChannel
-    private val commonEncoder = CommonEncoder()
+    private var commonEncoder = CommonEncoder()
     private var wavEncoder: WavEncoder? = null
     private var successCallback: RequestPermissionsSuccessCallback? = null
-
-    companion object {
-        private const val NORMALISATION_FACTOR = 32767.0
-    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ): Boolean {
         return if (requestCode == Constants.RECORD_AUDIO_REQUEST_CODE) {
-            val isGranted =
-                grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-            successCallback?.onSuccess(isGranted)
-            isGranted
+            successCallback?.onSuccess(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
         } else {
             false
         }
     }
 
     private fun isPermissionGranted(activity: Activity?): Boolean {
-        return if (activity != null && permissions.isNotEmpty()) {
-            val result = ActivityCompat.checkSelfPermission(activity, permissions[0])
-            result == PackageManager.PERMISSION_GRANTED
-        } else {
-            false
-        }
+        val result = ActivityCompat.checkSelfPermission(activity!!, permissions[0])
+        return result == PackageManager.PERMISSION_GRANTED
     }
 
     fun checkPermission(
@@ -70,12 +60,10 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     ) {
         this.successCallback = successCallback
         if (!isPermissionGranted(activity)) {
-            if (activity != null) {
+            activity?.let {
                 ActivityCompat.requestPermissions(
-                    activity, permissions, Constants.RECORD_AUDIO_REQUEST_CODE
+                    it, permissions, Constants.RECORD_AUDIO_REQUEST_CODE
                 )
-            } else {
-                result.error(LOG_TAG, "Activity is null, cannot request permissions", null)
             }
         } else {
             result.success(true)
@@ -88,11 +76,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         recorderSettings: RecorderSettings, channel: MethodChannel, result: Result
     ) {
         filePath = recorderSettings.path
-        if (filePath == null) {
-            result.error(LOG_TAG, "File path is null", null)
-            return
-        }
-        
+        if (filePath == null) return
         this.channel = channel
         bufferSize =
             AudioRecord.getMinBufferSize(recorderSettings.sampleRate, channelConfig, audioFormat)
@@ -103,23 +87,15 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                 "Invalid buffer size: $bufferSize",
                 null
             )
-            return
         }
-
         try {
-            val currentBufferSize = bufferSize
-            if (currentBufferSize != null && currentBufferSize > 0) {
-                audioRecord = AudioRecord(
-                    MediaRecorder.AudioSource.MIC,
-                    recorderSettings.sampleRate,
-                    channelConfig,
-                    audioFormat,
-                    currentBufferSize
-                )
-            } else {
-                result.error(LOG_TAG, "Invalid buffer size", null)
-                return
-            }
+            audioRecord = AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                recorderSettings.sampleRate,
+                channelConfig,
+                audioFormat,
+                bufferSize!!
+            )
         } catch (e: Exception) {
             result.error(
                 LOG_TAG,
@@ -143,46 +119,36 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             )
             return
         }
-
         audioRecord?.startRecording()
         recorderState = RecorderState.Recording
-
-        if (currentEncoder?.encodeForWav == true) {
-            val currentPath = currentRecorderSettings.path
-            if (currentPath != null) {
-                wavEncoder = WavEncoder(
-                    wavFile = File(currentPath),
-                    sampleRate = currentRecorderSettings.sampleRate
-                )
-                wavEncoder?.start(result)
-            } else {
-                result.error(LOG_TAG, "File path is null for WAV encoder", null)
-                return
-            }
+        if (encoder?.encodeForWav == true) {
+            wavEncoder = WavEncoder(
+                wavFile = File(recorderSettings!!.path!!),
+                sampleRate = recorderSettings!!.sampleRate
+            )
+            wavEncoder?.start(result)
         } else {
-            commonEncoder.initCodec(recorderSettings = currentRecorderSettings, result = result) {
+            commonEncoder.initCodec(recorderSettings = recorderSettings!!, result = result) {
                 recordingThread?.join()
             }
         }
-
-        val buffer = ByteArray(currentBufferSize)
+        val buffer = ByteArray(bufferSize!!)
         recordingThread = Thread {
-            while (Thread.currentThread().isAlive && !Thread.currentThread().isInterrupted &&
-                (recorderState == RecorderState.Recording || recorderState == RecorderState.Paused)
-            ) {
-                if (recorderState != RecorderState.Recording) continue
+            while (recorderState == RecorderState.Recording || recorderState == RecorderState.Paused) {
+                if (recorderState == RecorderState.Recording) {
+                    val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
 
-                val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
-                if (read <= 0) continue
-
-                val audioData = buffer.copyOf(read)
-                if (currentEncoder?.encodeForWav == true) {
-                    wavEncoder?.writePcmData(audioData)
-                } else {
-                    commonEncoder.queueInputBuffer(audioData)
+                    if (read > 0) {
+                        val audioData = buffer.copyOf(read)
+                        if (encoder?.encodeForWav == true) {
+                            wavEncoder?.writePcmData(audioData)
+                        } else {
+                            commonEncoder.queueInputBuffer(audioData)
+                        }
+                        val rms = calculateRms(audioData, read)
+                        sendBytesToFlutter(audioData, rms)
+                    }
                 }
-                val rms = calculateRms(audioData, read)
-                sendBytesToFlutter(audioData, rms)
             }
         }
         recordingThread?.start()
@@ -191,10 +157,8 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     fun stop(result: Result) {
         try {
-            recordingThread?.interrupt() // Interrupt the thread to stop the loop
             audioRecord?.stop()
             recorderState = RecorderState.Stopped
-
             if (encoder?.encodeForWav == true) {
                 wavEncoder?.stop(result)
                 recordingThread?.join()
@@ -217,19 +181,11 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     }
 
     private fun sendBytesToFlutter(chunk: ByteArray, rms: Double) {
-        if (::channel.isInitialized) {
-            val args: MutableMap<String, Any?> = HashMap()
-            args["normalisedRms"] = rms
-            args["bytes"] = chunk
-            Handler(Looper.getMainLooper()).post {
-                try {
-                    channel.invokeMethod("onAudioChunk", args)
-                } catch (e: Exception) {
-                    Log.e(LOG_TAG, "Error sending bytes to Flutter: ${e.message}")
-                }
-            }
-        } else {
-            Log.w(LOG_TAG, "Channel not initialized, cannot send audio data to Flutter")
+        val args: MutableMap<String, Any?> = HashMap()
+        args["normalisedRms"] = rms
+        args["bytes"] = chunk
+        Handler(Looper.getMainLooper()).post {
+            channel.invokeMethod("onAudioChunk", args)
         }
     }
 
@@ -247,7 +203,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             count++
         }
 
-        val normalisedRms = sqrt(sum / count) / NORMALISATION_FACTOR
+        val normalisedRms = sqrt(sum / count) / 32767.0
         return normalisedRms
     }
 
@@ -263,39 +219,27 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     fun release() {
         try {
-            audioRecord?.stop()
             audioRecord?.release()
-            recordingThread?.interrupt()
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Error releasing AudioRecord: ${e.message}")
         }
 
         audioRecord = null
-        recordingThread = null
         recorderState = RecorderState.Disposed
     }
 
     private fun getDuration(path: String?): Int {
-        if (path == null) {
-            Log.w(LOG_TAG, "Path is null, cannot get duration")
-            return -1
-        }
-        
         val mediaMetadataRetriever = MediaMetadataRetriever()
-        return try {
+        try {
             mediaMetadataRetriever.setDataSource(path)
             val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION)
-            Log.d(LOG_TAG, "Duration: $duration")
-            duration?.toInt() ?: -1
+            println("Duration: $duration")
+            return duration?.toInt() ?: -1
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "Error getting duration: ${e.message}", e)
-            -1
+            Log.e(LOG_TAG, "Error getting duration: ${e.message}")
         } finally {
-            try {
-                mediaMetadataRetriever.release()
-            } catch (e: Exception) {
-                Log.e(LOG_TAG, "Error releasing MediaMetadataRetriever: ${e.message}")
-            }
+            mediaMetadataRetriever.release()
         }
+        return -1
     }
 }

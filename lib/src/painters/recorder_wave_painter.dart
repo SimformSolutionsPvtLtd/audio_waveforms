@@ -88,7 +88,7 @@ class RecorderWavePainter extends CustomPainter {
   final Shader? gradient;
   final bool shouldClearLabels;
   final VoidCallback revertClearLabelCall;
-  final ValueSetter<int> setCurrentPositionDuration;
+  final Function(int) setCurrentPositionDuration;
   final bool shouldCalculateScrolledPosition;
   final double scaleFactor;
   final Duration currentlyRecordedDuration;
