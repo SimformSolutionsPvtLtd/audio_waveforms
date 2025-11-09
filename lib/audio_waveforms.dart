@@ -10,3 +10,4 @@ export 'src/controllers/recorder_controller.dart';
 export 'src/models/android_encoder_settings.dart';
 export 'src/models/ios_encoder_setting.dart';
 export 'src/models/recorder_settings.dart';
+export 'src/enums/waveform_extraction_type.dart';

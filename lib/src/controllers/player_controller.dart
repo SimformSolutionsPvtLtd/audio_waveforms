@@ -127,7 +127,8 @@ class PlayerController extends ChangeNotifier {
   Future<void> preparePlayer({
     required String path,
     double? volume,
-    bool shouldExtractWaveform = true,
+    WaveformExtractionType waveformExtractionType =
+        WaveformExtractionType.noExtraction,
     int noOfSamples = 100,
   }) async {
     if (!path.startsWith('http')) {
@@ -150,20 +151,18 @@ class PlayerController extends ChangeNotifier {
       _setPlayerState(PlayerState.initialized);
     }
 
-    if (shouldExtractWaveform) {
-      waveformExtraction
-          .extractWaveformData(
+    if (waveformExtractionType != WaveformExtractionType.noExtraction) {
+      var extraction = waveformExtraction.extractWaveformData(
         path: path,
         noOfSamples: noOfSamples,
-      )
-          .then(
-        (value) {
+      )..then((values) {
           waveformExtraction.waveformData
             ..clear()
-            ..addAll(value);
-          notifyListeners();
-        },
-      );
+            ..addAll(values);
+        });
+      if (waveformExtractionType == WaveformExtractionType.extractSync) {
+        await extraction;
+      }
     }
     notifyListeners();
   }
