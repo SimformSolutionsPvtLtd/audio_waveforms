@@ -4,7 +4,7 @@ A Flutter package that allows you to generate waveforms while recording audio in
 
 ## Preview
 
-![The example app running on mobile](https://raw.githubusercontent.com/SimformSolutionsPvtLtd/audio_waveforms/main/preview/demo.gif)
+![The example app running on mobile](https://raw.githubusercontent.com/SimformSolutionsPvtLtd/audio_waveforms/main/preview/demo_v2_0_0.gif)
 
 ## Features
 
