@@ -11,7 +11,7 @@ _Check out other amazing open-source [Flutter libraries](https://simform-flutter
 
 ## Preview
 
-![Audio Waveforms Demo](https://raw.githubusercontent.com/SimformSolutionsPvtLtd/audio_waveforms/main/preview/demo.gif)
+![Audio Waveforms Demo](https://raw.githubusercontent.com/SimformSolutionsPvtLtd/audio_waveforms/main/preview/demo_v2_0_0.gif)
 
 ## Features
 
