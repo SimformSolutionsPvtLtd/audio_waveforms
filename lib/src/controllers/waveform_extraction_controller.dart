@@ -1,7 +1,7 @@
 part of 'player_controller.dart';
 
 /// WaveformExtractionController is used for
-/// extraction of waveform data as List<double>,
+/// extraction of waveform data as List\<double\>,
 /// which can be used to show [AudioFileWaveforms]
 ///
 /// It is used by [PlayerController] internally for handling data extraction,
