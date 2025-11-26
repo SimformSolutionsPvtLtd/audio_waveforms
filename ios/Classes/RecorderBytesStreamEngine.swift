@@ -13,6 +13,7 @@ class RecorderBytesStreamEngine {
     private var audioEngine = AVAudioEngine()
     private var audioFormat: AVAudioFormat?
     private var flutterChannel: FlutterMethodChannel
+    private var paused: Bool = false
 
     init(channel: FlutterMethodChannel) {
         flutterChannel = channel
@@ -22,6 +23,9 @@ class RecorderBytesStreamEngine {
         let inputNode = audioEngine.inputNode
         audioFormat = inputNode.outputFormat(forBus: 0)
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: audioFormat) { (buffer, time) in
+            if self.paused {
+                return
+            }
             if let (convertedBytes, normalizedRms) = self.convertToFlutterType(buffer) {
                 self.sendToFlutter(convertedBytes, normalizedRms: normalizedRms)
             }
@@ -31,6 +35,10 @@ class RecorderBytesStreamEngine {
         } catch {
            result(FlutterError(code: Constants.audioWaveforms, message: "Error starting Audio Engine", details: error.localizedDescription))
         }
+    }
+
+    func togglePause() {
+        paused = !paused
     }
 
     func detach() {
@@ -61,7 +69,6 @@ class RecorderBytesStreamEngine {
         // Normalize RMS to 0-1 range (assuming max amplitude is 1.0 for Float32)
         let normalizedRms = Double(min(rms, 1.0))
 
-        let byteCount = frameLength * MemoryLayout<Float32>.size
         let byteBuffer = audioSamples.withUnsafeBufferPointer { bufferPointer in
             return Data(buffer: bufferPointer)
         }
