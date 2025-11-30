@@ -219,7 +219,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     fun resume(result: Result) {
         recorderState = RecorderState.Recording
-        result.success(false)
+        result.success(true)
     }
 
     fun release() {
