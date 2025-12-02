@@ -162,13 +162,10 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             if (encoder?.encodeForWav == true) {
                 wavEncoder?.stop(result)
                 recordingThread?.join()
+                sendRecordingResult(result)
             } else {
                 commonEncoder.setOnEncodingCompleted {
-                    val duration = getDuration(recorderSettings?.path)
-                    val hashMap = HashMap<String, Any?>()
-                    hashMap[Constants.resultFilePath] = recorderSettings?.path
-                    hashMap[Constants.resultDuration] = duration
-                    result.success(hashMap)
+                    sendRecordingResult(result)
                 }
                 commonEncoder.signalToStop()
             }
@@ -178,6 +175,14 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             return
         }
         release()
+    }
+
+    private fun sendRecordingResult(result: Result) {
+        val duration = getDuration(recorderSettings?.path)
+        val hashMap = HashMap<String, Any?>()
+        hashMap[Constants.resultFilePath] = recorderSettings?.path
+        hashMap[Constants.resultDuration] = duration
+        result.success(hashMap)
     }
 
     private fun sendBytesToFlutter(chunk: ByteArray, rms: Double) {
