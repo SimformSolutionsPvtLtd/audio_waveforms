@@ -2,6 +2,8 @@
 
 - Fixed [#452](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/452) - OnAmplitude continues to add data points when recording is paused on iOS
 - Fixed [#453](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/453) - Recording with wav format never returns result
+- Fixed [#433](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/433) - `extractWaveformData` doesn't return result on iOS
+- Fixed [#455](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/455) - On android resuming audio recording returns false instead of true - thanks [@yuanhoujun](https://github.com/yuanhoujun)
 
 ## 2.0.0
 

@@ -45,9 +45,10 @@ public class WaveformExtractor {
         samplesPerPixel: Int?,
         offset: Int? = 0,
         length: UInt? = nil,
-        playerKey: String
-    ) async -> FloatChannelData? {
-        guard let audioFile = audioFile else { return nil }
+        playerKey: String,
+        onExtractionComplete: ([Float]?) -> Void
+    ) async -> Void {
+        guard let audioFile = audioFile else { return }
         
         /// Prevent division by zero, + minimum resolution
         let samplesPerPixel = max(1, samplesPerPixel ?? 100)
@@ -58,7 +59,7 @@ public class WaveformExtractor {
         guard let rmsBuffer = AVAudioPCMBuffer(
             pcmFormat: audioFile.processingFormat,
             frameCapacity: framesPerBuffer
-        ) else { return nil }
+        ) else { return }
         
         let channelCount = Int(audioFile.processingFormat.channelCount)
         let waveformStorage = WaveformStorage(
@@ -78,7 +79,7 @@ public class WaveformExtractor {
                 message: "Offset is larger than total length.",
                 details: "Please select less number of samples"
             )
-            return nil
+            return
         }
         
         var startFrame: AVAudioFramePosition = offset == nil
@@ -89,7 +90,7 @@ public class WaveformExtractor {
             if abortGetWaveformData {
                 audioFile.framePosition = currentFrame
                 abortGetWaveformData = false
-                return nil
+                return
             }
             
             do {
@@ -99,10 +100,10 @@ public class WaveformExtractor {
                 sendErrorToFlutter(
                     message: "Couldn't read buffer. \(error.localizedDescription)"
                 )
-                return nil
+                return
             }
             
-            guard let floatData = rmsBuffer.floatChannelData else { return nil }
+            guard let floatData = rmsBuffer.floatChannelData else { return }
             
             for channel in 0..<channelCount {
                 /// Calculating RMS(Root mean square)
@@ -131,7 +132,9 @@ public class WaveformExtractor {
         }
         
         audioFile.framePosition = currentFrame
-        return await waveformStorage.getData()
+        let waveformData = await waveformStorage.getData()
+        let data = getChannelMean(data: waveformData)
+        onExtractionComplete(data);
     }
 
     func getChannelMean(data: FloatChannelData) -> [Float] {
