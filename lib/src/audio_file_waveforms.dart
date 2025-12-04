@@ -168,8 +168,9 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     );
 
     _growingWaveController
-      ..forward()
-      ..addListener(_updateGrowAnimationProgress);
+      ..addListener(_updateGrowAnimationProgress)
+      ..forward();
+
     onCurrentDurationSubscription =
         playerController.onCurrentDurationChanged.listen((event) {
       _seekProgress.value = event;
