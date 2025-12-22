@@ -317,6 +317,7 @@ class PlayerController extends ChangeNotifier {
   void dispose() async {
     if (playerState != PlayerState.stopped) await stopPlayer();
     await release();
+    await waveformExtraction.stopWaveformExtraction();
     PlatformStreams.instance.playerControllerFactory.remove(playerKey);
     if (PlatformStreams.instance.playerControllerFactory.isEmpty) {
       PlatformStreams.instance.dispose();
