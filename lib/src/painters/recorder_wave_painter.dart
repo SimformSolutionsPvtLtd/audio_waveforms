@@ -47,6 +47,7 @@ class RecorderWavePainter extends CustomPainter {
     required this.scaleFactor,
     required this.currentlyRecordedDuration,
     required this.labels,
+    required this.isRtl,
   })  : _wavePaint = Paint()
           ..color = waveColor
           ..strokeWidth = waveThickness
@@ -95,6 +96,8 @@ class RecorderWavePainter extends CustomPainter {
   final double scaleFactor;
   final Duration currentlyRecordedDuration;
   final List<Label> labels;
+  final bool isRtl;
+
   static const int durationBuffer = 5;
 
   @override
@@ -107,16 +110,27 @@ class RecorderWavePainter extends CustomPainter {
     // Wave gradient
     if (gradient != null) _waveGradient();
 
-    for (var i = 0; i < waveData.length; i++) {
-      if (((spacing * i) + dragOffset.dx + spacing >
-              size.width / (extendWaveform ? 1 : 2) +
-                  totalCurrentBackDistance.dx) &&
-          callPushback) {
+    if (isRtl) {
+      // For RTL: call pushBack when refresh is triggered (e.g., after scrolling)
+      if (callPushback) {
         pushBack();
       }
 
-      // draws waves
-      _drawWave(canvas, size, i);
+      for (var i = 0; i < waveData.length; i++) {
+        _drawRtlWave(canvas, i, size);
+      }
+    } else {
+      for (var i = 0; i < waveData.length; i++) {
+        if (((spacing * i) + dragOffset.dx + spacing >
+                size.width / (extendWaveform ? 1 : 2) +
+                    totalCurrentBackDistance.dx) &&
+            callPushback) {
+          pushBack();
+        }
+
+        // draws waves
+        _drawLtrWave(canvas, size, i);
+      }
     }
 
     // duration labels
@@ -128,33 +142,45 @@ class RecorderWavePainter extends CustomPainter {
     if (showMiddleLine) _drawMiddleLine(canvas, size);
 
     // calculates scrolled position with respect to duration
-    if (shouldCalculateScrolledPosition) _setScrolledDuration(size);
+    if (shouldCalculateScrolledPosition) {
+      if (isRtl) {
+        _setScrolledDurationRtl(size);
+      } else {
+        _setScrolledDuration(size);
+      }
+    }
   }
 
   @override
   bool shouldRepaint(RecorderWavePainter oldDelegate) => true;
 
   void _drawTextInRange(Canvas canvas, Size size) {
-    for (final label in labels) {
+    for (var i = 0; i < labels.length; i++) {
+      final label = labels[i];
       final content = label.content;
-      final offset = label.offset - totalCurrentBackDistance + dragOffset;
+      Offset offset;
+      if (isRtl) {
+        // For RTL: labels follow wave positions (from right edge)
+        final currentWaveformWidth = spacing * waveData.length;
+        final labelWaveformWidth = label.offset.dx;
+        final distanceFromRight = currentWaveformWidth - labelWaveformWidth;
+        final labelX = size.width - distanceFromRight + dragOffset.dx;
+        offset = Offset(labelX, label.offset.dy);
+      } else {
+        offset = label.offset - totalCurrentBackDistance + dragOffset;
+      }
       final halfWidth = size.width * 0.5;
 
-      // Text painting is performance intensive process so we will only render
-      // labels whose position is greater then -halfWidth and triple of
-      // halfWidth because it will be in visible viewport and it has extra
-      // buffer so that bigger labels can be visible when they are extremely at
-      // right or left.
       if (offset.dx > -halfWidth && offset.dx < halfWidth * 3) {
-        // Draw duration line
         canvas.drawLine(
           Offset(offset.dx + durationTextPadding, size.height),
-          Offset(offset.dx + durationTextPadding,
-              size.height + durationLinesHeight),
+          Offset(
+            offset.dx + durationTextPadding,
+            size.height + durationLinesHeight,
+          ),
           _durationLinePaint,
         );
 
-        // Draw label text
         final textSpan = TextSpan(
           text: content,
           style: durationStyle,
@@ -178,7 +204,8 @@ class RecorderWavePainter extends CustomPainter {
     );
   }
 
-  void _drawWave(Canvas canvas, Size size, int i) {
+  /// Draw wave for LTR direction
+  void _drawLtrWave(Canvas canvas, Size size, int i) {
     final height = size.height;
     final dx = -totalCurrentBackDistance.dx +
         dragOffset.dx +
@@ -205,6 +232,34 @@ class RecorderWavePainter extends CustomPainter {
     }
   }
 
+  /// Draw wave for RTL direction
+  void _drawRtlWave(Canvas canvas, int i, Size size) {
+    final height = size.height;
+    // For RTL: newest wave at right edge, older waves move left
+    // Wave position: right edge minus offset based on wave index from the end
+    final dx = size.width - (spacing * (waveData.length - i)) + dragOffset.dx;
+
+    final scaledWaveHeight = waveData[i] * scaleFactor;
+    final upperDy = height - (showTop ? scaledWaveHeight : 0) - bottomPadding;
+    final lowerDy =
+        height + (showBottom ? scaledWaveHeight : 0) - bottomPadding;
+
+    // We will check here for starting position [dx]
+    // to be less than size.width and
+    // the dx cannot be less than 0
+    // This condition will ensure that only visible
+    // portions of waves are being drawn to user
+    // and [dx < size.width] will ensure only fully visible waves are drawn,
+    // if any wave is half visible this will cut out that wave too.
+    if (dx < size.width && dx > 0) {
+      canvas.drawLine(
+        Offset(dx, upperDy),
+        Offset(dx, lowerDy),
+        _wavePaint,
+      );
+    }
+  }
+
   void _waveGradient() {
     _wavePaint.shader = gradient;
   }
@@ -216,6 +271,13 @@ class RecorderWavePainter extends CustomPainter {
               1000)
           .abs()
           .toInt(),
+    );
+  }
+
+  /// Set scrolled duration for RTL mode
+  void _setScrolledDurationRtl(Size size) {
+    setCurrentPositionDuration(
+      (((-dragOffset.dx + (size.width / 2)) / spacing) * 1000).abs().toInt(),
     );
   }
 }

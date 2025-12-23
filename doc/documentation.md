@@ -885,6 +885,35 @@ AudioWaveforms(
 )
 ```
 
+## Waveform Render Mode
+
+The **WaveformRenderMode** enum controls the direction in which recording waveforms are rendered.
+
+Available Modes
+
+- LTR (Left-to-Right): Normal mode where waveforms render from left to right:
+```dart
+AudioWaveforms(
+  recorderController: recorderController,
+  size: Size(300, 80),
+  waveStyle: WaveStyle(
+    waveformRenderMode: WaveformRenderMode.ltr,
+  ),
+)
+```
+The waveform renders from left to right. Once the waveform reaches the end of the available width, older waves are pushed left to make space for new waves.
+
+- RTL (Right-to-Left): RTL mode where waveforms render from right to left:
+```dart
+AudioWaveforms(
+  recorderController: recorderController,
+  size: Size(300, 80),
+  waveStyle: WaveStyle(
+    waveformRenderMode: WaveformRenderMode.rtl,
+  ),
+)
+```
+
 # Advanced Usage - Player
 
 This guide covers advanced features and customizations of the audio player.
