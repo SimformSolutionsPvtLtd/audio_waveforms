@@ -45,10 +45,14 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   Duration currentlyRecordedDuration = Duration.zero;
   late StreamSubscription<Duration> streamSubscription;
 
+  late final bool _isRtl = widget.waveStyle.waveformRenderMode.isRtl;
+
   @override
   void initState() {
     super.initState();
-    _initialPosition = -(widget.waveStyle.waveThickness / 2);
+    // For RTL, initial position starts at 0 (waves grow from right edge)
+    // For LTR, initial position starts at negative half thickness
+    _initialPosition = _isRtl ? 0.0 : -(widget.waveStyle.waveThickness / 2);
     widget.recorderController.addListener(_recorderControllerListener);
     streamSubscription =
         widget.recorderController.onCurrentDuration.listen((duration) {
@@ -119,6 +123,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                     widget.shouldCalculateScrolledPosition,
                 scaleFactor: widget.waveStyle.scaleFactor,
                 currentlyRecordedDuration: currentlyRecordedDuration,
+                isRtl: _isRtl,
               ),
             ),
           ),
@@ -153,26 +158,14 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
 
   ///This handles scrolling of the wave
   void _handleHorizontalDragUpdate(DragUpdateDetails details) {
-    var direction = details.globalPosition.dx - _initialOffsetPosition;
     widget.recorderController.setRefresh(false);
     _isScrolled = true;
 
-    ///left to right
-    if (-_totalBackDistance.dx + _dragOffset.dx + details.delta.dx <
-            (widget.size.width / 2) &&
-        direction > 0) {
-      setState(() => _dragOffset += details.delta);
-    }
-
-    ///right to left
-    else if (-_totalBackDistance.dx +
-                _dragOffset.dx +
-                (widget.waveStyle.spacing *
-                    widget.recorderController.waveData.length) +
-                details.delta.dx >
-            (widget.size.width / 2) &&
-        direction < 0) {
-      setState(() => _dragOffset += details.delta);
+    switch (widget.waveStyle.waveformRenderMode) {
+      case WaveformRenderMode.ltr:
+        _handleScrollLtr(details);
+      case WaveformRenderMode.rtl:
+        _handleScrollRtl(details);
     }
   }
 
@@ -186,28 +179,90 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   ///
   ///This will also handle refreshing the wave after scrolled
   void _pushBackWave() {
-    if (_isScrolled) {
-      _initialPosition =
-          widget.waveStyle.spacing * widget.recorderController.waveData.length -
-              widget.size.width / 2;
-      _totalBackDistance =
-          _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);
-      _isScrolled = false;
+    if (_isRtl) {
+      // For RTL: handle refresh after scrolling
+      if (widget.recorderController.shouldRefresh && _isScrolled) {
+        _initialOffsetPosition = 0.0;
+        _dragOffset = Offset.zero;
+        _isScrolled = false;
+        // Reset shouldRefresh flag and trigger rebuild with new values
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) {
+            widget.recorderController.setRefresh(false);
+          },
+        );
+      }
     } else {
-      _initialPosition = 0.0;
-      _totalBackDistance =
-          _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);
-    }
-    if (widget.recorderController.shouldClearLabels) {
-      _initialOffsetPosition = 0.0;
-      _totalBackDistance = Offset.zero;
-      _dragOffset = Offset.zero;
+      if (_isScrolled) {
+        _initialPosition = widget.waveStyle.spacing *
+                widget.recorderController.waveData.length -
+            widget.size.width / 2;
+        _totalBackDistance =
+            _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);
+        _isScrolled = false;
+      } else {
+        _initialPosition = 0.0;
+        _totalBackDistance =
+            _totalBackDistance + Offset(widget.waveStyle.spacing, 0.0);
+      }
+      if (widget.recorderController.shouldClearLabels) {
+        _initialOffsetPosition = 0.0;
+        _totalBackDistance = Offset.zero;
+        _dragOffset = Offset.zero;
+      }
     }
   }
 
   void _recorderControllerListener() {
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  /// Handles scrolling for LTR waveform
+  void _handleScrollLtr(DragUpdateDetails details) {
+    var direction = details.globalPosition.dx - _initialOffsetPosition;
+    final delta = details.delta;
+    final deltaDx = details.delta.dx;
+    final dragOffset = _dragOffset.dx;
+    final totalBackDistanceDx = -_totalBackDistance.dx;
+    final halfWidth = widget.size.width / 2;
+    final waveformWidth =
+        widget.waveStyle.spacing * widget.recorderController.waveData.length;
+
+    ///left to right
+    if (-totalBackDistanceDx + dragOffset + deltaDx < halfWidth &&
+        direction > 0) {
+      setState(() => _dragOffset += delta);
+    }
+
+    ///right to left
+    else if (-totalBackDistanceDx + dragOffset + waveformWidth + deltaDx >
+            halfWidth &&
+        direction < 0) {
+      setState(() => _dragOffset += delta);
+    }
+  }
+
+  /// Handles scrolling for RTL waveform
+  void _handleScrollRtl(DragUpdateDetails details) {
+    var direction = details.globalPosition.dx - _initialOffsetPosition;
+    final delta = details.delta;
+    final dragOffsetDx = _dragOffset.dx;
+
+    final waveformWidth =
+        widget.waveStyle.spacing * widget.recorderController.waveData.length;
+
+    final halfWidth = widget.size.width / 2;
+
+    /// right to left
+    if (direction < 0 && dragOffsetDx > -halfWidth) {
+      setState(() => _dragOffset += delta);
+    }
+
+    /// left to right
+    else if (direction > 0 && dragOffsetDx < waveformWidth - halfWidth) {
+      setState(() => _dragOffset += delta);
     }
   }
 }
