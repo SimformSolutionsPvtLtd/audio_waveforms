@@ -285,10 +285,9 @@ class RecorderController extends ChangeNotifier {
   /// Clears WaveData and labels from the list. This will effectively remove
   /// waves and labels from the UI.
   void reset() {
-    refresh();
     _waveData.clear();
     _shouldClearLabels = true;
-    notifyListeners();
+    refresh();
   }
 
   /// Sets [shouldClearLabels] flag to false.

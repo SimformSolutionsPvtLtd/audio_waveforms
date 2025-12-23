@@ -177,3 +177,25 @@ enum UpdateFrequency {
 
   final int value;
 }
+
+/// An enum to decide waveform rendering mode.
+enum WaveformRenderMode {
+  /// Normal mode where waveform starts from left to right.
+  ///
+  /// The waveform will render from left to right. Once rendered waveforms
+  /// reaches the end of the available width, it will start pushing the
+  /// previous waves to left to make space for new waves.
+  ltr,
+
+  /// RTL mode where waveform starts from right to left.
+  ///
+  /// The waveform will render from right to left. Older waves will be pushed
+  /// to the left to make space for new waves.
+  rtl;
+
+  /// Check WaveformRenderMode is equals to ltr or not.
+  bool get isLtr => this == WaveformRenderMode.ltr;
+
+  /// Check WaveformRenderMode is equals to rtl or not.
+  bool get isRtl => this == WaveformRenderMode.rtl;
+}
