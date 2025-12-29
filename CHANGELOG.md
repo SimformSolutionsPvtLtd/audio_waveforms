@@ -1,3 +1,7 @@
+## 2.0.2 (#unreleased)
+
+- Chore [#460](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/460) - Update compileSdk and targetSdk to run example app
+
 ## 2.0.1
 
 - Fixed [#452](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/452) - OnAmplitude continues to add data points when recording is paused on iOS
