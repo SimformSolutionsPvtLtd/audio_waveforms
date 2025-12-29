@@ -2,6 +2,7 @@
 
 - Chore [#461](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/461) - Update analysis options and related files
 - Chore [#460](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/460) - Update compileSdk and targetSdk to run example app
+- Feature [#250](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/250) - Add support for right to left waveform rendering
 
 ## 2.0.1
 

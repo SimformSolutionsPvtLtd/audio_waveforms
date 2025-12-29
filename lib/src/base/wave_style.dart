@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../audio_waveforms.dart';
+
 class WaveStyle {
   /// A model class to provide style to the waveforms.
   const WaveStyle({
@@ -28,6 +30,7 @@ class WaveStyle {
     this.durationLinesColor = Colors.blueAccent,
     this.gradient,
     this.scaleFactor = 20.0,
+    this.waveformRenderMode = WaveformRenderMode.ltr,
   }) : assert(
           waveThickness < spacing,
           "waveThickness can't be greater than spacing",
@@ -117,4 +120,15 @@ class WaveStyle {
   /// Default normalised amplitude/power we have are between 0.0 and 1.0.
   /// So scale them, [scaleFactor] can be used. Defaults to 20.0.
   final double scaleFactor;
+
+  /// Defines the rendering direction of the waveform. By default, it is set to
+  /// [WaveformRenderMode.ltr]. Which means the waveform will render from left
+  /// to right. Once rendered waveforms reaches the end of the available width,
+  /// it will start pushing the previous waves to left to make space for new
+  /// waves.
+  ///
+  /// If set to [WaveformRenderMode.rtl], the waveform will render from right
+  /// to left. Older waves will be pushed to the left to make space for new
+  /// waves.
+  final WaveformRenderMode waveformRenderMode;
 }

@@ -47,6 +47,7 @@ class RecorderWavePainter extends CustomPainter {
     required this.shouldCalculateScrolledPosition,
     required this.scaleFactor,
     required this.currentlyRecordedDuration,
+    required this.isRtl,
   })  : _wavePaint = Paint()
           ..color = waveColor
           ..strokeWidth = waveThickness
@@ -92,6 +93,7 @@ class RecorderWavePainter extends CustomPainter {
   final bool shouldCalculateScrolledPosition;
   final double scaleFactor;
   final Duration currentlyRecordedDuration;
+  final bool isRtl;
   var _labelPadding = 0.0;
 
   final List<Label> _labels = [];
@@ -108,20 +110,31 @@ class RecorderWavePainter extends CustomPainter {
     // Wave gradient
     if (gradient != null) _waveGradient();
 
-    for (var i = 0; i < waveData.length; i++) {
-      if (((spacing * i) + dragOffset.dx + spacing >
-              size.width / (extendWaveform ? 1 : 2) + totalBackDistance.dx) &&
-          callPushback) {
+    if (isRtl) {
+      // For RTL: call pushBack when refresh is triggered (e.g., after scrolling)
+      if (callPushback) {
         pushBack();
       }
 
-      ///draws waves
-      _drawWave(canvas, size, i);
+      for (var i = 0; i < waveData.length; i++) {
+        drawRtl(canvas, i, size);
+      }
+    } else {
+      for (var i = 0; i < waveData.length; i++) {
+        if (((spacing * i) + dragOffset.dx + spacing >
+                size.width / (extendWaveform ? 1 : 2) + totalBackDistance.dx) &&
+            callPushback) {
+          pushBack();
+        }
 
-      ///duration labels
-      if (showDurationLabel) {
-        _addLabel(canvas, i, size);
-        _drawTextInRange(canvas, i, size);
+        ///draws waves
+        _drawLtrWave(canvas, size, i);
+
+        ///duration labels
+        if (showDurationLabel) {
+          _addLabel(canvas, i, size);
+          _drawTextInRange(canvas, i, size);
+        }
       }
     }
 
@@ -129,7 +142,13 @@ class RecorderWavePainter extends CustomPainter {
     if (showMiddleLine) _drawMiddleLine(canvas, size);
 
     ///calculates scrolled position with respect to duration
-    if (shouldCalculateScrolledPosition) _setScrolledDuration(size);
+    if (shouldCalculateScrolledPosition) {
+      if (isRtl) {
+        _setScrolledDurationRtl(size);
+      } else {
+        _setScrolledDuration(size);
+      }
+    }
   }
 
   @override
@@ -198,7 +217,8 @@ class RecorderWavePainter extends CustomPainter {
     );
   }
 
-  void _drawWave(Canvas canvas, Size size, int i) {
+  /// Draw wave for LTR direction
+  void _drawLtrWave(Canvas canvas, Size size, int i) {
     final height = size.height;
     final dx =
         -totalBackDistance.dx + dragOffset.dx + (spacing * i) - initialPosition;
@@ -223,6 +243,34 @@ class RecorderWavePainter extends CustomPainter {
     }
   }
 
+  /// Draw wave for RTL direction
+  void drawRtl(Canvas canvas, int i, Size size) {
+    final height = size.height;
+    // For RTL: newest wave at right edge, older waves move left
+    // Wave position: right edge minus offset based on wave index from the end
+    final dx = size.width - (spacing * (waveData.length - i)) + dragOffset.dx;
+
+    final scaledWaveHeight = waveData[i] * scaleFactor;
+    final upperDy = height - (showTop ? scaledWaveHeight : 0) - bottomPadding;
+    final lowerDy =
+        height + (showBottom ? scaledWaveHeight : 0) - bottomPadding;
+
+    // We will check here for starting position [dx]
+    // to be less than size.width and
+    // the dx cannot be less than 0
+    // This condition will ensure that only visible
+    // portions of waves are being drawn to user
+    // and [dx < size.width] will ensure only fully visible waves are drawn,
+    // if any wave is half visible this will cut out that wave too.
+    if (dx < size.width && dx > 0) {
+      canvas.drawLine(
+        Offset(dx, upperDy),
+        Offset(dx, lowerDy),
+        _wavePaint,
+      );
+    }
+  }
+
   void _waveGradient() {
     _wavePaint.shader = gradient;
   }
@@ -234,5 +282,10 @@ class RecorderWavePainter extends CustomPainter {
           .abs()
           .toInt(),
     );
+  }
+
+  void _setScrolledDurationRtl(Size size) {
+    setCurrentPositionDuration(
+        (((-dragOffset.dx + (size.width / 2)) / spacing) * 1000).abs().toInt());
   }
 }
