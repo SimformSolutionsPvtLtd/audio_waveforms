@@ -7,6 +7,38 @@ import 'base/wave_clipper.dart';
 import 'painters/player_wave_painter.dart';
 
 class AudioFileWaveforms extends StatefulWidget {
+  /// Generate waveforms from audio file. You play those audio file using
+  /// [PlayerController].
+  ///
+  /// When you play the audio file, waves change their color according to
+  /// how much audio has been played and how much is left.
+  ///
+  /// With seeking gesture enabled, playing audio can be seeked to
+  /// any position using gestures.
+  const AudioFileWaveforms({
+    super.key,
+    required this.size,
+    required this.playerController,
+    this.waveformData = const [],
+    this.continuousWaveform = true,
+    this.playerWaveStyle = const PlayerWaveStyle(),
+    this.padding,
+    this.margin,
+    this.decoration,
+    this.backgroundColor,
+    this.animationDuration = const Duration(milliseconds: 500),
+    this.animationCurve = Curves.easeIn,
+    this.clipBehavior = Clip.none,
+    this.waveformType = WaveformType.long,
+    this.enableSeekGesture = true,
+    this.onDragStart,
+    this.onDragEnd,
+    this.dragUpdateDetails,
+    this.onTapUp,
+    this.seekOnTapUp = true,
+    this.onTapDown,
+  });
+
   /// A size to define height and width of waveform.
   final Size size;
 
@@ -63,17 +95,17 @@ class AudioFileWaveforms extends StatefulWidget {
   final bool enableSeekGesture;
 
   /// Provides a callback when drag starts.
-  final Function(DragStartDetails)? onDragStart;
+  final ValueSetter<DragStartDetails>? onDragStart;
 
   /// Provides a callback when drag ends.
-  final Function(DragEndDetails)? onDragEnd;
+  final ValueSetter<DragEndDetails>? onDragEnd;
 
   /// Provides a callback on drag updates.
-  final Function(DragUpdateDetails)? dragUpdateDetails;
+  final ValueSetter<DragUpdateDetails>? dragUpdateDetails;
 
   /// Provides a callback when pointer has stopped contacting the screen.
   /// This handler will still provide callback when [seekOnTapUp] is set to `false`.
-  final Function(TapUpDetails)? onTapUp;
+  final ValueSetter<TapUpDetails>? onTapUp;
 
   /// When set to true, seek gesture will be performed when pointer is lifted
   /// from the screen otherwise seek gesture will be performed when pointer has
@@ -85,38 +117,6 @@ class AudioFileWaveforms extends StatefulWidget {
   /// Provides a callback when pointer has started contacting the screen.
   /// This handler will still provide callback when [seekOnTapUp] is set to `true`.
   final GestureTapDownCallback? onTapDown;
-
-  /// Generate waveforms from audio file. You play those audio file using
-  /// [PlayerController].
-  ///
-  /// When you play the audio file, waves change their color according to
-  /// how much audio has been played and how much is left.
-  ///
-  /// With seeking gesture enabled, playing audio can be seeked to
-  /// any position using gestures.
-  const AudioFileWaveforms({
-    super.key,
-    required this.size,
-    required this.playerController,
-    this.waveformData = const [],
-    this.continuousWaveform = true,
-    this.playerWaveStyle = const PlayerWaveStyle(),
-    this.padding,
-    this.margin,
-    this.decoration,
-    this.backgroundColor,
-    this.animationDuration = const Duration(milliseconds: 500),
-    this.animationCurve = Curves.easeIn,
-    this.clipBehavior = Clip.none,
-    this.waveformType = WaveformType.long,
-    this.enableSeekGesture = true,
-    this.onDragStart,
-    this.onDragEnd,
-    this.dragUpdateDetails,
-    this.onTapUp,
-    this.seekOnTapUp = true,
-    this.onTapDown,
-  });
 
   @override
   State<AudioFileWaveforms> createState() => _AudioFileWaveformsState();
@@ -414,10 +414,11 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   void _pushBackWave() {
     if (!_isScrolled && widget.waveformType.isLong) {
       _totalBackDistance = Offset(
-          (playerWaveStyle.spacing * _audioProgress * _waveformData.length) +
-              playerWaveStyle.spacing +
-              _dragOffset.dx,
-          0.0);
+        (playerWaveStyle.spacing * _audioProgress * _waveformData.length) +
+            playerWaveStyle.spacing +
+            _dragOffset.dx,
+        0.0,
+      );
     }
     if (playerController.shouldClearLabels) {
       _initialDragPosition = 0.0;

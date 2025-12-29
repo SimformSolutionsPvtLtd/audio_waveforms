@@ -12,6 +12,15 @@ import 'player_controller.dart';
 
 // ignore_for_file: deprecated_member_use_from_same_package
 class RecorderController extends ChangeNotifier {
+  /// A class having controls for recording audio and other useful handlers.
+  RecorderController() {
+    if (!_platformStream.isInitialised) {
+      _platformStream.init();
+    }
+    _amplitudeStreamSubscription =
+        PlatformStreams.instance.onAmplitude.listen(_updateOnNewAmplitude);
+  }
+
   final _platformStream = PlatformStreams.instance;
 
   final List<double> _waveData = [];
@@ -116,16 +125,7 @@ class RecorderController extends ChangeNotifier {
   /// A stream to get bytes while recording audio.
   Stream<Uint8List> get onAudioChunks => _platformStream.onRecordedBytes;
 
-  StreamSubscription? _amplitudeStreamSubscription;
-
-  /// A class having controls for recording audio and other useful handlers.
-  RecorderController() {
-    if (!_platformStream.isInitialised) {
-      _platformStream.init();
-    }
-    _amplitudeStreamSubscription =
-        PlatformStreams.instance.onAmplitude.listen(_updateOnNewAmplitude);
-  }
+  StreamSubscription<double>? _amplitudeStreamSubscription;
 
   /// A ValueNotifier which provides current position of scrolled waveform with
   /// respect to [middle line].

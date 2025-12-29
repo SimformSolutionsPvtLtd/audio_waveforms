@@ -13,6 +13,13 @@ part '../base/audio_waveforms_interface.dart';
 part 'waveform_extraction_controller.dart';
 
 class PlayerController extends ChangeNotifier {
+  PlayerController() {
+    if (!PlatformStreams.instance.isInitialised) {
+      PlatformStreams.instance.init();
+    }
+    PlatformStreams.instance.playerControllerFactory.addAll({playerKey: this});
+  }
+
   PlayerState _playerState = PlayerState.stopped;
 
   /// Provides current state of the player
@@ -87,13 +94,6 @@ class PlayerController extends ChangeNotifier {
   /// A stream to get events when audio is finished playing.
   Stream<void> get onCompletion =>
       PlatformStreams.instance.onCompletion.filter(playerKey);
-
-  PlayerController() {
-    if (!PlatformStreams.instance.isInitialised) {
-      PlatformStreams.instance.init();
-    }
-    PlatformStreams.instance.playerControllerFactory.addAll({playerKey: this});
-  }
 
   void _setPlayerState(PlayerState state) {
     _playerState = state;

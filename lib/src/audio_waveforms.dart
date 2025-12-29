@@ -7,16 +7,6 @@ import 'base/wave_clipper.dart';
 import 'painters/recorder_wave_painter.dart';
 
 class AudioWaveforms extends StatefulWidget {
-  final Size size;
-  final RecorderController recorderController;
-  final WaveStyle waveStyle;
-  final EdgeInsets? padding;
-  final EdgeInsets? margin;
-  final BoxDecoration? decoration;
-  final Color? backgroundColor;
-  final bool enableGesture;
-  final bool shouldCalculateScrolledPosition;
-
   const AudioWaveforms({
     super.key,
     required this.size,
@@ -29,6 +19,16 @@ class AudioWaveforms extends StatefulWidget {
     this.backgroundColor,
     this.shouldCalculateScrolledPosition = false,
   });
+
+  final Size size;
+  final RecorderController recorderController;
+  final WaveStyle waveStyle;
+  final EdgeInsets? padding;
+  final EdgeInsets? margin;
+  final BoxDecoration? decoration;
+  final Color? backgroundColor;
+  final bool enableGesture;
+  final bool shouldCalculateScrolledPosition;
 
   @override
   State<AudioWaveforms> createState() => _AudioWaveformsState();

@@ -145,9 +145,8 @@ class _WaveBubbleState extends State<WaveBubble> {
             AudioFileWaveforms(
               size: Size(MediaQuery.of(context).size.width / 2, 70),
               playerController: controller,
-              waveformType: !widget.isSender
-                  ? WaveformType.fitWidth
-                  : WaveformType.long,
+              waveformType:
+                  widget.isSender ? WaveformType.long : WaveformType.fitWidth,
               playerWaveStyle: playerWaveStyle,
             ),
             if (widget.isSender) const SizedBox(width: 10),

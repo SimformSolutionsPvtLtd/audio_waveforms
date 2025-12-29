@@ -1,10 +1,9 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
-  ## TODO(Jay): Make this both rules false when we upgrade the flutter_lint version
-  strong-mode:
-    implicit-casts: true
-    implicit-dynamic: true
+  language:
+    strict-inference: true
+    strict-raw-types: true
   errors:
     argument_type_not_assignable: error
     invalid_assignment: error
@@ -23,3 +22,6 @@ linter:
     avoid_positional_boolean_parameters: false
     use_super_parameters: true
     prefer_relative_imports: true
+    require_trailing_commas: true
+    prefer_const_constructors: true
+    sort_constructors_first: true
