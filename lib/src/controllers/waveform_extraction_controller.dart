@@ -19,11 +19,11 @@ part of 'player_controller.dart';
 ///      ),
 /// ```dart
 class WaveformExtractionController {
-  final String _extractorKey;
-
   WaveformExtractionController() : _extractorKey = shortHash(UniqueKey());
 
   WaveformExtractionController._(this._extractorKey);
+
+  final String _extractorKey;
 
   final List<double> _waveformData = [];
 

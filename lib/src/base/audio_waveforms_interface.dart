@@ -153,8 +153,13 @@ class AudioWaveformsInterface {
 
   ///platform call to seek audio at provided position
   Future<bool> seekTo(String key, int progress) async {
-    var result = await _methodChannel.invokeMethod(Constants.seekTo,
-        {Constants.progress: progress, Constants.playerKey: key});
+    var result = await _methodChannel.invokeMethod(
+      Constants.seekTo,
+      {
+        Constants.progress: progress,
+        Constants.playerKey: key,
+      },
+    );
     return result ?? false;
   }
 

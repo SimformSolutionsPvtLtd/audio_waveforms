@@ -79,7 +79,8 @@ class PlatformStreams {
   }
 
   void addExtractedWaveformDataEvent(
-      PlayerIdentifier<List<double>> playerIdentifier) {
+    PlayerIdentifier<List<double>> playerIdentifier,
+  ) {
     if (!_extractedWaveformDataController.isClosed) {
       _extractedWaveformDataController.add(playerIdentifier);
     }

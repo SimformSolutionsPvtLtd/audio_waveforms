@@ -88,7 +88,7 @@ class RecorderWavePainter extends CustomPainter {
   final Shader? gradient;
   final bool shouldClearLabels;
   final VoidCallback revertClearLabelCall;
-  final Function(int) setCurrentPositionDuration;
+  final ValueSetter<int> setCurrentPositionDuration;
   final bool shouldCalculateScrolledPosition;
   final double scaleFactor;
   final Duration currentlyRecordedDuration;
@@ -229,10 +229,10 @@ class RecorderWavePainter extends CustomPainter {
 
   void _setScrolledDuration(Size size) {
     setCurrentPositionDuration(
-        (((-totalBackDistance.dx + dragOffset.dx - (size.width / 2)) /
-                    spacing) *
-                1000)
-            .abs()
-            .toInt());
+      (((-totalBackDistance.dx + dragOffset.dx - (size.width / 2)) / spacing) *
+              1000)
+          .abs()
+          .toInt(),
+    );
   }
 }
