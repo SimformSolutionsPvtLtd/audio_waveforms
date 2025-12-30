@@ -3,6 +3,7 @@
 - Chore [#460](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/460) - Update compileSdk and targetSdk to run example app
 - Chore [#461](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/461) - Update analysis options and related files
 - Fixed [#464](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/464) - Fixed labels not displaying properly during recording
+- Feature [#398](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/398) - Add noOfSamplesPerSecond parameter to preparePlayer for easier waveform configuration
 
 ## 2.0.1
 

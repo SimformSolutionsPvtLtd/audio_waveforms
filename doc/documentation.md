@@ -404,7 +404,6 @@ final playerController = PlayerController();
 ## Prepare Player
 
 Before playing, prepare the player with an audio file:
-
 ```dart
 await playerController.preparePlayer(
   path: '/path/to/audio.mp3',
@@ -413,6 +412,30 @@ await playerController.preparePlayer(
 ```
 
 Setting `shouldExtractWaveform` to `true` will automatically extract waveform data from the audio file.
+
+### Configuring Waveform Sample Count
+
+You can control waveform granularity using either:
+
+**Fixed sample count:**
+```dart
+await playerController.preparePlayer(
+  path: '/path/to/audio.mp3',
+  shouldExtractWaveform: true,
+  noOfSamples: 200, // Exactly 200 waveform bars
+);
+```
+
+**Samples per second (dynamic):**
+```dart
+await playerController.preparePlayer(
+  path: '/path/to/audio.mp3',
+  shouldExtractWaveform: true,
+  noOfSamplesPerSecond: 10, // 10 samples per second of audio
+);
+```
+
+**Important**: Use only ONE of `noOfSamples` OR `noOfSamplesPerSecond`. If both are null, defaults to 100 samples. See the [Waveform Extraction Controller](#waveform-extraction-controller) section for detailed explanation of both approaches.
 
 ### Loading from Assets
 
@@ -1227,21 +1250,50 @@ final waveformExtraction = WaveformExtractionController();
 
 ## Extract Waveform Data
 
-Extract waveform data from an audio file:
+Extract waveform data from an audio file using one of two sampling strategies:
+
+### Option 1: Fixed Sample Count
+
+Specify an exact number of waveform samples:
 
 ```dart
 final waveformData = await waveformExtraction.extractWaveformData(
   path: '/path/to/audio.mp3',
-  noOfSamples: 100,
+  noOfSamples: 200, // Exactly 200 data points
 );
-
-print('Extracted ${waveformData.length} samples');
 ```
+
+### Option 2: Samples Per Second (Dynamic)
+
+Automatically calculate samples based on audio duration:
+
+```dart
+final waveformData = await waveformExtraction.extractWaveformData(
+  path: '/path/to/audio.mp3',
+  noOfSamplesPerSecond: 10, // 10 samples per second of audio
+);
+```
+
+**How it works**: The total number of samples is calculated as `noOfSamplesPerSecond × audioDurationInSeconds`.
+
+For example:
+- A 30-second audio with `noOfSamplesPerSecond: 10` → 300 samples
+- A 2-minute audio with `noOfSamplesPerSecond: 5` → 600 samples
+
+**When to use each approach**:
+- **Fixed count** (`noOfSamples`): When you want a specific number of bars regardless of audio length
+- **Per second** (`noOfSamplesPerSecond`): When you want consistent waveform density across different audio durations
 
 ### Parameters
 
 - `path` (required): Path to the audio file (local or network URL)
-- `noOfSamples` (optional): Number of samples to extract (default: 100)
+- `noOfSamples` (optional): Fixed number of samples to extract
+- `noOfSamplesPerSecond` (optional): Samples per second for dynamic calculation
+
+**Important**: 
+- Provide only ONE of `noOfSamples` OR `noOfSamplesPerSecond`, not both
+- If both are null, defaults to `noOfSamples = 100`
+- Both `PlayerController` and `WaveformExtractionController` support these parameters
 
 ## Using Extracted Data
 
@@ -1522,9 +1574,9 @@ This section provides a quick reference for the main classes and their propertie
 
 ### Methods
 
-| Method                                                                               | Description                              |
-|--------------------------------------------------------------------------------------|------------------------------------------|
-| `preparePlayer({required String path, bool shouldExtractWaveform, int noOfSamples})` | Prepare audio file for playback          |
+| Method                                                                                                                   | Description                              |
+|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
+| `preparePlayer({required String path, bool shouldExtractWaveform, int? noOfSamples, int? noOfSamplesPerSecond})`        | Prepare audio file for playback          |
 | `startPlayer({FinishMode finishMode})`                                               | Start playing audio                      |
 | `pausePlayer()`                                                                      | Pause playback                           |
 | `stopPlayer()`                                                                       | Stop playback                            |
@@ -1572,10 +1624,10 @@ This section provides a quick reference for the main classes and their propertie
 
 ### Methods
 
-| Method                                                         | Description                           |
-|----------------------------------------------------------------|---------------------------------------|
-| `extractWaveformData({required String path, int noOfSamples})` | Extract waveform data from audio file |
-| `stopWaveformExtraction()`                                     | Stop ongoing extraction               |
+| Method                                                                                           | Description                           |
+|--------------------------------------------------------------------------------------------------|---------------------------------------|
+| `extractWaveformData({required String path, int? noOfSamples, int? noOfSamplesPerSecond})`      | Extract waveform data from audio file |
+| `stopWaveformExtraction()`                                                                       | Stop ongoing extraction               |
 
 ### Streams
 
