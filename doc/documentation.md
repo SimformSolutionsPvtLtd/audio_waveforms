@@ -171,6 +171,45 @@ This plugin requires iOS 13.0 or higher. Add this line to your `Podfile`:
 platform :ios, '13.0'
 ```
 
+### macOS Setup
+
+#### Add microphone usage description
+
+Add description to your microphone usage in `macos/Runner/Info.plist`:
+
+```xml
+<key>NSMicrophoneUsageDescription</key>
+<string>This app requires microphone access to record audio.</string>
+```
+
+#### Enable macOS desktop support
+
+Enable macOS desktop support for your Flutter project:
+
+```bash
+flutter config --enable-macos-desktop
+flutter create --platforms=macos .
+```
+
+#### Set minimum macOS version
+
+This plugin requires macOS 10.14 or higher. Add this line to your `macos/Podfile`:
+
+```ruby
+platform :osx, '10.14'
+```
+
+#### macOS-Specific Implementation Notes
+
+On macOS, the audio recording implementation differs from iOS due to platform limitations:
+
+- **No AVAudioSession coordination**: macOS lacks the AVAudioSession layer that iOS uses to coordinate audio resources between apps.
+- **AVAudioEngine conflict**: AVAudioEngine and AVAudioRecorder cannot both access the microphone simultaneously on macOS, causing resource conflicts.
+- **Waveform generation**: Instead of real-time byte streaming, waveforms are generated through periodic polling of decibel levels every 50ms using the `getDecibel()` method.
+- **Same API surface**: Despite these implementation differences, the public API remains identical across all platforms.
+
+These implementation details are handled automatically by the plugin, requiring no changes to your application code.
+
 ## 4. Import the package
 
 Add the import statement in your Dart files where you want to use Audio Waveforms:

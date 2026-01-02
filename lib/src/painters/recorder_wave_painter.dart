@@ -149,8 +149,10 @@ class RecorderWavePainter extends CustomPainter {
         // Draw duration line
         canvas.drawLine(
           Offset(offset.dx + durationTextPadding, size.height),
-          Offset(offset.dx + durationTextPadding,
-              size.height + durationLinesHeight),
+          Offset(
+            offset.dx + durationTextPadding,
+            size.height + durationLinesHeight,
+          ),
           _durationLinePaint,
         );
 
