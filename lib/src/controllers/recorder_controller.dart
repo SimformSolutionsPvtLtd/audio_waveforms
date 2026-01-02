@@ -49,6 +49,10 @@ class RecorderController extends ChangeNotifier {
 
   Timer? _timer;
 
+  /// Timer for polling decibel levels on macOS.
+  /// Used because AVAudioEngine conflicts with AVAudioRecorder on macOS.
+  Timer? _macOSDecibelTimer;
+
   bool _hasPermission = false;
 
   /// A boolean to check for microphone permission status. It is true when
@@ -187,7 +191,8 @@ class RecorderController extends ChangeNotifier {
           notifyListeners();
           return;
         }
-        if (Platform.isIOS) {
+        // iOS and macOS don't require initialization, set state directly
+        if (Platform.isIOS || Platform.isMacOS) {
           _setRecorderState(RecorderState.initialized);
         }
         if (_recorderState.isInitialized) {
@@ -199,6 +204,10 @@ class RecorderController extends ChangeNotifier {
           if (_isRecording) {
             _setRecorderState(RecorderState.recording);
             _startTimer();
+            // On macOS, start polling for decibels since bytesStreamEngine is disabled
+            if (Platform.isMacOS) {
+              _startMacOSDecibelPolling();
+            }
           } else {
             throw "Failed to start recording";
           }
@@ -254,6 +263,7 @@ class RecorderController extends ChangeNotifier {
       }
       _recorderTimer?.cancel();
       _timer?.cancel();
+      _macOSDecibelTimer?.cancel();
       _setRecorderState(RecorderState.paused);
     }
     notifyListeners();
@@ -276,6 +286,7 @@ class RecorderController extends ChangeNotifier {
       _isRecording = false;
       _timer?.cancel();
       _recorderTimer?.cancel();
+      _macOSDecibelTimer?.cancel();
       if (audioInfo[Constants.resultDuration] != null) {
         final duration = audioInfo[Constants.resultDuration];
 
@@ -324,6 +335,28 @@ class RecorderController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Starts polling for decibel levels on macOS.
+  ///
+  /// On macOS, AVAudioEngine (used for byte streaming) conflicts with
+  /// AVAudioRecorder. To provide waveform visualization, this method
+  /// periodically calls getDecibel() to retrieve amplitude data every 50ms.
+  void _startMacOSDecibelPolling() {
+    const duration = Duration(milliseconds: 50);
+    _macOSDecibelTimer = Timer.periodic(duration, (_) async {
+      if (_recorderState.isRecording) {
+        try {
+          final decibel = await AudioWaveformsInterface.instance.getDecibel();
+          if (decibel != null) {
+            _waveData.add(decibel);
+            notifyListeners();
+          }
+        } catch (e) {
+          // Ignore errors during polling
+        }
+      }
+    });
+  }
+
   /// Refreshes the waveform to the initial state after scrolling.
   void refresh() {
     _shouldRefresh = true;
@@ -366,8 +399,10 @@ class RecorderController extends ChangeNotifier {
     _amplitudeStreamSubscription?.cancel();
     _recorderTimer?.cancel();
     _timer?.cancel();
+    _macOSDecibelTimer?.cancel();
     _timer = null;
     _recorderTimer = null;
+    _macOSDecibelTimer = null;
     _isDisposed = true;
     super.dispose();
   }

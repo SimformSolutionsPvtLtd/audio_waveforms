@@ -138,10 +138,10 @@ class _HomeState extends State<Home> {
                                       50),
                                   recorderController: recorderController,
                                   waveStyle: const WaveStyle(
-                                    waveColor: Colors.white,
-                                    extendWaveform: true,
-                                    showMiddleLine: false,
-                                  ),
+                                      waveColor: Colors.white,
+                                      extendWaveform: true,
+                                      showMiddleLine: false,
+                                      showDurationLabel: true),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12.0),
                                     color: const Color(0xFF1E1B26),
@@ -206,30 +206,25 @@ class _HomeState extends State<Home> {
     try {
       if (isRecording) {
         recorderController.reset();
-
         final path = await recorderController.stop(false);
-
         if (path != null) {
           paths.add(path);
           isRecordingCompleted = true;
-          debugPrint(path);
-          debugPrint("Recorded file size: ${File(path).lengthSync()}");
         }
       } else {
-        final path = "${appDirectory.path}/recording.m4a";
         await recorderController.record(
-          path: path, // Path is optional
+          path: "${appDirectory.path}/recording.m4a",
           recorderSettings: const RecorderSettings(),
         );
       }
     } catch (e) {
-      debugPrint(e.toString());
-    } finally {
-      if (recorderController.hasPermission) {
-        setState(() {
-          isRecording = !isRecording;
-        });
-      }
+      debugPrint("Error in recording: $e");
+    }
+
+    if (recorderController.hasPermission) {
+      setState(() {
+        isRecording = !isRecording;
+      });
     }
   }
 
