@@ -71,6 +71,8 @@ struct Constants {
     static let onAudioChunk = "onAudioChunk"
     static let bytes = "bytes"
     static let normalisedRms = "normalisedRms"
+    static let recordedDuration = "recordedDuration"
+    static let defaultSampleRate = 44100
 }
 
 
