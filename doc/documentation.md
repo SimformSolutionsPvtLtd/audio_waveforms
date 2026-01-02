@@ -171,6 +171,25 @@ This plugin requires iOS 13.0 or higher. Add this line to your `Podfile`:
 platform :ios, '13.0'
 ```
 
+### macOS Setup
+
+#### Add microphone usage description
+
+Add description to your microphone usage in `macos/Runner/Info.plist`:
+
+```xml
+<key>NSMicrophoneUsageDescription</key>
+<string>This app requires microphone access to record audio.</string>
+```
+
+#### Set minimum macOS version
+
+This plugin requires macOS 10.14 or higher. Add this line to your `macos/Podfile`:
+
+```ruby
+platform :osx, '10.14'
+```
+
 ## 4. Import the package
 
 Add the import statement in your Dart files where you want to use Audio Waveforms:

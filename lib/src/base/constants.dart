@@ -47,7 +47,6 @@ class Constants {
   static const String onCurrentExtractedWaveformData =
       "onCurrentExtractedWaveformData";
   static const String stopExtraction = "stopExtraction";
-  static const String useLegacyNormalization = "useLegacyNormalization";
   static const String updateFrequency = "updateFrequency";
   static const String overrideAudioSession = "overrideAudioSession";
   static const String resultFilePath = "resultFilePath";
