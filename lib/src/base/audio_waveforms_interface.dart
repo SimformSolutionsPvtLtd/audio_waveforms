@@ -16,7 +16,7 @@ class AudioWaveformsInterface {
   }) async {
     final isRecording = await _methodChannel.invokeMethod(
       Constants.startRecording,
-      Platform.isIOS
+      (Platform.isIOS || Platform.isMacOS)
           ? recorderSetting.iosToJson(
               path: path,
               overrideAudioSession: overrideAudioSession,

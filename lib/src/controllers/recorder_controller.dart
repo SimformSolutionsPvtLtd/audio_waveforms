@@ -187,7 +187,8 @@ class RecorderController extends ChangeNotifier {
           notifyListeners();
           return;
         }
-        if (Platform.isIOS) {
+        // iOS and macOS don't require initialization, set state directly
+        if (Platform.isIOS || Platform.isMacOS) {
           _setRecorderState(RecorderState.initialized);
         }
         if (_recorderState.isInitialized) {
@@ -199,6 +200,7 @@ class RecorderController extends ChangeNotifier {
           if (_isRecording) {
             _setRecorderState(RecorderState.recording);
             _startTimer();
+            // macOS now uses AVAudioEngine which provides real-time amplitude data
           } else {
             throw "Failed to start recording";
           }
