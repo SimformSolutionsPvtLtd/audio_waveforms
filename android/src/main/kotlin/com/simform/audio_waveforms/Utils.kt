@@ -71,6 +71,11 @@ object Constants {
     const val resultFilePath = "resultFilePath"
     const val resultDuration = "resultDuration"
     const val pauseAllPlayers = "pauseAllPlayers"
+    const val normalisedRms = "normalisedRms"
+    const val bytes = "bytes"
+    const val recordedDuration = "recordedDuration"
+    const val onAudioChunk = "onAudioChunk"
+
     // TODO: make user can set this in future
     const val CHANNEL: Int = 1
     const val BIT_PER_SAMPLE: Int = 16
@@ -87,6 +92,7 @@ object Constants {
     const val THIRTY_TWO_BITS = 2.14748365E9f
     const val ENCODER_THREAD = "EncoderThread"
     const val AAC_FILE_EXTENSION = "aac"
+    const val DEFAULT_SAMPLE_RATE = 44100
 }
 
 /**
