@@ -19,6 +19,10 @@ class RecorderController extends ChangeNotifier {
     }
     _amplitudeStreamSubscription =
         PlatformStreams.instance.onAmplitude.listen(_updateOnNewAmplitude);
+    _currentDurationStreamSubscription =
+        _platformStream.onCurrentDuration.listen((duration) {
+      _elapsedDuration = duration;
+    });
   }
 
   final _platformStream = PlatformStreams.instance;
@@ -46,8 +50,6 @@ class RecorderController extends ChangeNotifier {
   bool _shouldRefresh = true;
 
   bool get shouldRefresh => _shouldRefresh;
-
-  Timer? _timer;
 
   bool _hasPermission = false;
 
@@ -92,18 +94,11 @@ class RecorderController extends ChangeNotifier {
 
   Duration _recordedDuration = Duration.zero;
 
-  Timer? _recorderTimer;
-
   final ValueNotifier<int> _currentScrolledDuration = ValueNotifier(0);
 
-  final StreamController<Duration> _currentDurationController =
-      StreamController.broadcast();
-
   /// A stream to get current duration of currently recording audio file.
-  /// Events are emitted every 50 milliseconds which means current duration is
-  /// accurate to 50 milliseconds. To get Fully accurate duration use
-  /// [recordedDuration] after stopping the recording.
-  Stream<Duration> get onCurrentDuration => _currentDurationController.stream;
+  /// Events are emitted as soon it is available from platform.
+  Stream<Duration> get onCurrentDuration => _platformStream.onCurrentDuration;
 
   final StreamController<RecorderState> _recorderStateController =
       StreamController.broadcast();
@@ -126,6 +121,7 @@ class RecorderController extends ChangeNotifier {
   Stream<Uint8List> get onAudioChunks => _platformStream.onRecordedBytes;
 
   StreamSubscription<double>? _amplitudeStreamSubscription;
+  StreamSubscription<Duration>? _currentDurationStreamSubscription;
 
   /// A ValueNotifier which provides current position of scrolled waveform with
   /// respect to [middle line].
@@ -179,7 +175,6 @@ class RecorderController extends ChangeNotifier {
         if (_recorderState.isPaused) {
           _isRecording = await AudioWaveformsInterface.instance.resume();
           if (_isRecording) {
-            _startTimer();
             _setRecorderState(RecorderState.recording);
           } else {
             throw "Failed to resume recording";
@@ -198,7 +193,6 @@ class RecorderController extends ChangeNotifier {
           );
           if (_isRecording) {
             _setRecorderState(RecorderState.recording);
-            _startTimer();
           } else {
             throw "Failed to start recording";
           }
@@ -252,8 +246,6 @@ class RecorderController extends ChangeNotifier {
       if (_isRecording) {
         throw "Failed to pause recording";
       }
-      _recorderTimer?.cancel();
-      _timer?.cancel();
       _setRecorderState(RecorderState.paused);
     }
     notifyListeners();
@@ -274,8 +266,6 @@ class RecorderController extends ChangeNotifier {
     if (_recorderState.isRecording || _recorderState.isPaused) {
       final audioInfo = await AudioWaveformsInterface.instance.stop();
       _isRecording = false;
-      _timer?.cancel();
-      _recorderTimer?.cancel();
       if (audioInfo[Constants.resultDuration] != null) {
         final duration = audioInfo[Constants.resultDuration];
 
@@ -306,16 +296,6 @@ class RecorderController extends ChangeNotifier {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _shouldClearLabels = false;
       notifyListeners();
-    });
-  }
-
-  /// Gets decibel by every defined frequency
-  void _startTimer() {
-    _recordedDuration = Duration.zero;
-    const duration = Duration(milliseconds: 50);
-    _recorderTimer = Timer.periodic(duration, (_) {
-      _elapsedDuration += duration;
-      _currentDurationController.add(elapsedDuration);
     });
   }
 
@@ -360,14 +340,10 @@ class RecorderController extends ChangeNotifier {
   void dispose() async {
     if (recorderState != RecorderState.stopped) await stop();
     _currentScrolledDuration.dispose();
-    _currentDurationController.close();
     _recorderStateController.close();
     _recordedFileDurationController.close();
     _amplitudeStreamSubscription?.cancel();
-    _recorderTimer?.cancel();
-    _timer?.cancel();
-    _timer = null;
-    _recorderTimer = null;
+    _currentDurationStreamSubscription?.cancel();
     _isDisposed = true;
     super.dispose();
   }

@@ -6,6 +6,7 @@
 - Feature [#398](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/398) - Add noOfSamplesPerSecond parameter to preparePlayer for easier waveform configuration
 - Fixed [#441](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/441) - Incorrect waveform UI when setting `Duration.zero` for AudioFileWaveforms
 - Fixed [#439](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/439) - Waveform extraction is not cancel when PlayController is disposed
+- Fixed [#236](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/236) - Recorded duration is not same as controller duration
 
 ## 2.0.1
 

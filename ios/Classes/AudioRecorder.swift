@@ -63,7 +63,11 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             audioRecorder?.delegate = self
             audioRecorder?.isMeteringEnabled = true
             audioRecorder?.record()
-            bytesStreamEngine.attach(result: result)
+            bytesStreamEngine
+                .attach(
+                    result: result,
+                    sampleRate:  recordingSettings.sampleRate ?? Constants.defaultSampleRate
+                )
             result(true)
         } catch {
             result(FlutterError(code: Constants.audioWaveforms, message: "Failed to start recording", details: error.localizedDescription))

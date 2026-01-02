@@ -14,12 +14,13 @@ class RecorderBytesStreamEngine {
     private var audioFormat: AVAudioFormat?
     private var flutterChannel: FlutterMethodChannel
     private var paused: Bool = false
+    private var totalFrames: AVAudioFramePosition = 0
 
     init(channel: FlutterMethodChannel) {
         flutterChannel = channel
     }
 
-    func attach(result: @escaping FlutterResult) {
+    func attach(result: @escaping FlutterResult, sampleRate: Int) {
         let inputNode = audioEngine.inputNode
         audioFormat = inputNode.outputFormat(forBus: 0)
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: audioFormat) { (buffer, time) in
@@ -27,7 +28,15 @@ class RecorderBytesStreamEngine {
                 return
             }
             if let (convertedBytes, normalizedRms) = self.convertToFlutterType(buffer) {
-                self.sendToFlutter(convertedBytes, normalizedRms: normalizedRms)
+                self.totalFrames += AVAudioFramePosition(buffer.frameLength)
+                let effectiveSampleRate = buffer.format.sampleRate > 0 ? buffer.format.sampleRate : Double(sampleRate)
+                let duration = Double(self.totalFrames) / effectiveSampleRate
+                let milliseconds = Int(duration * 1000)
+                self.sendToFlutter(
+                    convertedBytes,
+                    normalizedRms: normalizedRms,
+                    milliSeconds: milliseconds
+                )
             }
         }
         do {
@@ -42,6 +51,7 @@ class RecorderBytesStreamEngine {
     }
 
     func detach() {
+        totalFrames = 0
         audioEngine.inputNode.removeTap(onBus: 0)
         audioEngine.stop()
     }
@@ -77,12 +87,13 @@ class RecorderBytesStreamEngine {
 
     }
 
-    private func sendToFlutter(_ buffer: FlutterStandardTypedData, normalizedRms: Double) {
+    private func sendToFlutter(_ buffer: FlutterStandardTypedData, normalizedRms: Double, milliSeconds: Int) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             flutterChannel.invokeMethod(Constants.onAudioChunk, arguments: [
                 Constants.bytes: buffer,
-                Constants.normalisedRms: normalizedRms
+                Constants.normalisedRms: normalizedRms,
+                Constants.recordedDuration: milliSeconds,
             ])
         }
     }

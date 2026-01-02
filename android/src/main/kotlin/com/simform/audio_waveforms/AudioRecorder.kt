@@ -38,6 +38,13 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var commonEncoder = CommonEncoder()
     private var wavEncoder: WavEncoder? = null
     private var successCallback: RequestPermissionsSuccessCallback? = null
+    private var totalSamples = 0L
+    private val channelCount: Int
+        get() = when (channelConfig) {
+            AudioFormat.CHANNEL_IN_MONO -> 1
+            AudioFormat.CHANNEL_IN_STEREO -> 2
+            else -> 1
+        }
 
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
@@ -146,7 +153,12 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                             commonEncoder.queueInputBuffer(audioData)
                         }
                         val rms = calculateRms(audioData, read)
-                        sendBytesToFlutter(audioData, rms)
+                        totalSamples += read / channelCount
+                        val durationSec =
+                            totalSamples.toDouble() / (recorderSettings?.sampleRate
+                                ?: Constants.DEFAULT_SAMPLE_RATE)
+                        val milliSeconds = (durationSec * 1000).toLong()
+                        sendBytesToFlutter(audioData, rms, milliSeconds)
                     }
                 }
             }
@@ -158,6 +170,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     fun stop(result: Result) {
         try {
             audioRecord?.stop()
+            totalSamples = 0L
             recorderState = RecorderState.Stopped
             if (encoder?.encodeForWav == true) {
                 wavEncoder?.stop(result)
@@ -185,12 +198,13 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         result.success(hashMap)
     }
 
-    private fun sendBytesToFlutter(chunk: ByteArray, rms: Double) {
+    private fun sendBytesToFlutter(chunk: ByteArray, rms: Double, milliSeconds: Long) {
         val args: MutableMap<String, Any?> = HashMap()
-        args["normalisedRms"] = rms
-        args["bytes"] = chunk
+        args[Constants.normalisedRms] = rms
+        args[Constants.bytes] = chunk
+        args[Constants.recordedDuration] = milliSeconds
         Handler(Looper.getMainLooper()).post {
-            channel.invokeMethod("onAudioChunk", args)
+            channel.invokeMethod(Constants.onAudioChunk, args)
         }
     }
 
