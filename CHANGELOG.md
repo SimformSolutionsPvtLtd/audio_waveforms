@@ -8,6 +8,7 @@
 - Fixed [#439](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/439) - Waveform extraction is not cancel when PlayController is disposed
 - Fixed [#236](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/236) - Recorded duration is not same as controller duration
 - Feature [#250](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/250) - Add support for right to left waveform rendering
+- Fixed [#463](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/463) - iOS crash while streaming audio bytes due to hardware format mismatch 
 
 ## 2.0.1
 
