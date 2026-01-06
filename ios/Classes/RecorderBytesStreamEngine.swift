@@ -11,7 +11,6 @@ import Accelerate
 
 class RecorderBytesStreamEngine {
     private var audioEngine = AVAudioEngine()
-    private var audioFormat: AVAudioFormat?
     private var flutterChannel: FlutterMethodChannel
     private var paused: Bool = false
     private var totalFrames: AVAudioFramePosition = 0
@@ -22,8 +21,7 @@ class RecorderBytesStreamEngine {
 
     func attach(result: @escaping FlutterResult, sampleRate: Int) {
         let inputNode = audioEngine.inputNode
-        audioFormat = inputNode.outputFormat(forBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: audioFormat) { (buffer, time) in
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: nil) { (buffer, time) in
             if self.paused {
                 return
             }
