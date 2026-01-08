@@ -1603,21 +1603,21 @@ This section provides a quick reference for the main classes and their propertie
 
 ### Methods
 
-| Method                                                                                                                   | Description                              |
-|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
-| `preparePlayer({required String path, bool shouldExtractWaveform, int? noOfSamples, int? noOfSamplesPerSecond})`        | Prepare audio file for playback          |
-| `startPlayer({FinishMode finishMode})`                                               | Start playing audio                      |
-| `pausePlayer()`                                                                      | Pause playback                           |
-| `stopPlayer()`                                                                       | Stop playback                            |
-| `setVolume(double volume)`                                                           | Set volume (0.0 to 1.0)                  |
-| `setRate(double rate)`                                                               | Set playback speed                       |
-| `seekTo(int progress)`                                                               | Seek to position in milliseconds         |
-| `setFinishMode({required FinishMode finishMode})`                                    | Set behavior when audio finishes         |
-| `getDuration(DurationType durationType)`                                             | Get duration (max or current)            |
-| `release()`                                                                          | Release native player resources          |
-| `stopAllPlayers()`                                                                   | Stop all players                         |
-| `pauseAllPlayers()`                                                                  | Pause all players                        |
-| `dispose()`                                                                          | Dispose controller and release resources |
+| Method                                                                                                           | Description                              |
+|------------------------------------------------------------------------------------------------------------------|------------------------------------------|
+| `preparePlayer({required String path, bool shouldExtractWaveform, int? noOfSamples, int? noOfSamplesPerSecond})` | Prepare audio file for playback          |
+| `startPlayer({FinishMode finishMode})`                                                                           | Start playing audio                      |
+| `pausePlayer()`                                                                                                  | Pause playback                           |
+| `stopPlayer()`                                                                                                   | Stop playback                            |
+| `setVolume(double volume)`                                                                                       | Set volume (0.0 to 1.0)                  |
+| `setRate(double rate)`                                                                                           | Set playback speed                       |
+| `seekTo(int progress)`                                                                                           | Seek to position in milliseconds         |
+| `setFinishMode({required FinishMode finishMode})`                                                                | Set behavior when audio finishes         |
+| `getDuration(DurationType durationType)`                                                                         | Get duration (max or current)            |
+| `release()`                                                                                                      | Release native player resources          |
+| `stopAllPlayers()`                                                                                               | Stop all players                         |
+| `pauseAllPlayers()`                                                                                              | Pause all players                        |
+| `dispose()`                                                                                                      | Dispose controller and release resources |
 
 ### Properties
 
@@ -1653,10 +1653,10 @@ This section provides a quick reference for the main classes and their propertie
 
 ### Methods
 
-| Method                                                                                           | Description                           |
-|--------------------------------------------------------------------------------------------------|---------------------------------------|
-| `extractWaveformData({required String path, int? noOfSamples, int? noOfSamplesPerSecond})`      | Extract waveform data from audio file |
-| `stopWaveformExtraction()`                                                                       | Stop ongoing extraction               |
+| Method                                                                                     | Description                           |
+|--------------------------------------------------------------------------------------------|---------------------------------------|
+| `extractWaveformData({required String path, int? noOfSamples, int? noOfSamplesPerSecond})` | Extract waveform data from audio file |
+| `stopWaveformExtraction()`                                                                 | Stop ongoing extraction               |
 
 ### Streams
 
@@ -1873,47 +1873,10 @@ These are the main contributors who have helped shape the Audio Waveforms packag
 
 ## Main Contributors
 
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/Ujas-Majithiya">
-        <img src="https://avatars.githubusercontent.com/u/56400956?s=100" width="100px;" alt=""/>
-        <br />
-        <sub><b>Ujas Majithiya</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/DevarshRanpara">
-        <img src="https://avatars.githubusercontent.com/u/26064415?s=100" width="100px;" alt=""/>
-        <br />
-        <sub><b>Devarsh Ranpara</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/jayakbari1">
-        <img src="https://avatars.githubusercontent.com/u/67188121?s=100" width="100px;" alt=""/>
-        <br />
-        <sub><b>Jay Akbari</b></sub>
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/himanshu447">
-        <img src="https://avatars.githubusercontent.com/u/35589687?s=100" width="100px;" alt=""/>
-        <br />
-        <sub><b>Himanshu Gandhi</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/ManojPadia">
-        <img src="https://avatars.githubusercontent.com/u/69233459?s=100" width="100px;" alt=""/>
-        <br />
-        <sub><b>Manoj Padia</b></sub>
-      </a>
-    </td>
-  </tr>
-</table>
+
+| ![img](https://avatars.githubusercontent.com/u/56400956?v=4&s=200) | ![img](https://avatars.githubusercontent.com/u/67188121?v=4&s=200) | ![img](https://avatars.githubusercontent.com/u/55338705?v=4&s=200&t=1) | ![img](https://avatars.githubusercontent.com/u/130688960?v=4&s=200) |
+|:------------------------------------------------------------------:|:------------------------------------------------------------------:|:----------------------------------------------------------------------:|:-------------------------------------------------------------------:|
+|        [Ujas Majithiya](https://github.com/Ujas-Majithiya)         |            [Jay Akbari](https://github.com/jayakbari1)             |          [Priyanshu Desai](https://github.com/priyanshudesai)          |             [Vasu Nageshri](https://github.com/Vasusn)              |
 
 ## How to Contribute
 

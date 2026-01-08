@@ -1,4 +1,4 @@
-## 2.0.2 (#unreleased)
+## 2.0.2
 
 - Chore [#460](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/460) - Update compileSdk and targetSdk to run example app
 - Chore [#461](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/461) - Update analysis options and related files

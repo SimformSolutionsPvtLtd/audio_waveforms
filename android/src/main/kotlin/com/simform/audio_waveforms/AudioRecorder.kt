@@ -252,7 +252,6 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         try {
             mediaMetadataRetriever.setDataSource(path)
             val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION)
-            println("Duration: $duration")
             return duration?.toInt() ?: -1
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Error getting duration: ${e.message}")
