@@ -182,7 +182,8 @@ class RecorderController extends ChangeNotifier {
           notifyListeners();
           return;
         }
-        if (Platform.isIOS) {
+        // iOS and macOS don't require initialization, set state directly
+        if (isIosOrMacOS) {
           _setRecorderState(RecorderState.initialized);
         }
         if (_recorderState.isInitialized) {

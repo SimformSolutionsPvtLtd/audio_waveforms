@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'player_identifier.dart';
 
 //ignore_for_file: constant_identifier_names
@@ -199,3 +201,6 @@ enum WaveformRenderMode {
   /// Check WaveformRenderMode is equals to rtl or not.
   bool get isRtl => this == WaveformRenderMode.rtl;
 }
+
+/// Checks if the current platform is iOS or macOS.
+bool get isIosOrMacOS => Platform.isIOS || Platform.isMacOS;

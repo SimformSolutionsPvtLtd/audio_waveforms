@@ -1,3 +1,7 @@
+## 2.1.0 (#unreleased)
+
+- Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+
 ## 2.0.2
 
 - Chore [#460](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/460) - Update compileSdk and targetSdk to run example app
