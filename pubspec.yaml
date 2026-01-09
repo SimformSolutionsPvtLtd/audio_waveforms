@@ -11,6 +11,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  web: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -28,4 +31,7 @@ flutter:
         pluginClass: AudioWaveformsPlugin
       macos:
         pluginClass: AudioWaveformsPlugin
+      web:
+        pluginClass: AudioWaveformsPlugin
+        fileName: audio_waveforms_web.dart
 

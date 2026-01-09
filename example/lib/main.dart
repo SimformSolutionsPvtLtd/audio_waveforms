@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:audio_waveforms_example/chat_bubble.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -52,6 +53,20 @@ class _HomeState extends State<Home> {
 
   Future<void> _init() async {
     recorderController = RecorderController();
+    // TODO(vasu): This is a simplified implementation for demonstration purposes.
+    // On web, asset paths work differently than native platforms. For production
+    // web apps, consider:
+    // 1. Using proper web URLs (http://example.com/audio.mp3)
+    // 2. Converting assets to base64-encoded data URIs
+    // 3. Using Flutter's AssetBundle to properly load web assets
+    // 4. Implementing proper CORS handling for external audio sources
+    if (kIsWeb) {
+      paths.addAll(assetPaths);
+      isLoading = false;
+      setState(() {});
+      return;
+    }
+
     appDirectory = await getApplicationDocumentsDirectory();
     for (final path in assetPaths) {
       final fileName = path.split('/').last;
@@ -204,6 +219,13 @@ class _HomeState extends State<Home> {
 
   void _startOrStopRecording() async {
     try {
+      if (kIsWeb) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Recording not supported on web')),
+        );
+        return;
+      }
+
       if (isRecording) {
         recorderController.reset();
 

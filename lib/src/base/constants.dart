@@ -58,4 +58,36 @@ class Constants {
   static const String normalisedRms = 'normalisedRms';
   static const String bytes = 'bytes';
   static const String recordedDuration = 'recordedDuration';
+
+  // Error codes
+  static const String audioWaveforms = 'audio_waveforms';
+  static const String unsupported = 'UNSUPPORTED';
+  static const String unimplemented = 'Unimplemented';
+
+  // Error messages
+  static const String cannotPreparePlayer = 'Cannot prepare player';
+  static const String cannotStartPlayer = 'Cannot start player';
+  static const String cannotPausePlayer = 'Cannot pause player';
+  static const String cannotStopPlayer = 'Cannot stop player';
+  static const String cannotReleasePlayer = 'Cannot release player';
+  static const String cannotGetDuration = 'Cannot get duration';
+  static const String cannotSeekToPosition = 'Cannot seek to position';
+  static const String cannotSetVolume = 'Cannot set volume';
+  static const String cannotSetRate = 'Cannot set rate';
+  static const String cannotSetFinishMode = 'Cannot set finish mode';
+  static const String playerKeyIsNull = 'Player key is null';
+  static const String playerKeyOrDurationTypeIsNull =
+      'Player key or duration type is null';
+  static const String playerKeyOrProgressIsNull =
+      'Player key or progress is null';
+  static const String playerKeyOrVolumeIsNull = 'Player key or volume is null';
+  static const String playerKeyOrRateIsNull = 'Player key or rate is null';
+  static const String recordingNotSupportedOnWeb =
+      'Audio recording is not supported on web platform';
+  static const String methodNotAvailableForWeb =
+      'is not available for web. Recording functionality is only available on mobile platforms (iOS/Android).';
+  static const String methodNotImplementedOnWeb =
+      'is not implemented on web platform';
+  static const String audioWaveformsDoesNotImplement =
+      'audio_waveforms for web doesn\'t implement';
 }
