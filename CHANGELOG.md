@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Feature [#472](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/472) - Add web platform support for audio player
 
 ## 2.0.2
 
