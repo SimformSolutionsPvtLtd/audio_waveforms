@@ -10,6 +10,7 @@ import android.util.Log
 import io.flutter.plugin.common.MethodChannel
 import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.pow
 import kotlin.math.sqrt
 import androidx.core.net.toUri
@@ -68,6 +69,8 @@ class WaveformExtractor(
     private var perSamplePoints = 0L
     /** Flag to prevent submitting multiple results */
     private var isReplySubmitted = false
+    /** Ensures stop/release is executed only once (MediaCodec callbacks are async). */
+    private val isStopped = AtomicBoolean(false)
 
     /**
      * Retrieves the audio format from the given media file
@@ -121,7 +124,7 @@ class WaveformExtractor(
                 it.configure(format, null, null, 0)
                 it.setCallback(object : MediaCodec.Callback() {
                     override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
-                        if (inputEof || index < 0) return
+                        if (isStopped.get() || inputEof || index < 0) return
                         val extractor = extractor ?: return
                         codec.getInputBuffer(index)?.let { buf ->
                             val size = extractor.readSampleData(buf, 0)
@@ -132,21 +135,38 @@ class WaveformExtractor(
                                     extractor.advance()
                                 } catch (e: Exception) {
                                     inputEof = true
-                                    result.error(
-                                        Constants.LOG_TAG,
-                                        e.message,
-                                        "Invalid input buffer."
-                                    )
+                                    if (!isReplySubmitted) {
+                                        result.error(
+                                            Constants.LOG_TAG,
+                                            e.message,
+                                            "Invalid input buffer."
+                                        )
+                                        isReplySubmitted = true
+                                    }
+                                    stop()
                                 }
                             } else {
-                                codec.queueInputBuffer(
-                                    index,
-                                    0,
-                                    0,
-                                    0,
-                                    MediaCodec.BUFFER_FLAG_END_OF_STREAM
-                                )
-                                inputEof = true
+                                try {
+                                    codec.queueInputBuffer(
+                                        index,
+                                        0,
+                                        0,
+                                        0,
+                                        MediaCodec.BUFFER_FLAG_END_OF_STREAM
+                                    )
+                                    inputEof = true
+                                } catch (e: Exception) {
+                                    inputEof = true
+                                    if (!isReplySubmitted) {
+                                        result.error(
+                                            Constants.LOG_TAG,
+                                            e.message,
+                                            "Failed to queue EOS buffer."
+                                        )
+                                        isReplySubmitted = true
+                                    }
+                                    stop()
+                                }
                             }
                         }
                     }
@@ -169,7 +189,10 @@ class WaveformExtractor(
                             16
                         }
                         totalSamples = (sampleRate.toLong() * durationMillis) / 1000
-                        perSamplePoints = totalSamples / expectedPoints
+                        // Guard against zero/invalid values: if perSamplePoints becomes 0,
+                        // handleBufferDivision() will trigger stop() immediately and callbacks
+                        // may continue, causing "codec is released already" crashes.
+                        perSamplePoints = if (expectedPoints <= 0) 1 else (totalSamples / expectedPoints).coerceAtLeast(1)
                     }
 
                     override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {
@@ -180,8 +203,8 @@ class WaveformExtractor(
                                 "An error is thrown while decoding the audio file"
                             )
                             isReplySubmitted = true
-                            finishCount.countDown()
                         }
+                        stop()
                     }
 
                     override fun onOutputBufferAvailable(
@@ -189,7 +212,14 @@ class WaveformExtractor(
                         index: Int,
                         info: MediaCodec.BufferInfo
                     ) {
-                        if (index < 0 || decoder == null) return
+                        if (index < 0) return
+                        // If we are already stopping/stopped, just attempt to release the buffer.
+                        if (isStopped.get() || decoder == null) {
+                            try {
+                                codec.releaseOutputBuffer(index, false)
+                            } catch (_: IllegalStateException) {}
+                            return
+                        }
                         
                         try {
                             if (info.size > 0) {
@@ -249,6 +279,7 @@ class WaveformExtractor(
                 )
                 isReplySubmitted = true
             }
+            stop()
         }
 
 
@@ -272,6 +303,10 @@ class WaveformExtractor(
      * @param value The normalized audio sample value (-1.0 to 1.0)
      */
     private fun handleBufferDivision(value: Float) {
+        // Defensive: perSamplePoints should never be <= 0, but keep this to avoid edge-case crashes.
+        if (perSamplePoints <= 0L) {
+            perSamplePoints = 1
+        }
         if (sampleCount == perSamplePoints) {
             updateProgress()
 
@@ -402,10 +437,39 @@ class WaveformExtractor(
      * 3. Signals completion via the countdown latch
      */
     fun stop() {
-        decoder?.stop()
-        decoder?.release()
-        extractor?.release()
-        finishCount.countDown()
+        if (!isStopped.compareAndSet(false, true)) return
+
+        val localDecoder = decoder
+        decoder = null
+        val localExtractor = extractor
+        extractor = null
+
+        try {
+            try {
+                localDecoder?.stop()
+            } catch (e: IllegalStateException) {
+                // MediaCodec can already be released in some failure paths (e.g. ID3v2.4 MP3 decode issues).
+                Log.w(Constants.LOG_TAG, "Decoder already stopped/released: ${e.message}")
+            } catch (t: Throwable) {
+                Log.w(Constants.LOG_TAG, "Decoder stop failed: ${t.message}")
+            }
+
+            try {
+                localDecoder?.release()
+            } catch (e: IllegalStateException) {
+                Log.w(Constants.LOG_TAG, "Decoder already released: ${e.message}")
+            } catch (t: Throwable) {
+                Log.w(Constants.LOG_TAG, "Decoder release failed: ${t.message}")
+            }
+
+            try {
+                localExtractor?.release()
+            } catch (t: Throwable) {
+                Log.w(Constants.LOG_TAG, "Extractor release failed: ${t.message}")
+            }
+        } finally {
+            finishCount.countDown()
+        }
     }
 }
 
