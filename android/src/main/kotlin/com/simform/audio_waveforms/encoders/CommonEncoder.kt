@@ -267,10 +267,11 @@ class CommonEncoder {
     fun signalToStop() {
         isEncodingComplete = true
 
-        // If an input buffer is already available and the queue is empty,
-        // the onInputBufferAvailable callback won't fire again on its own.
-        // We must queue the EOS buffer now to avoid hanging forever.
-        synchronized(inputQueue) {
+        // Post the EOS check to the handler thread so it runs on the same
+        // thread as onInputBufferAvailable, avoiding race conditions where
+        // both threads try to queue EOS with the same buffer index.
+        handler.post {
+            if (isEncoderStopped) return@post
             if (currentInputBufferIndex >= 0 && inputQueue.isEmpty()) {
                 try {
                     queueEosBuffer(mediaCodec, currentInputBufferIndex)
@@ -429,12 +430,14 @@ class CommonEncoder {
             mediaMuxer?.stop()
             mediaMuxer?.release()
             outputStream.close()
-            handlerThread.quitSafely()
-            handlerThread.join()
         } catch (e: Exception) {
             Log.e(Constants.LOG_TAG, "Error stopping encoder: ${e.message}")
         } finally {
             completionCallback?.invoke()
+            // Quit the handler thread after invoking the callback.
+            // Don't call join() -- stopEncoder() is called from callbacks
+            // running on this same thread, so joining would deadlock.
+            handlerThread.quitSafely()
         }
 
         // Reset state for next recording
