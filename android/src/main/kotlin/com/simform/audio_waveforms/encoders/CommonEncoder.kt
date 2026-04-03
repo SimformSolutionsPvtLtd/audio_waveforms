@@ -153,17 +153,7 @@ class CommonEncoder {
         mediaCodec.setCallback(object : MediaCodec.Callback() {
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
                 if (isEncodingComplete && inputQueue.isEmpty()) {
-                    // Use the last calculated presentation time for EOF, not system time
-                    val eofTimestamp = if (totalBytesEncoded > 0) {
-                        val bytesPerSample = 2L
-                        val channels = 1L
-                        (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
-                    } else {
-                        0L
-                    }
-                    codec.queueInputBuffer(
-                        index, 0, 0, eofTimestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM
-                    )
+                    queueEosBuffer(codec, index)
                 } else {
                     currentInputBufferIndex = index
                     feedEncoder()
@@ -244,7 +234,7 @@ class CommonEncoder {
                     isMuxerStarted = true
                 }
             }
-        })
+        }, handler)
 
         mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
         mediaCodec.start()
@@ -276,6 +266,20 @@ class CommonEncoder {
      */
     fun signalToStop() {
         isEncodingComplete = true
+
+        // If an input buffer is already available and the queue is empty,
+        // the onInputBufferAvailable callback won't fire again on its own.
+        // We must queue the EOS buffer now to avoid hanging forever.
+        synchronized(inputQueue) {
+            if (currentInputBufferIndex >= 0 && inputQueue.isEmpty()) {
+                try {
+                    queueEosBuffer(mediaCodec, currentInputBufferIndex)
+                    currentInputBufferIndex = -1
+                } catch (e: Exception) {
+                    Log.e(Constants.LOG_TAG, "Error queuing EOS in signalToStop: ${e.message}")
+                }
+            }
+        }
     }
 
     /**
@@ -287,6 +291,22 @@ class CommonEncoder {
         completionCallback = callback
     }
 
+
+    /**
+     * Queues an end-of-stream buffer to signal that encoding is complete.
+     */
+    private fun queueEosBuffer(codec: MediaCodec, bufferIndex: Int) {
+        val eofTimestamp = if (totalBytesEncoded > 0) {
+            val bytesPerSample = 2L
+            val channels = 1L
+            (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
+        } else {
+            0L
+        }
+        codec.queueInputBuffer(
+            bufferIndex, 0, 0, eofTimestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM
+        )
+    }
 
     /**
      * Feeds available audio data to the encoder
@@ -411,9 +431,10 @@ class CommonEncoder {
             outputStream.close()
             handlerThread.quitSafely()
             handlerThread.join()
-            completionCallback?.invoke()
         } catch (e: Exception) {
             Log.e(Constants.LOG_TAG, "Error stopping encoder: ${e.message}")
+        } finally {
+            completionCallback?.invoke()
         }
 
         // Reset state for next recording

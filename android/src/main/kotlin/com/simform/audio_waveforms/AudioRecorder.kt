@@ -176,18 +176,18 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                 wavEncoder?.stop(result)
                 recordingThread?.join()
                 sendRecordingResult(result)
+                release()
             } else {
                 commonEncoder.setOnEncodingCompleted {
                     sendRecordingResult(result)
+                    release()
                 }
                 commonEncoder.signalToStop()
             }
-
         } catch (e: Exception) {
             result.error(LOG_TAG, e.message, "An error occurred while stopping the recorder")
-            return
+            release()
         }
-        release()
     }
 
     private fun sendRecordingResult(result: Result) {
@@ -195,7 +195,9 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         val hashMap = HashMap<String, Any?>()
         hashMap[Constants.resultFilePath] = recorderSettings?.path
         hashMap[Constants.resultDuration] = duration
-        result.success(hashMap)
+        Handler(Looper.getMainLooper()).post {
+            result.success(hashMap)
+        }
     }
 
     private fun sendBytesToFlutter(chunk: ByteArray, rms: Double, milliSeconds: Long) {
