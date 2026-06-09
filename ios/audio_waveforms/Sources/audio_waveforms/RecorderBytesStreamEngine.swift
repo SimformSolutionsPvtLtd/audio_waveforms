@@ -5,6 +5,7 @@
 //  Created by Ujas Majithiya on 10/04/25.
 //
 
+import Flutter
 import Foundation
 import AVFAudio
 import Accelerate

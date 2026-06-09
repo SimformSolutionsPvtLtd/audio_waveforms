@@ -3,7 +3,7 @@ import FlutterMacOS
 
 /// Main plugin class for audio_waveforms on macOS.
 /// Manages recording, playback, and waveform extraction functionality.
-public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
+public class AudioWaveformsPlugin: NSObject, FlutterPlugin {
 
     let audioRecorder: AudioRecorder
     var audioPlayers = [String: AudioPlayer]()
@@ -32,7 +32,7 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         let channel = FlutterMethodChannel(
             name: Constants.methodChannelName,
             binaryMessenger: registrar.messenger)
-        let instance = SwiftAudioWaveformsPlugin(
+        let instance = AudioWaveformsPlugin(
             registrar: registrar, flutterChannel: channel)
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
