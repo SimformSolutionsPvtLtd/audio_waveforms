@@ -328,7 +328,13 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private fun pauseAllPlayer(result: Result) {
         try {
             for ((key, _) in audioPlayers) {
-                audioPlayers[key]?.pause()
+                // Only pause players that are actually playing. Pausing an
+                // already-completed/paused player re-emits its current
+                // position (0 after a FinishMode.Pause seek), which wipes the
+                // completed waveform on the Flutter side. See issue #490.
+                if (audioPlayers[key]?.isPlaying() == true) {
+                    audioPlayers[key]?.pause()
+                }
             }
             result.success(true)
         } catch (e: Exception) {

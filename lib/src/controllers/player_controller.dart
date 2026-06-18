@@ -351,7 +351,12 @@ class PlayerController extends ChangeNotifier {
     if (isAllPlayersPaused) {
       PlatformStreams.instance.playerControllerFactory
           .forEach((playKey, controller) {
-        controller._setPlayerState(PlayerState.paused);
+        // Only players that were actually playing get paused. Flipping a
+        // completed/stopped player to paused would discard its finished
+        // state. See issue #490.
+        if (controller.playerState.isPlaying) {
+          controller._setPlayerState(PlayerState.paused);
+        }
       });
     }
     return isAllPlayersPaused;

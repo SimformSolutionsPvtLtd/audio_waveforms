@@ -124,6 +124,11 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         result(true)
     }
 
+    /// Whether this player is currently playing audio.
+    var isPlaying: Bool {
+        return player?.isPlaying ?? false
+    }
+
     /// Pauses the current audio playback.
     func pausePlayer() {
         stopListening()

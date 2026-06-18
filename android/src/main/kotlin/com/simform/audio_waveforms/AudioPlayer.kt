@@ -146,6 +146,9 @@ class AudioPlayer(
         player?.pause()
     }
 
+    /** Whether this player is currently playing audio. */
+    fun isPlaying(): Boolean = player?.isPlaying == true
+
     fun release(result: MethodChannel.Result) {
         try {
             player?.release()
