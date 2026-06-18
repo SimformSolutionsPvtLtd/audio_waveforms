@@ -63,3 +63,7 @@ ios/Runner.xcworkspace/xcshareddata/
 example/ios/Flutter/flutter_export_environment.sh
 audio_waveforms.iml
 pubspec.lock
+
+# Swift Package Manager
+**/.build/
+**/.swiftpm/
