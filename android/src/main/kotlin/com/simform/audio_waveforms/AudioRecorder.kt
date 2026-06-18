@@ -45,6 +45,13 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             AudioFormat.CHANNEL_IN_STEREO -> 2
             else -> 1
         }
+    private val bytesPerSample: Int
+        get() = when (audioFormat) {
+            AudioFormat.ENCODING_PCM_8BIT -> 1
+            AudioFormat.ENCODING_PCM_16BIT -> 2
+            AudioFormat.ENCODING_PCM_FLOAT -> 4
+            else -> 2
+        }
 
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
@@ -153,7 +160,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                             commonEncoder.queueInputBuffer(audioData)
                         }
                         val rms = calculateRms(audioData, read)
-                        totalSamples += read / channelCount
+                        totalSamples += read / (channelCount * bytesPerSample)
                         val durationSec =
                             totalSamples.toDouble() / (recorderSettings?.sampleRate
                                 ?: Constants.DEFAULT_SAMPLE_RATE)
