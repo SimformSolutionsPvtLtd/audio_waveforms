@@ -45,6 +45,13 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             AudioFormat.CHANNEL_IN_STEREO -> 2
             else -> 1
         }
+    private val bytesPerSample: Int
+        get() = when (audioFormat) {
+            AudioFormat.ENCODING_PCM_8BIT -> 1
+            AudioFormat.ENCODING_PCM_16BIT -> 2
+            AudioFormat.ENCODING_PCM_FLOAT -> 4
+            else -> 2
+        }
 
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
@@ -126,6 +133,11 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             )
             return
         }
+        if (recorderState != RecorderState.Recording && recorderState != RecorderState.Paused) {
+            // Let the previous recording thread finish so it can't add to the reset counter.
+            recordingThread?.join()
+        }
+        totalSamples = 0L
         audioRecord?.startRecording()
         recorderState = RecorderState.Recording
         if (encoder?.encodeForWav == true) {
@@ -153,7 +165,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                             commonEncoder.queueInputBuffer(audioData)
                         }
                         val rms = calculateRms(audioData, read)
-                        totalSamples += read / channelCount
+                        totalSamples += read / (channelCount * bytesPerSample)
                         val durationSec =
                             totalSamples.toDouble() / (recorderSettings?.sampleRate
                                 ?: Constants.DEFAULT_SAMPLE_RATE)
@@ -170,7 +182,6 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     fun stop(result: Result) {
         try {
             audioRecord?.stop()
-            totalSamples = 0L
             recorderState = RecorderState.Stopped
             if (encoder?.encodeForWav == true) {
                 wavEncoder?.stop(result)
