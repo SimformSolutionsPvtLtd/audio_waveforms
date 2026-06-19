@@ -21,6 +21,17 @@ class RecorderBytesStreamEngine {
 
     func attach(result: @escaping FlutterResult, sampleRate: Int) {
         let inputNode = audioEngine.inputNode
+
+        // Reset any previous engine/tap state before installing a new tap.
+        // Installing a tap on a bus that already has one throws a fatal
+        // `nullptr == Tap()` exception (see issue #487). This also cleans up
+        // a tap leaked when a prior `audioEngine.start()` failed.
+        if audioEngine.isRunning {
+            audioEngine.stop()
+        }
+        inputNode.removeTap(onBus: 0)
+        totalFrames = 0
+
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: nil) { (buffer, time) in
             if self.paused {
                 return
@@ -40,6 +51,9 @@ class RecorderBytesStreamEngine {
         do {
             try audioEngine.start()
         } catch {
+           // Remove the tap so a failed start doesn't leak it onto the bus,
+           // which would crash the next `attach` with `nullptr == Tap()`.
+           inputNode.removeTap(onBus: 0)
            result(FlutterError(code: Constants.audioWaveforms, message: "Error starting Audio Engine", details: error.localizedDescription))
         }
     }
