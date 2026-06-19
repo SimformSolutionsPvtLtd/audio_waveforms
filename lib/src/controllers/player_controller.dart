@@ -196,6 +196,10 @@ class PlayerController extends ChangeNotifier {
             ..addAll(value);
           notifyListeners();
         },
+      ).catchError(
+        (Object error) {
+          debugPrint('Waveform extraction failed: $error');
+        },
       );
     }
     notifyListeners();

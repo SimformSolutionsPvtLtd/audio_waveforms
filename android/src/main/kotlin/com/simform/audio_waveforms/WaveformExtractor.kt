@@ -6,6 +6,8 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import io.flutter.plugin.common.MethodChannel
 import java.nio.ByteBuffer
@@ -66,8 +68,44 @@ class WaveformExtractor(
     private var totalSamples = 0L
     /** Number of audio samples per waveform data point */
     private var perSamplePoints = 0L
-    /** Flag to prevent submitting multiple results */
+    /** Flag to prevent submitting multiple results. Guarded by [lock]; read/written from the decode and codec callback threads. */
+    @Volatile
     private var isReplySubmitted = false
+    /** Background thread running the blocking decode setup (setDataSource can block on network sources) */
+    private var decodeThread: Thread? = null
+    /** Delivers MethodChannel replies/events on the platform (main) thread, since decode runs off it. */
+    private val mainHandler = Handler(Looper.getMainLooper())
+    /** Guards decoder/extractor teardown against the live MediaCodec callbacks */
+    private val lock = Any()
+    /** Set once stop() has released the codec/extractor so in-flight callbacks bail out */
+    @Volatile
+    private var released = false
+
+    /**
+     * Delivers the final waveform data to Flutter exactly once, on the main thread.
+     * Idempotent: the first reply (success or error) wins and every later call is a no-op.
+     */
+    fun submitWaveformData() {
+        synchronized(lock) {
+            if (isReplySubmitted) return
+            isReplySubmitted = true
+        }
+        // Snapshot: the reply is posted async and sampleData may still be mutated by the decode thread.
+        val data = ArrayList(sampleData)
+        mainHandler.post { result.success(data) }
+    }
+
+    /**
+     * Delivers an error to Flutter exactly once, on the main thread.
+     * Idempotent: a no-op if a result (success or error) was already submitted.
+     */
+    private fun submitError(message: String?, details: String) {
+        synchronized(lock) {
+            if (isReplySubmitted) return
+            isReplySubmitted = true
+        }
+        mainHandler.post { result.error(Constants.LOG_TAG, message, details) }
+    }
 
     /**
      * Retrieves the audio format from the given media file
@@ -114,15 +152,24 @@ class WaveformExtractor(
      * 5. Reporting progress via the callback interface and method channel
      */
     fun startDecode() {
+        // setDataSource()/getFormat() block synchronously and, for network sources with poor or no
+        // connectivity, can stall for tens of seconds (native NuCachedSource2 retries). Running on the
+        // platform main thread would freeze the UI and trigger an ANR, so do the setup off the main thread.
+        decodeThread = Thread {
+            decodeInternal()
+        }.also { it.start() }
+    }
+
+    private fun decodeInternal() {
         try {
             val format = getFormat(path) ?: error("No audio format found")
             val mime = format.getString(MediaFormat.KEY_MIME) ?: error("No MIME type found")
             decoder = MediaCodec.createDecoderByType(mime).also {
                 it.configure(format, null, null, 0)
                 it.setCallback(object : MediaCodec.Callback() {
-                    override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
-                        if (inputEof || index < 0) return
-                        val extractor = extractor ?: return
+                    override fun onInputBufferAvailable(codec: MediaCodec, index: Int): Unit = synchronized(lock) {
+                        if (released || inputEof || index < 0) return@synchronized
+                        val extractor = extractor ?: return@synchronized
                         codec.getInputBuffer(index)?.let { buf ->
                             val size = extractor.readSampleData(buf, 0)
                             val sampleTime = extractor.sampleTime
@@ -132,11 +179,7 @@ class WaveformExtractor(
                                     extractor.advance()
                                 } catch (e: Exception) {
                                     inputEof = true
-                                    result.error(
-                                        Constants.LOG_TAG,
-                                        e.message,
-                                        "Invalid input buffer."
-                                    )
+                                    submitError(e.message, "Invalid input buffer.")
                                 }
                             } else {
                                 codec.queueInputBuffer(
@@ -173,24 +216,17 @@ class WaveformExtractor(
                     }
 
                     override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {
-                        if (!isReplySubmitted) {
-                            result.error(
-                                Constants.LOG_TAG,
-                                e.message,
-                                "An error is thrown while decoding the audio file"
-                            )
-                            isReplySubmitted = true
-                            finishCount.countDown()
-                        }
+                        submitError(e.message, "An error is thrown while decoding the audio file")
+                        finishCount.countDown()
                     }
 
                     override fun onOutputBufferAvailable(
                         codec: MediaCodec,
                         index: Int,
                         info: MediaCodec.BufferInfo
-                    ) {
-                        if (index < 0 || decoder == null) return
-                        
+                    ): Unit = synchronized(lock) {
+                        if (released || index < 0 || decoder == null) return@synchronized
+
                         try {
                             if (info.size > 0) {
                                 codec.getOutputBuffer(index)?.let { buf ->
@@ -232,6 +268,7 @@ class WaveformExtractor(
                             updateProgress()
                             val rms = sqrt(sampleSum / perSamplePoints).toFloat()
                             sendProgress(rms)
+                            submitWaveformData()
                             stop()
                         }
                     }
@@ -241,14 +278,7 @@ class WaveformExtractor(
             }
 
         } catch (e: Exception) {
-            if (!isReplySubmitted) {
-                result.error(
-                    Constants.LOG_TAG,
-                    e.message,
-                    "An error is thrown before decoding the audio file"
-                )
-                isReplySubmitted = true
-            }
+            submitError(e.message, "An error is thrown before decoding the audio file")
         }
 
 
@@ -277,6 +307,7 @@ class WaveformExtractor(
 
             // Discard redundant values and release resources
             if (progress > 1.0F) {
+                submitWaveformData()
                 stop()
                 return
             }
@@ -384,13 +415,16 @@ class WaveformExtractor(
         sampleSum = 0.0
 
         val args: MutableMap<String, Any?> = HashMap()
-        args[Constants.waveformData] = sampleData
+        args[Constants.waveformData] = ArrayList(sampleData)
         args[Constants.progress] = progress
         args[Constants.playerKey] = key
-        methodChannel.invokeMethod(
-            Constants.onCurrentExtractedWaveformData,
-            args
-        )
+        // Decode runs off the platform thread; MethodChannel must be invoked on the main thread.
+        mainHandler.post {
+            methodChannel.invokeMethod(
+                Constants.onCurrentExtractedWaveformData,
+                args
+            )
+        }
     }
 
     /**
@@ -402,9 +436,38 @@ class WaveformExtractor(
      * 3. Signals completion via the countdown latch
      */
     fun stop() {
-        decoder?.stop()
-        decoder?.release()
-        extractor?.release()
+        decodeThread?.interrupt()
+        decodeThread = null
+        var decoderToRelease: MediaCodec? = null
+        var extractorToRelease: MediaExtractor? = null
+        // Claim ownership of the codec/extractor under the lock and flip `released` so any
+        // callback that wins the lock afterwards bails out instead of touching freed objects.
+        synchronized(lock) {
+            if (released) return
+            released = true
+            decoderToRelease = decoder
+            extractorToRelease = extractor
+            decoder = null
+            extractor = null
+        }
+        // Release OUTSIDE the lock: MediaCodec.stop()/release() can block draining in-flight
+        // callbacks, and those callbacks contend for the same lock — releasing while holding it
+        // risks a deadlock. Wrap in try/catch so an already-released codec can't crash teardown.
+        try {
+            decoderToRelease?.stop()
+        } catch (e: Exception) {
+            Log.e(Constants.LOG_TAG, "Error stopping decoder: ${e.message}")
+        }
+        try {
+            decoderToRelease?.release()
+        } catch (e: Exception) {
+            Log.e(Constants.LOG_TAG, "Error releasing decoder: ${e.message}")
+        }
+        try {
+            extractorToRelease?.release()
+        } catch (e: Exception) {
+            Log.e(Constants.LOG_TAG, "Error releasing extractor: ${e.message}")
+        }
         finishCount.countDown()
     }
 }
