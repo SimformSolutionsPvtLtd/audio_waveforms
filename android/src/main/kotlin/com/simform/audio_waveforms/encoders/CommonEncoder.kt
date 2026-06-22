@@ -406,7 +406,11 @@ class CommonEncoder {
         try {
             mediaCodec.stop()
             mediaCodec.release()
-            mediaMuxer?.stop()
+            // Only stop the muxer if it was actually started; stopping an unstarted muxer
+            // throws and triggers the native MPEG4Writer "track not started" crash.
+            if (isMuxerStarted) {
+                mediaMuxer?.stop()
+            }
             mediaMuxer?.release()
             outputStream.close()
             handlerThread.quitSafely()

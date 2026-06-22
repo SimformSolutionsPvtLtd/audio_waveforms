@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Fixed [#482](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/482) - Prevent Android crash on stop by checking muxer state before stopping
 
 ## 2.0.2
 

@@ -135,15 +135,21 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             )
             wavEncoder?.start(result)
         } else {
-            commonEncoder.initCodec(recorderSettings = recorderSettings!!, result = result) {
-                recordingThread?.join()
-            }
+            commonEncoder.initCodec(recorderSettings = recorderSettings!!, result = result)
         }
         val buffer = ByteArray(bufferSize!!)
         recordingThread = Thread {
             while (recorderState == RecorderState.Recording || recorderState == RecorderState.Paused) {
                 if (recorderState == RecorderState.Recording) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+
+                    if (read < 0) {
+                        // Negative return is an AudioRecord error (e.g. ERROR_INVALID_OPERATION,
+                        // ERROR_DEAD_OBJECT). Reading again would keep failing, so stop cleanly.
+                        Log.e(LOG_TAG, "AudioRecord.read() error: $read")
+                        recorderState = RecorderState.Stopped
+                        break
+                    }
 
                     if (read > 0) {
                         val audioData = buffer.copyOf(read)
@@ -169,12 +175,15 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     fun stop(result: Result) {
         try {
-            audioRecord?.stop()
-            totalSamples = 0L
+            // Stop the read loop first, then unblock and join the recording thread so it
+            // can never call audioRecord.read() after the AudioRecord is released below.
             recorderState = RecorderState.Stopped
+            audioRecord?.stop()
+            recordingThread?.join()
+            recordingThread = null
+            totalSamples = 0L
             if (encoder?.encodeForWav == true) {
                 wavEncoder?.stop(result)
-                recordingThread?.join()
                 sendRecordingResult(result)
             } else {
                 commonEncoder.setOnEncodingCompleted {
