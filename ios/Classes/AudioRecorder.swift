@@ -6,7 +6,14 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var path: String?
     var useLegacyNormalization: Bool = false
     var audioUrl: URL?
-    var recordedDuration: CMTime = CMTime.zero
+    /// Held until `audioRecorderDidFinishRecording` fires so we only read the
+    /// file and return its path once the recorder has finalised it on disk.
+    /// Re-entrant stops queue here and all resolve with the same result, so a
+    /// second `stop()` never gets an empty map / null path.
+    private var stopResults: [FlutterResult] = []
+    /// Bumped on every async stop; the watchdog bails if superseded, so a stale
+    /// timer can't consume a later recording's `stopResults`.
+    private var stopGeneration: Int = 0
     var flutterChannel: FlutterMethodChannel
     var bytesStreamEngine: RecorderBytesStreamEngine
     init(channel: FlutterMethodChannel){
@@ -75,36 +82,94 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     }
     
     public func stopRecording(_ result: @escaping FlutterResult) {
-        audioRecorder?.stop()
+        // A stop is already in flight: queue this result so it resolves with the
+        // same finalised path/duration instead of getting an empty map / null path.
+        if !stopResults.isEmpty {
+            stopResults.append(result)
+            return
+        }
         bytesStreamEngine.detach()
-        if(audioUrl != nil) {
-            let asset = AVURLAsset(url:  audioUrl!)
-            
-            if #available(iOS 15.0, *) {
-                Task {
-                    do {
-                        recordedDuration = try await asset.load(.duration)
-                        sendResult(result, duration: Int(recordedDuration.seconds * 1000))
-                    } catch let err {
-                        debugPrint(err.localizedDescription)
-                        sendResult(result, duration: Int(CMTime.zero.seconds))
-                    }
+        // `stop()` finalises the file async; reading it early yields a truncated
+        // container. Defer to the delegate; finalise now only if recorder is gone.
+        guard let recorder = audioRecorder else {
+            finalizeRecording([result], url: audioUrl, path: path)
+            return
+        }
+        stopResults.append(result)
+        stopGeneration += 1
+        let generation = stopGeneration
+        // Detach so a subsequent `startRecording` can't mutate the URL/path this
+        // stop finalises; the watchdog closure keeps the recorder alive meanwhile.
+        audioRecorder = nil
+        recorder.stop()
+        // The delegate isn't guaranteed to fire, so force-finalise after a timeout
+        // or Dart's `stop()` hangs forever. `generation` guard + empty `stopResults`
+        // make a stale timer / the loser of delegate-vs-watchdog a no-op.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            guard let self = self,
+                  generation == self.stopGeneration,
+                  !self.stopResults.isEmpty else { return }
+            let pending = self.stopResults
+            self.stopResults = []
+            self.finalizeRecording(pending, url: recorder.url, path: recorder.url.path)
+        }
+    }
+
+    /// Reads the file's duration and returns its path; call only after writing
+    /// finished. URL/path passed in (not from `self`) to avoid a re-recording race.
+    /// All queued `results` resolve with the same path/duration.
+    private func finalizeRecording(_ results: [FlutterResult], url: URL?, path: String?) {
+        guard let url = url else {
+            sendResult(results, duration: 0, path: path)
+            return
+        }
+        let asset = AVURLAsset(url: url)
+        if #available(iOS 15.0, *) {
+            Task {
+                var durationMs = 0
+                do {
+                    let seconds = try await asset.load(.duration).seconds
+                    // `seconds` is NaN/infinite for an invalid or unfinished
+                    // container; `Int(NaN)` crashes, so only convert when finite.
+                    if seconds.isFinite { durationMs = Int(seconds * 1000) }
+                } catch let err {
+                    debugPrint(err.localizedDescription)
                 }
-            } else {
-                recordedDuration = asset.duration
-                sendResult(result, duration: Int(recordedDuration.seconds * 1000))
+                // FlutterResult must be invoked on the platform (main) thread;
+                // the Task continuation resumes on a background executor.
+                DispatchQueue.main.async {
+                    self.sendResult(results, duration: durationMs, path: path)
+                }
             }
         } else {
-            sendResult(result, duration: Int(CMTime.zero.seconds))
+            // `seconds` is NaN for an invalid container; `Int(NaN)` crashes.
+            let seconds = asset.duration.seconds
+            sendResult(results, duration: seconds.isFinite ? Int(seconds * 1000) : 0, path: path)
         }
-        audioRecorder = nil
     }
-    
-    private func sendResult(_ result: @escaping FlutterResult, duration:Int){
+
+    public func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
+        // Hop to main: `stopResults`/`stopGeneration` are only mutated there and
+        // `FlutterResult` must run on the platform thread.
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self, !self.stopResults.isEmpty else { return }
+            let results = self.stopResults
+            self.stopResults = []
+            // `flag == false`: recorder couldn't write a valid file. finalize still
+            // returns the path (zero duration) since Dart doesn't catch errors here.
+            if !flag {
+                debugPrint("audioRecorderDidFinishRecording reported failure for \(recorder.url)")
+            }
+            // Use the finishing recorder's own URL so a re-recording can't redirect us.
+            self.finalizeRecording(results, url: recorder.url, path: recorder.url.path)
+        }
+    }
+
+    private func sendResult(_ results: [FlutterResult], duration: Int, path: String?) {
         var params = [String:Any?]()
         params[Constants.resultFilePath] = path
         params[Constants.resultDuration] = duration
-        result(params)
+        for result in results { result(params) }
     }
     
     public func pauseRecording(_ result: @escaping FlutterResult) {
