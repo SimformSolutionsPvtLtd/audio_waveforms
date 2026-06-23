@@ -1,7 +1,8 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
-- Fixed [#432](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/432) - iOS kAudioFileInvalidFileError: finalise the recording before returning its path, and parse `file://` player paths correctly
+- Fixed [#432](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/432) - iOS kAudioFileInvalidFileError: finalise recording before returning path, handle re-entrant `stop()`, and parse `file://` player paths
+- Fixed player paths  `file://` parsing on macOS
 
 ## 2.0.2
 
