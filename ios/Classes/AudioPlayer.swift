@@ -23,15 +23,24 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     func preparePlayer(path: String?, volume: Double?, updateFrequency: Int?,result: @escaping FlutterResult, overrideAudioSession : Bool) {
         if(!(path ?? "").isEmpty) {
             self.updateFrequency = updateFrequency ?? 200
-            let audioUrl = URL.init(string: path!)
-            if(audioUrl == nil){
-                result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise Url from provided audio file", details: "If path contains `file://` try removing it"))
-                return
+            // `URL(string:)` mis-parses raw paths and truncates `file://` URLs at
+            // `#`/`?`, so strip the scheme and percent-decode for `fileURLWithPath:`.
+            let audioUrl: URL
+            if path!.hasPrefix("file://") {
+                var stripped = String(path!.dropFirst("file://".count))
+                // `file:///path` starts with `/`; `file://host/path` keeps a host
+                // segment — drop it so the host isn't folded into the file path.
+                if !stripped.hasPrefix("/"), let slash = stripped.firstIndex(of: "/") {
+                    stripped = String(stripped[slash...])
+                }
+                audioUrl = URL(fileURLWithPath: stripped.removingPercentEncoding ?? stripped)
+            } else {
+                audioUrl = URL(fileURLWithPath: path!)
             }
             do {
                 stopPlayer()
                 player = nil
-                player = try AVAudioPlayer(contentsOf: audioUrl!)
+                player = try AVAudioPlayer(contentsOf: audioUrl)
                 do {
                     if overrideAudioSession {
                         try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
