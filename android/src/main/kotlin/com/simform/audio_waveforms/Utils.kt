@@ -39,6 +39,10 @@ object Constants {
     const val encoder = "encoder"
     const val sampleRate = "sampleRate"
     const val bitRate = "bitRate"
+    const val audioSource = "audioSource"
+    const val useNoiseSuppressor = "useNoiseSuppressor"
+    const val useEchoCanceler = "useEchoCanceler"
+    const val useAutoGainControl = "useAutoGainControl"
     const val fileNameFormat = "dd-MM-yy-hh-mm-ss"
 
     const val preparePlayer = "preparePlayer"

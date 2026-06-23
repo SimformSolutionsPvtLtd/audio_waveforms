@@ -36,7 +36,28 @@ data class RecorderSettings(
      * Bit rate in bits per second
      * Defaults to 128kbps (good quality for most audio)
      */
-    val bitRate: Int = 128000
+    val bitRate: Int = 128000,
+
+    /**
+     * MediaRecorder.AudioSource constant used for capture.
+     * Defaults to MIC (1).
+     */
+    val audioSource: Int = 1,
+
+    /**
+     * Whether to attach a NoiseSuppressor to the recording session when available.
+     */
+    val useNoiseSuppressor: Boolean = false,
+
+    /**
+     * Whether to attach an AcousticEchoCanceler to the recording session when available.
+     */
+    val useEchoCanceler: Boolean = false,
+
+    /**
+     * Whether to attach an AutomaticGainControl to the recording session when available.
+     */
+    val useAutoGainControl: Boolean = false
 ) {
     companion object {
         /**
@@ -54,7 +75,11 @@ data class RecorderSettings(
                 path = json[Constants.path] as String?,
                 encoder = Encoder.fromString(json[Constants.encoder] as String?),
                 sampleRate = (json[Constants.sampleRate] as Int?) ?: 44100,
-                bitRate = json[Constants.bitRate] as Int
+                bitRate = json[Constants.bitRate] as Int,
+                audioSource = (json[Constants.audioSource] as Int?) ?: 1,
+                useNoiseSuppressor = (json[Constants.useNoiseSuppressor] as Boolean?) ?: false,
+                useEchoCanceler = (json[Constants.useEchoCanceler] as Boolean?) ?: false,
+                useAutoGainControl = (json[Constants.useAutoGainControl] as Boolean?) ?: false
             )
         }
     }
