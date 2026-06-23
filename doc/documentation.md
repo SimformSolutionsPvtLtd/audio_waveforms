@@ -700,6 +700,64 @@ await recorderController.record(
 **Important**: Ensure your file extension, sample rate, and bit rate are compatible with chosen 
 encoder.
 
+## Android Audio Source and Noise Reduction
+
+> **Android only.** These options live on `AndroidEncoderSettings` and have no effect on iOS/macOS.
+
+By default Android captures from the raw microphone (`AndroidAudioSource.mic`), which can include
+noticeable echo and background noise. You can route capture through the device's voice processing
+pipeline and attach hardware audio effects to clean up the signal. All options are opt-in, so the
+default recording behaviour is unchanged.
+
+```dart
+await recorderController.record(
+  recorderSettings: const RecorderSettings(
+    androidEncoderSettings: AndroidEncoderSettings(
+      audioSource: AndroidAudioSource.voiceCommunication,
+      useNoiseSuppressor: true,
+      useEchoCanceler: true,
+      useAutoGainControl: false,
+    ),
+  ),
+);
+```
+
+### Audio Source
+
+`audioSource` maps to Android's [`MediaRecorder.AudioSource`](https://developer.android.com/reference/android/media/MediaRecorder.AudioSource).
+For voice/chat recordings, `AndroidAudioSource.voiceCommunication` is usually the best choice — it
+runs capture through the device voice pipeline, which already applies echo cancellation and noise
+suppression where the hardware supports it.
+
+| `AndroidAudioSource` | Description |
+|----------------------|-------------|
+| `defaultSource`      | Device default source. |
+| `mic`                | Raw microphone. **Default for this package.** |
+| `camcorder`          | Tuned for video recording. |
+| `voiceRecognition`   | Tuned for speech recognition. |
+| `voiceCommunication` | Tuned for VoIP; applies device echo cancellation and noise suppression. |
+| `unprocessed`        | Raw, unprocessed signal (e.g. music). Requires API 24+; falls back to `defaultSource` on older devices. |
+| `voicePerformance`   | Tuned for live performance. Requires API 29+; falls back to `defaultSource` on older devices. |
+
+### Audio Effects
+
+Each effect attaches to the recording session only when you enable it **and** the device reports it
+as available; an unsupported effect is skipped without aborting the recording, and all effects are
+released when the recorder is released.
+
+| Setting | Effect | Notes |
+|---------|--------|-------|
+| `useNoiseSuppressor`  | `NoiseSuppressor`       | Suppresses steady background noise. |
+| `useEchoCanceler`     | `AcousticEchoCanceler`  | Most effective with `AndroidAudioSource.voiceCommunication`. |
+| `useAutoGainControl`  | `AutomaticGainControl`  | Normalises captured level — see caveat below. |
+
+**Note**: `useAutoGainControl` alters the captured amplitude and therefore the rendered waveform, so
+avoid it for music or level-sensitive recording.
+
+**Tip**: `voiceCommunication` already applies echo/noise processing in the device pipeline. Enabling
+`useEchoCanceler`/`useNoiseSuppressor` on top is redundant on some devices and helpful on others, so
+validate the combination on your target hardware.
+
 ## Override Audio Session (iOS)
 
 Control whether the plugin should override iOS audio session settings:
@@ -1762,13 +1820,25 @@ IosEncoderSetting({
 
 ## AndroidEncoderSettings
 
-Android encoder configuration:
+Android encoder and capture configuration:
 
 ```dart
 AndroidEncoderSettings({
-  required AndroidEncoder androidEncoder,
+  AndroidEncoder androidEncoder = AndroidEncoder.aacLc,
+  AndroidAudioSource audioSource = AndroidAudioSource.mic,
+  bool useNoiseSuppressor = false,
+  bool useEchoCanceler = false,
+  bool useAutoGainControl = false,
 })
 ```
+
+See [Android Audio Source and Noise Reduction](#android-audio-source-and-noise-reduction) for
+details on `audioSource` and the audio-effect flags.
+
+## AndroidAudioSource
+
+Android-only audio input source. Values: `defaultSource`, `mic` (default), `camcorder`,
+`voiceRecognition`, `voiceCommunication`, `unprocessed` (API 24+), `voicePerformance` (API 29+).
 
 # Migration Guides
 
