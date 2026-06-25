@@ -154,6 +154,10 @@ class PlayerController extends ChangeNotifier {
         throw ArgumentError('Invalid path format: $path');
       }
       path = uri.path;
+      // A wrong extension (e.g. Android AAC-in-MP4 named `.mp3`, issue #113)
+      // makes AVFoundation pick the wrong parser on iOS/macOS. Redirect to a
+      // correctly-named symlink when the sniffed container disagrees.
+      path = await normalizedAudioPath(path);
     }
     final isPrepared = await AudioWaveformsInterface.instance.preparePlayer(
       path: path,

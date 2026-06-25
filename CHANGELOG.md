@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Fixed [#113](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/113) - Play audio files with mislabeled extensions on iOS/macOS
 
 ## 2.0.2
 
