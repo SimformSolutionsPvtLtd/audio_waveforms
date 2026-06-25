@@ -490,6 +490,13 @@ await playerController.preparePlayer(
 Currently, playing remote audio files directly isn't supported. You will need to download the file
 first, then play it locally.
 
+### Mislabeled File Extensions (iOS/macOS)
+
+iOS/macOS pick the audio parser from the file extension, so a file whose extension doesn't match
+its real container (e.g. an Android AAC-in-MP4 recording named `.mp3`/`.aac`) fails to load.
+`preparePlayer` detects this from the file's magic bytes and handles it automatically — no action
+needed.
+
 ## Start Playing
 
 Start playing the audio:

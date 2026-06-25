@@ -204,3 +204,67 @@ enum WaveformRenderMode {
 
 /// Checks if the current platform is iOS or macOS.
 bool get isIosOrMacOS => Platform.isIOS || Platform.isMacOS;
+
+/// Sniffs an audio file's container from its leading magic bytes and returns
+/// the file extension AVFoundation needs to pick the right parser, or `null`
+/// when the container isn't recognised.
+Future<String?> sniffAudioExtension(String path) async {
+  RandomAccessFile? raf;
+  try {
+    raf = await File(path).open();
+    final b = await raf.read(12);
+    if (b.length < 4) return null;
+    String ascii(int start, int end) =>
+        end <= b.length ? String.fromCharCodes(b.sublist(start, end)) : '';
+    // MP4 / M4A container: bytes 4..8 == "ftyp" (covers AAC-in-MP4).
+    if (ascii(4, 8) == 'ftyp') return 'm4a';
+    if (ascii(0, 4) == 'RIFF' && ascii(8, 12) == 'WAVE') return 'wav';
+    if (ascii(0, 4) == 'fLaC') return 'flac';
+    if (ascii(0, 4) == 'OggS') return 'ogg';
+    if (ascii(0, 3) == 'ID3') return 'mp3';
+    // Raw frame sync: 0xFFFx = ADTS AAC, 0xFFEx = MP3.
+    if (b[0] == 0xFF) {
+      if ((b[1] & 0xF6) == 0xF0) return 'aac';
+      if ((b[1] & 0xE0) == 0xE0) return 'mp3';
+    }
+    return null;
+  } catch (_) {
+    return null;
+  } finally {
+    await raf?.close();
+  }
+}
+
+/// On iOS/macOS, AVFoundation routes strictly by file extension. Android can
+/// record AAC-in-MP4 yet name the file `.mp3`/`.aac` (issue #113), which then
+/// fails to load or silently mis-parses (e.g. an 8ms bogus duration). When the
+/// extension disagrees with the container sniffed from magic bytes, this returns
+/// a temp symlink carrying the correct extension so the right parser is chosen;
+/// otherwise it returns [path] unchanged. No-op on other platforms.
+Future<String> normalizedAudioPath(String path) async {
+  if (!isIosOrMacOS) return path;
+  final ext = await sniffAudioExtension(path);
+  if (ext == null) return path;
+  final dot = path.lastIndexOf('.');
+  final currentExt = dot == -1 ? '' : path.substring(dot + 1).toLowerCase();
+  if (currentExt == ext) return path;
+  try {
+    final link =
+        Link('${Directory.systemTemp.path}/awf_sniff_${path.hashCode}.$ext');
+    final type = await FileSystemEntity.type(link.path);
+    if (type == FileSystemEntityType.link) {
+      // Reuse only when it already targets this exact file; otherwise the
+      // name collided with another path, so re-point it.
+      if (await link.target() == path) return link.path;
+      await link.delete();
+    } else if (type != FileSystemEntityType.notFound) {
+      // A stale regular file/dir is squatting on the name; clear it so the
+      // link can be created instead of silently disabling the fix.
+      await File(link.path).delete();
+    }
+    await link.create(path);
+    return link.path;
+  } catch (_) {
+    return path;
+  }
+}
