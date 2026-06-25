@@ -46,6 +46,52 @@ enum AndroidEncoder {
   }
 }
 
+/// Audio input source for Android recordings.
+///
+/// Maps to [MediaRecorder.AudioSource](https://developer.android.com/reference/android/media/MediaRecorder.AudioSource).
+/// Selecting [voiceCommunication] routes capture through the device's voice
+/// pipeline, which applies hardware noise suppression and echo cancellation —
+/// this is what most voice-chat apps use. Use [mic] (the default) or
+/// [unprocessed] when you want the raw signal (e.g. music).
+enum AndroidAudioSource {
+  /// Default audio source.
+  defaultSource,
+
+  /// Microphone audio source. This is the default for this package.
+  mic,
+
+  /// Tuned for video recording, with the same orientation as the camera.
+  camcorder,
+
+  /// Tuned for voice recognition.
+  voiceRecognition,
+
+  /// Tuned for voice communications (e.g. VoIP). Applies echo cancellation
+  /// and noise suppression where the device supports it.
+  voiceCommunication,
+
+  /// Unprocessed source, with no effects applied by the device. Requires
+  /// API 24+; falls back to [defaultSource] on older devices.
+  unprocessed,
+
+  /// Tuned for live performance recording. Requires API 29+; falls back to
+  /// [defaultSource] on older devices.
+  voicePerformance;
+
+  /// Native `MediaRecorder.AudioSource` integer constant.
+  int toNativeValue() {
+    return switch (this) {
+      AndroidAudioSource.defaultSource => 0,
+      AndroidAudioSource.mic => 1,
+      AndroidAudioSource.camcorder => 5,
+      AndroidAudioSource.voiceRecognition => 6,
+      AndroidAudioSource.voiceCommunication => 7,
+      AndroidAudioSource.unprocessed => 9,
+      AndroidAudioSource.voicePerformance => 10,
+    };
+  }
+}
+
 /// IOS encoders.
 ///
 /// Android and IOS are have been separated to better support

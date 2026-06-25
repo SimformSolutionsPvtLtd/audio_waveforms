@@ -15,6 +15,10 @@ class Constants {
   static const String outputFormat = 'outputFormat';
   static const String sampleRate = 'sampleRate';
   static const String bitRate = 'bitRate';
+  static const String audioSource = 'audioSource';
+  static const String useNoiseSuppressor = 'useNoiseSuppressor';
+  static const String useEchoCanceler = 'useEchoCanceler';
+  static const String useAutoGainControl = 'useAutoGainControl';
   static const String readAudioFile = 'readAudioFile';
   static const String convertToBytes = 'convertToBytes';
   static const String preparePlayer = "preparePlayer";
