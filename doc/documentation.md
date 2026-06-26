@@ -487,8 +487,18 @@ await playerController.preparePlayer(
 
 ### Loading from Network
 
-Currently, playing remote audio files directly isn't supported. You will need to download the file
-first, then play it locally.
+Remote audio files can be loaded directly by passing an `http`/`https` URL as the `path`:
+
+```dart
+await playerController.preparePlayer(
+  path: 'https://example.com/audio.mp3',
+  shouldExtractWaveform: true,
+);
+```
+
+Playback streams the URL on all platforms. Waveform extraction also works from a
+remote URL: on iOS/macOS the file is downloaded to a temporary file before
+decoding, while Android decodes the network stream directly.
 
 ## Start Playing
 
