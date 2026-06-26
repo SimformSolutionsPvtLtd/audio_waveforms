@@ -204,3 +204,48 @@ enum WaveformRenderMode {
 
 /// Checks if the current platform is iOS or macOS.
 bool get isIosOrMacOS => Platform.isIOS || Platform.isMacOS;
+
+/// Downloads a remote audio [url] to a temporary file and returns its path.
+///
+/// Waveform extraction on iOS/macOS uses `AVAudioFile`, which can only read
+/// local files, so a remote URL must be downloaded before it can be decoded.
+/// The original file extension is preserved so the native decoder can infer
+/// the audio format. The caller is responsible for deleting the returned file
+/// once extraction is finished.
+Future<String> downloadAudioToTempFile(String url) async {
+  final uri = Uri.parse(url);
+  final httpClient = HttpClient();
+  try {
+    final request = await httpClient.getUrl(uri);
+    final response = await request.close();
+    if (response.statusCode != HttpStatus.ok) {
+      throw HttpException(
+        'Failed to download audio for waveform extraction '
+        '(status ${response.statusCode}).',
+        uri: uri,
+      );
+    }
+    final name = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+    final extension = name.contains('.') ? '.${name.split('.').last}' : '';
+    final tempPath = '${Directory.systemTemp.path}/audio_waveforms_'
+        '${DateTime.now().microsecondsSinceEpoch}$extension';
+    final file = File(tempPath);
+    try {
+      await response.pipe(file.openWrite());
+    } catch (_) {
+      // Remove the partially written file so a failed download doesn't leave
+      // an orphan in the temp directory, then rethrow.
+      if (file.existsSync()) {
+        try {
+          await file.delete();
+        } catch (_) {
+          // Best-effort cleanup; ignore failures.
+        }
+      }
+      rethrow;
+    }
+    return file.path;
+  } finally {
+    httpClient.close();
+  }
+}

@@ -99,11 +99,35 @@ class WaveformExtractionController {
       actualNoOfSamples = noOfSamples ?? 100;
     }
 
-    return await AudioWaveformsInterface.instance.extractWaveformData(
-      key: _extractorKey,
-      path: path,
-      noOfSamples: actualNoOfSamples,
-    );
+    // Waveform extraction on iOS/macOS uses AVAudioFile, which can only read
+    // local files. Remote URLs are downloaded to a temporary file first and
+    // cleaned up afterwards. Android's MediaExtractor handles network URIs
+    // directly, so the path is passed through unchanged there.
+    var effectivePath = path;
+    File? tempFile;
+    final uri = Uri.tryParse(path);
+    final isRemote =
+        uri != null && (uri.isScheme('http') || uri.isScheme('https'));
+    if (isIosOrMacOS && isRemote) {
+      effectivePath = await downloadAudioToTempFile(path);
+      tempFile = File(effectivePath);
+    }
+
+    try {
+      return await AudioWaveformsInterface.instance.extractWaveformData(
+        key: _extractorKey,
+        path: effectivePath,
+        noOfSamples: actualNoOfSamples,
+      );
+    } finally {
+      if (tempFile != null && tempFile.existsSync()) {
+        try {
+          await tempFile.delete();
+        } catch (_) {
+          // Best-effort cleanup; ignore failures.
+        }
+      }
+    }
   }
 
   /// Stops current waveform extraction, if any.

@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Feature [#54](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/54) - Support waveform extraction from remote URLs on iOS and macOS
 
 ## 2.0.2
 
