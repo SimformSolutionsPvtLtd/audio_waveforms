@@ -8,6 +8,8 @@ import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import io.flutter.plugin.common.MethodChannel
 
 class AudioPlayer(
@@ -54,7 +56,14 @@ class AudioPlayer(
             networkRetryCount = 0
             stop()
             player?.clearMediaItems()
-            player = ExoPlayer.Builder(appContext).build()
+            // Enable CBR seeking so headerless streams (raw ADTS .aac) are seekable (#429).
+            // Formats with their own seek info (Xing MP3, MP4/M4A, WAV) are unaffected.
+            val extractorsFactory = DefaultExtractorsFactory()
+                    .setConstantBitrateSeekingEnabled(true)
+            player = ExoPlayer.Builder(
+                    appContext,
+                    DefaultMediaSourceFactory(appContext, extractorsFactory)
+            ).build()
             player?.setMediaItem(mediaItem)
             player?.prepare()
             playerListener = object : Player.Listener {

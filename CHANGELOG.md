@@ -4,6 +4,7 @@
 - Fixed [#477](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/477) - Serialize extractor teardown with a lock and clear codec references to prevent stopping an already-released codec on Android
 - Partially fixed [#478](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/478) - Guard decode callbacks against released resources to prevent crash while extracting waveform from ID3v2.4 files on Android
 - Fixed [#488](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/488) - Auto-retry playback on transient network loss and run extraction setup off the main thread to prevent crashes and ANR on Android
+- Fixed [#429](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/429) - Enable constant bitrate seeking so raw ADTS AAC files are seekable on Android
 
 ## 2.0.2
 
