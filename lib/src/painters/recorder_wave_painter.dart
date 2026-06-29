@@ -48,6 +48,7 @@ class RecorderWavePainter extends CustomPainter {
     required this.currentlyRecordedDuration,
     required this.labels,
     required this.isRtl,
+    required this.maxDuration,
   })  : _wavePaint = Paint()
           ..color = waveColor
           ..strokeWidth = waveThickness
@@ -98,6 +99,15 @@ class RecorderWavePainter extends CustomPainter {
   final List<Label> labels;
   final bool isRtl;
 
+  /// When non-null (LTR only), the waveform is bounded to this duration and
+  /// fills `currentlyRecordedDuration / maxDuration` of the width instead of
+  /// scrolling. See [WaveStyle.maxDuration].
+  final Duration? maxDuration;
+
+  /// Whether bounded (max-duration) mode is active. A non-positive
+  /// [maxDuration] is ignored and falls back to the default scrolling behavior.
+  bool get _isBounded => maxDuration != null && maxDuration!.inMicroseconds > 0;
+
   static const int durationBuffer = 5;
 
   @override
@@ -121,9 +131,12 @@ class RecorderWavePainter extends CustomPainter {
       }
     } else {
       for (var i = 0; i < waveData.length; i++) {
-        if (((spacing * i) + dragOffset.dx + spacing >
-                size.width / (extendWaveform ? 1 : 2) +
-                    totalCurrentBackDistance.dx) &&
+        // When [maxDuration] is set the waveform is bounded to the width and
+        // never scrolls, so pushBack is skipped.
+        if (!_isBounded &&
+            ((spacing * i) + dragOffset.dx + spacing >
+                    size.width / (extendWaveform ? 1 : 2) +
+                        totalCurrentBackDistance.dx) &&
             callPushback) {
           pushBack();
         }
@@ -207,10 +220,17 @@ class RecorderWavePainter extends CustomPainter {
   /// Draw wave for LTR direction
   void _drawLtrWave(Canvas canvas, Size size, int i) {
     final height = size.height;
-    final dx = -totalCurrentBackDistance.dx +
-        dragOffset.dx +
-        (spacing * i) -
-        initialPosition;
+    final double dx;
+    if (_isBounded) {
+      // Bounded mode: distribute the current samples across the fraction of
+      // the width equal to currentlyRecordedDuration / maxDuration. No scroll.
+      dx = _boundedDx(size, i);
+    } else {
+      dx = -totalCurrentBackDistance.dx +
+          dragOffset.dx +
+          (spacing * i) -
+          initialPosition;
+    }
     final scaledWaveHeight = waveData[i] * scaleFactor;
     final upperDy = height - (showTop ? scaledWaveHeight : 0) - bottomPadding;
     final lowerDy =
@@ -223,13 +243,34 @@ class RecorderWavePainter extends CustomPainter {
     // portions of waves are being drawn to user
     // and [dx > 0] will ensure only fully visible waves are drawn,
     // if any wave is half visible this will cut out that wave too.
-    if (dx > 0 && dx < size.width) {
+    //
+    // In bounded ([maxDuration]) mode the waves are clamped within the width,
+    // so the first wave at dx == 0 and the last at dx == size.width are kept.
+    final isVisible = _isBounded
+        ? (dx >= 0 && dx <= size.width)
+        : (dx > 0 && dx < size.width);
+    if (isVisible) {
       canvas.drawLine(
         Offset(dx, upperDy),
         Offset(dx, lowerDy),
         _wavePaint,
       );
     }
+  }
+
+  /// Horizontal position of wave [i] when [maxDuration] is set.
+  ///
+  /// The current samples are spread across `fraction * size.width`, where
+  /// `fraction = currentlyRecordedDuration / maxDuration` (clamped to 1). So
+  /// the waveform grows left-to-right and reaches the full width exactly at
+  /// [maxDuration].
+  double _boundedDx(Size size, int i) {
+    final maxMicros = maxDuration!.inMicroseconds;
+    if (maxMicros <= 0 || waveData.length <= 1) return 0;
+    final fraction =
+        (currentlyRecordedDuration.inMicroseconds / maxMicros).clamp(0.0, 1.0);
+    final effectiveSpacing = (fraction * size.width) / (waveData.length - 1);
+    return effectiveSpacing * i;
   }
 
   /// Draw wave for RTL direction

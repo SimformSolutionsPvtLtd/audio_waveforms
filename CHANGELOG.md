@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Feature [#91](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/91) - Add `WaveStyle.maxDuration` to bound recording waveform width proportionally
 
 ## 2.0.2
 

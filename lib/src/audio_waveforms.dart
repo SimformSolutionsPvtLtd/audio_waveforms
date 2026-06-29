@@ -157,6 +157,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
                 scaleFactor: _waveStyle.scaleFactor,
                 currentlyRecordedDuration: currentlyRecordedDuration,
                 isRtl: _isRtl,
+                maxDuration: _waveStyle.maxDuration,
               ),
             ),
           ),
