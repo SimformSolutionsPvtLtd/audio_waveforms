@@ -31,6 +31,7 @@ class WaveStyle {
     this.gradient,
     this.scaleFactor = 20.0,
     this.waveformRenderMode = WaveformRenderMode.ltr,
+    this.maxDuration,
   }) : assert(
           waveThickness < spacing,
           "waveThickness can't be greater than spacing",
@@ -133,4 +134,23 @@ class WaveStyle {
   /// to left. Older waves will be pushed to the left to make space for new
   /// waves.
   final WaveformRenderMode waveformRenderMode;
+
+  /// Bounds the recording waveform to a fixed maximum duration.
+  ///
+  /// When provided, the waveform is no longer scrolled. Instead it fills only
+  /// the fraction of the available width equal to
+  /// `elapsedRecordingDuration / maxDuration`. e.g. with `maxDuration` of 10s,
+  /// stopping the recording at 5s draws the waveform across half of the width;
+  /// reaching `maxDuration` fills the full width. Recording past `maxDuration`
+  /// is clamped to the full width.
+  ///
+  /// Can only be used with [WaveformRenderMode.ltr] (ignored for
+  /// [WaveformRenderMode.rtl], like [extendWaveform]). When set, it takes
+  /// precedence over [extendWaveform].
+  ///
+  /// A non-positive value (less than or equal to [Duration.zero]) is ignored
+  /// and falls back to the default scrolling behavior.
+  ///
+  /// Defaults to `null`, which keeps the default scrolling behavior.
+  final Duration? maxDuration;
 }

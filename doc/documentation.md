@@ -847,6 +847,34 @@ AudioWaveforms(
 )
 ```
 
+## Bounded Recording Width
+
+By default the recording waveform scrolls once it reaches the middle of the
+available width. Set `WaveStyle.maxDuration` to instead bound the waveform to a
+fixed maximum duration: the waveform fills only
+`elapsedRecordingDuration / maxDuration` of the width and never scrolls. For
+example, with a `maxDuration` of 10 seconds, stopping the recording at 5 seconds
+draws the waveform across half of the width; reaching 10 seconds fills the full
+width (recording past it stays clamped to the full width).
+
+This is useful when you want the final waveform length to reflect how long the
+recording is, relative to a cap.
+
+```dart
+AudioWaveforms(
+  controller: recorderController,
+  size: Size(MediaQuery.of(context).size.width, 100),
+  waveStyle: const WaveStyle(
+    maxDuration: Duration(seconds: 10),
+  ),
+)
+```
+
+> Note: `maxDuration` only applies to `WaveformRenderMode.ltr` (ignored for
+> `rtl`, like `extendWaveform`) and takes precedence over `extendWaveform` when
+> both are set. A non-positive value (`Duration.zero` or less) is ignored and
+> falls back to the default scrolling behavior.
+
 ## Waveform Gradients
 
 Apply gradients to waveforms:
@@ -1708,6 +1736,7 @@ This section provides a quick reference for the main classes and their propertie
 | `durationLinesHeight` | `double`    | -                  | Duration line height  |
 | `gradient`            | `Shader?`   | `null`             | Wave gradient         |
 | `scaleFactor`         | `double`    | `20.0`             | Wave scaling factor   |
+| `maxDuration`         | `Duration?` | `null`             | Bound recording width |
 
 ## PlayerWaveStyle (for Player)
 
