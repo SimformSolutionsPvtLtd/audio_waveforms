@@ -8,11 +8,11 @@ import '/src/base/label.dart';
 ///
 ///this gives location of first wave from right to left when scrolling
 ///
-///-totalBackDistance.dx + dragOffset.dx + (spacing * i)
+///-renderedBackDistance + dragOffset.dx + (spacing * i)
 ///
 ///this gives location of first wave from left to right when scrolling
 ///
-///-totalBackDistance.dx + dragOffset.dx
+///-renderedBackDistance + dragOffset.dx
 class RecorderWavePainter extends CustomPainter {
   RecorderWavePainter({
     required this.waveData,
@@ -26,7 +26,8 @@ class RecorderWavePainter extends CustomPainter {
     required this.waveCap,
     required this.middleLineColor,
     required this.middleLineThickness,
-    required this.totalCurrentBackDistance,
+    required this.renderedBackDistance,
+    required this.logicalBackDistance,
     required this.dragOffset,
     required this.waveThickness,
     required this.pushBack,
@@ -72,8 +73,12 @@ class RecorderWavePainter extends CustomPainter {
   final Color middleLineColor;
   final double middleLineThickness;
 
-  /// This gives total current distance the waves have been pushed back
-  final Offset totalCurrentBackDistance;
+  /// Current (frame-interpolated) distance the waves have been pushed back.
+  final double renderedBackDistance;
+
+  /// Logical (non-animated) back distance — used for overflow check to
+  /// prevent double-triggering pushBack during an in-flight animation.
+  final double logicalBackDistance;
   final Offset dragOffset;
   final double waveThickness;
   final VoidCallback pushBack;
@@ -135,8 +140,7 @@ class RecorderWavePainter extends CustomPainter {
         // never scrolls, so pushBack is skipped.
         if (!_isBounded &&
             ((spacing * i) + dragOffset.dx + spacing >
-                    size.width / (extendWaveform ? 1 : 2) +
-                        totalCurrentBackDistance.dx) &&
+                size.width / (extendWaveform ? 1 : 2) + logicalBackDistance) &&
             callPushback) {
           pushBack();
         }
@@ -180,7 +184,7 @@ class RecorderWavePainter extends CustomPainter {
         final labelX = size.width - distanceFromRight + dragOffset.dx;
         offset = Offset(labelX, label.offset.dy);
       } else {
-        offset = label.offset - totalCurrentBackDistance + dragOffset;
+        offset = label.offset - Offset(renderedBackDistance, 0) + dragOffset;
       }
       final halfWidth = size.width * 0.5;
 
@@ -226,7 +230,7 @@ class RecorderWavePainter extends CustomPainter {
       // the width equal to currentlyRecordedDuration / maxDuration. No scroll.
       dx = _boundedDx(size, i);
     } else {
-      dx = -totalCurrentBackDistance.dx +
+      dx = -renderedBackDistance +
           dragOffset.dx +
           (spacing * i) -
           initialPosition;
@@ -306,9 +310,11 @@ class RecorderWavePainter extends CustomPainter {
   }
 
   void _setScrolledDuration(Size size) {
+    // Use the logical (committed) back-distance, not the in-flight animated
+    // value, so the reported position reflects the true scroll target and does
+    // not lag/oscillate during the frame-interpolated scroll animation.
     setCurrentPositionDuration(
-      (((-totalCurrentBackDistance.dx + dragOffset.dx - (size.width / 2)) /
-                  spacing) *
+      (((-logicalBackDistance + dragOffset.dx - (size.width / 2)) / spacing) *
               1000)
           .abs()
           .toInt(),
