@@ -2,6 +2,7 @@
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
 - Feature [#91](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/91) - Add `WaveStyle.maxDuration` to bound recording waveform width proportionally
+- Feature [#382](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/382) - Smooth recorder waveform scroll with frame-interpolated animation
 
 ## 2.0.2
 

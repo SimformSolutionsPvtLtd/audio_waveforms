@@ -35,12 +35,32 @@ class AudioWaveforms extends StatefulWidget {
   State<AudioWaveforms> createState() => _AudioWaveformsState();
 }
 
-class _AudioWaveformsState extends State<AudioWaveforms> {
+class _AudioWaveformsState extends State<AudioWaveforms>
+    with SingleTickerProviderStateMixin {
   bool _isScrolled = false;
 
-  /// Tracks the total horizontal offset applied when the waveform is shifted backward.
-  Offset _totalBackDistance = Offset.zero;
+  /// Duration of the frame-interpolated scroll animation applied on each
+  /// pushback.
+  static const Duration _scrollAnimDuration = Duration(milliseconds: 100);
+
   Offset _dragOffset = Offset.zero;
+
+  late final AnimationController _scrollAnim;
+
+  /// Current (frame-interpolated) horizontal offset the waveform is shifted
+  /// backward. A bare scalar — the waveform only ever scrolls on the x-axis.
+  double _renderedBackDx = 0.0;
+
+  /// Logical (final) back-distance target; updated immediately on each pushback.
+  double _logicalBackDx = 0.0;
+
+  /// Animated source position at the moment the current animation started.
+  double _animSourceDx = 0.0;
+
+  /// True while a post-frame callback to (re)start [_scrollAnim] is pending.
+  /// Coalesces multiple pushbacks within one frame into a single animation
+  /// start and keeps the controller from being mutated during paint.
+  bool _scrollAnimScheduled = false;
 
   double _initialOffsetPosition = 0.0;
   late double _initialPosition;
@@ -64,6 +84,17 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
     // For RTL, initial position starts at 0 (waves grow from right edge)
     // For LTR, initial position starts at negative half thickness
     _initialPosition = _isRtl ? 0.0 : -(_waveStyle.waveThickness / 2);
+    _scrollAnim = AnimationController(
+      vsync: this,
+      duration: _scrollAnimDuration,
+    )..addListener(() {
+        // Only update the interpolated offset here. The AnimatedBuilder around
+        // the CustomPaint repaints the waveform on each tick, so there is no
+        // need to setState and rebuild the whole subtree (and re-run the
+        // clipper) every frame.
+        _renderedBackDx = _animSourceDx +
+            (_logicalBackDx - _animSourceDx) * _scrollAnim.value;
+      });
     _recorderController.addListener(_recorderControllerListener);
     streamSubscription =
         _recorderController.onCurrentDuration.listen((duration) {
@@ -96,6 +127,7 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
 
   @override
   void dispose() {
+    _scrollAnim.dispose();
     _recorderController.removeListener(_recorderControllerListener);
     streamSubscription.cancel();
     super.dispose();
@@ -119,45 +151,50 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
             waveWidth: _waveWidth,
           ),
           child: RepaintBoundary(
-            child: CustomPaint(
-              size: _size,
-              painter: RecorderWavePainter(
-                labels: _labels,
-                waveThickness: _waveStyle.waveThickness,
-                middleLineThickness: _waveStyle.middleLineThickness,
-                middleLineColor: _waveStyle.middleLineColor,
-                waveData: _recorderController.waveData,
-                callPushback: _recorderController.shouldRefresh,
-                bottomPadding: _waveStyle.bottomPadding ?? _size.height / 2,
-                spacing: _waveStyle.spacing,
-                waveCap: _waveStyle.waveCap,
-                showBottom: _waveStyle.showBottom,
-                showTop: _waveStyle.showTop,
-                waveColor: _waveStyle.waveColor,
-                showMiddleLine: _waveStyle.showMiddleLine,
-                totalCurrentBackDistance: _totalBackDistance,
-                dragOffset: _dragOffset,
-                pushBack: _pushBackWave,
-                initialPosition: _initialPosition,
-                extendWaveform: _waveStyle.extendWaveform,
-                showHourInDuration: _waveStyle.showHourInDuration,
-                showDurationLabel: _waveStyle.showDurationLabel,
-                durationLinesColor: _waveStyle.durationLinesColor,
-                durationStyle: _waveStyle.durationStyle,
-                durationTextPadding: _waveStyle.durationTextPadding,
-                durationLinesHeight: _waveStyle.durationLinesHeight,
-                labelSpacing: _waveStyle.labelSpacing,
-                gradient: _waveStyle.gradient,
-                shouldClearLabels: _recorderController.shouldClearLabels,
-                revertClearLabelCall: _recorderController.revertClearLabelCall,
-                setCurrentPositionDuration:
-                    _recorderController.setScrolledPositionDuration,
-                shouldCalculateScrolledPosition:
-                    widget.shouldCalculateScrolledPosition,
-                scaleFactor: _waveStyle.scaleFactor,
-                currentlyRecordedDuration: currentlyRecordedDuration,
-                isRtl: _isRtl,
-                maxDuration: _waveStyle.maxDuration,
+            child: AnimatedBuilder(
+              animation: _scrollAnim,
+              builder: (context, _) => CustomPaint(
+                size: _size,
+                painter: RecorderWavePainter(
+                  labels: _labels,
+                  waveThickness: _waveStyle.waveThickness,
+                  middleLineThickness: _waveStyle.middleLineThickness,
+                  middleLineColor: _waveStyle.middleLineColor,
+                  waveData: _recorderController.waveData,
+                  callPushback: _recorderController.shouldRefresh,
+                  bottomPadding: _waveStyle.bottomPadding ?? _size.height / 2,
+                  spacing: _waveStyle.spacing,
+                  waveCap: _waveStyle.waveCap,
+                  showBottom: _waveStyle.showBottom,
+                  showTop: _waveStyle.showTop,
+                  waveColor: _waveStyle.waveColor,
+                  showMiddleLine: _waveStyle.showMiddleLine,
+                  renderedBackDistance: _renderedBackDx,
+                  logicalBackDistance: _logicalBackDx,
+                  dragOffset: _dragOffset,
+                  pushBack: _pushBackWave,
+                  initialPosition: _initialPosition,
+                  extendWaveform: _waveStyle.extendWaveform,
+                  showHourInDuration: _waveStyle.showHourInDuration,
+                  showDurationLabel: _waveStyle.showDurationLabel,
+                  durationLinesColor: _waveStyle.durationLinesColor,
+                  durationStyle: _waveStyle.durationStyle,
+                  durationTextPadding: _waveStyle.durationTextPadding,
+                  durationLinesHeight: _waveStyle.durationLinesHeight,
+                  labelSpacing: _waveStyle.labelSpacing,
+                  gradient: _waveStyle.gradient,
+                  shouldClearLabels: _recorderController.shouldClearLabels,
+                  revertClearLabelCall:
+                      _recorderController.revertClearLabelCall,
+                  setCurrentPositionDuration:
+                      _recorderController.setScrolledPositionDuration,
+                  shouldCalculateScrolledPosition:
+                      widget.shouldCalculateScrolledPosition,
+                  scaleFactor: _waveStyle.scaleFactor,
+                  currentlyRecordedDuration: currentlyRecordedDuration,
+                  isRtl: _isRtl,
+                  maxDuration: _waveStyle.maxDuration,
+                ),
               ),
             ),
           ),
@@ -212,10 +249,10 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
   ///This will also handle refreshing the wave after scrolled
   void _pushBackWave() {
     if (_isRtl) {
-      if (!_isScrolled) {
-        _totalBackDistance =
-            _totalBackDistance + Offset(_waveStyle.spacing, 0.0);
-      }
+      // Note: the frame-interpolated scroll smoothing (_scrollAnim) is applied
+      // to LTR only. RTL positions bars from the right edge by index
+      // (see RecorderWavePainter._drawRtlWave) and never reads the back-distance
+      // offsets, so RTL recording advances one bar per sample on its own.
 
       // For RTL: handle refresh after scrolling
       if (_recorderController.shouldRefresh && _isScrolled) {
@@ -234,19 +271,36 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
         _initialPosition =
             _waveStyle.spacing * _recorderController.waveData.length -
                 _size.width / 2;
-        _totalBackDistance =
-            _totalBackDistance + Offset(_waveStyle.spacing, 0.0);
+        _logicalBackDx += _waveStyle.spacing;
+        _renderedBackDx = _logicalBackDx;
+        _animSourceDx = _logicalBackDx;
+        _scrollAnim.stop();
         _isScrolled = false;
       } else {
         _initialPosition = 0.0;
-        _totalBackDistance =
-            _totalBackDistance + Offset(_waveStyle.spacing, 0.0);
+        _logicalBackDx += _waveStyle.spacing;
+        // Mutating the AnimationController during paint would call setState in
+        // the paint phase, so defer the (re)start to after the frame; a guard coalesces multiple pushbacks per frame into one animation.
+        if (!_scrollAnimScheduled) {
+          _scrollAnimScheduled = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollAnimScheduled = false;
+            if (!mounted) return;
+            _animSourceDx = _renderedBackDx;
+            _scrollAnim
+              ..reset()
+              ..forward();
+          });
+        }
       }
     }
     if (_recorderController.shouldClearLabels) {
       _initialOffsetPosition = 0.0;
-      _totalBackDistance = Offset.zero;
+      _renderedBackDx = 0.0;
       _dragOffset = Offset.zero;
+      _logicalBackDx = 0.0;
+      _animSourceDx = 0.0;
+      _scrollAnim.stop();
     }
   }
 
@@ -267,19 +321,19 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
     final delta = details.delta;
     final deltaDx = details.delta.dx;
     final dragOffset = _dragOffset.dx;
-    final totalBackDistanceDx = -_totalBackDistance.dx;
+    final renderedBackDistanceDx = -_renderedBackDx;
     final halfWidth = _size.width / 2;
     final waveformWidth =
         _waveStyle.spacing * _recorderController.waveData.length;
 
     ///left to right
-    if (totalBackDistanceDx + dragOffset + deltaDx < halfWidth &&
+    if (renderedBackDistanceDx + dragOffset + deltaDx < halfWidth &&
         direction > 0) {
       setState(() => _dragOffset += delta);
     }
 
     ///right to left
-    else if (totalBackDistanceDx + dragOffset + waveformWidth + deltaDx >
+    else if (renderedBackDistanceDx + dragOffset + waveformWidth + deltaDx >
             halfWidth &&
         direction < 0) {
       setState(() => _dragOffset += delta);
