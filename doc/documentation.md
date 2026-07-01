@@ -267,6 +267,32 @@ await recorderController.pause();
 
 To resume recording, simply call `record()` again.
 
+### Save a playable file on pause (preview while paused)
+
+Pass `saveOnPause: true` to finalize the audio recorded so far into a
+standalone, playable file and get its path back — without ending the session.
+This enables previewing the recording while paused (WhatsApp-style):
+
+```dart
+final segmentPath = await recorderController.pause(saveOnPause: true);
+
+// Play it back while still paused:
+await playerController.preparePlayer(path: segmentPath!);
+await playerController.startPlayer();
+
+// Resume — recording continues into a NEW segment:
+await recorderController.record();
+```
+
+Because a media file can only be finalized once, resuming after a
+`saveOnPause` pause records into a **new** segment rather than the same file.
+All finalized segment paths (including the final one from `stop()`) are
+available in order via `recorderController.recordedSegments`. Merging them into
+a single file (e.g. with ffmpeg) is left to you.
+
+> Pass a distinct `path` to the resuming `record()` call (or omit it for an
+> auto-generated one) so a new segment doesn't overwrite a saved one.
+
 ## Stop Recording
 
 Stop the recording and get the file path:

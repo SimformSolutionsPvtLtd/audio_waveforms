@@ -94,6 +94,20 @@ class RecorderController extends ChangeNotifier {
 
   Duration _recordedDuration = Duration.zero;
 
+  final List<String> _recordedSegments = [];
+
+  /// Paths of audio segments finalized via [pause] with `saveOnPause: true`
+  /// (plus the final segment from [stop]), in recording order. Each entry is a
+  /// standalone, playable file. The list is cleared on [reset] and whenever a
+  /// brand-new recording starts. Merging the segments into one file (e.g. with
+  /// ffmpeg) is left to the caller.
+  List<String> get recordedSegments => List.unmodifiable(_recordedSegments);
+
+  /// True when the last [pause] call finalized (saved) the current segment, so
+  /// the native recorder is already stopped and [record] must start a fresh
+  /// segment instead of resuming.
+  bool _savedOnLastPause = false;
+
   final ValueNotifier<int> _currentScrolledDuration = ValueNotifier(0);
 
   /// A stream to get current duration of currently recording audio file.
@@ -166,13 +180,9 @@ class RecorderController extends ChangeNotifier {
     if (!_recorderState.isRecording) {
       await checkPermission();
       if (_hasPermission) {
-        if (Platform.isAndroid && _recorderState.isStopped) {
-          await _initRecorder(
-            path: path,
-            recorderSettings: recorderSettings,
-          );
-        }
-        if (_recorderState.isPaused) {
+        // Resume an unsaved pause into the same file: the native recording
+        // session is still alive, so just resume it.
+        if (_recorderState.isPaused && !_savedOnLastPause) {
           _isRecording = await AudioWaveformsInterface.instance.resume();
           if (_isRecording) {
             _setRecorderState(RecorderState.recording);
@@ -181,6 +191,23 @@ class RecorderController extends ChangeNotifier {
           }
           notifyListeners();
           return;
+        }
+        // A `saveOnPause` pause finalized (and stopped) the previous segment;
+        // resuming means starting a fresh recording into a new segment.
+        final startingNewSegment =
+            _recorderState.isPaused && _savedOnLastPause;
+        if (startingNewSegment) _savedOnLastPause = false;
+        // A brand-new recording starts a new session: drop prior segments.
+        if (_recorderState.isStopped) {
+          _recordedSegments.clear();
+          _savedOnLastPause = false;
+        }
+        if (Platform.isAndroid &&
+            (_recorderState.isStopped || startingNewSegment)) {
+          await _initRecorder(
+            path: path,
+            recorderSettings: recorderSettings,
+          );
         }
         // iOS and macOS don't require initialization, set state directly
         if (isIosOrMacOS) {
@@ -241,8 +268,33 @@ class RecorderController extends ChangeNotifier {
   }
 
   /// Pauses the current recording. Call [record] to resume recording.
-  Future<void> pause() async {
+  ///
+  /// When [saveOnPause] is false (default), the recorder is suspended in place
+  /// and a following [record] resumes into the same file; this returns null.
+  ///
+  /// When [saveOnPause] is true, the audio recorded so far is finalized into a
+  /// standalone, playable file — its path is returned and appended to
+  /// [recordedSegments]. The recorder can be resumed afterwards by calling
+  /// [record], which starts a fresh segment (pass a distinct `path`, or omit it
+  /// for an auto-generated one, to avoid overwriting the saved segment). The
+  /// returned file can be played back (e.g. via a [PlayerController]) while
+  /// paused — this is the preview-while-paused / WhatsApp-style use case.
+  Future<String?> pause({bool saveOnPause = false}) async {
     if (_recorderState.isRecording) {
+      if (saveOnPause) {
+        // Finalizing a playable segment is exactly what the native stop does;
+        // reuse it, but stay paused so recording can continue into a new
+        // segment. The native session is now stopped (see [_savedOnLastPause]).
+        final audioInfo = await AudioWaveformsInterface.instance.stop();
+        _isRecording = false;
+        _elapsedDuration = Duration.zero;
+        _savedOnLastPause = true;
+        final path = audioInfo[Constants.resultFilePath] as String?;
+        if (path != null) _recordedSegments.add(path);
+        _setRecorderState(RecorderState.paused);
+        notifyListeners();
+        return path;
+      }
       _isRecording = (await AudioWaveformsInterface.instance.pause()) ?? true;
       if (_isRecording) {
         throw "Failed to pause recording";
@@ -250,6 +302,7 @@ class RecorderController extends ChangeNotifier {
       _setRecorderState(RecorderState.paused);
     }
     notifyListeners();
+    return null;
   }
 
   /// Stops the current recording.
@@ -265,6 +318,19 @@ class RecorderController extends ChangeNotifier {
   /// left of for previous recording.
   Future<String?> stop([bool callReset = true]) async {
     if (_recorderState.isRecording || _recorderState.isPaused) {
+      // A `saveOnPause` pause already finalized the last segment and stopped
+      // the native recorder; calling stop again would hang/return nothing.
+      // Return the already-saved final segment instead.
+      if (_savedOnLastPause) {
+        _isRecording = false;
+        _savedOnLastPause = false;
+        _elapsedDuration = Duration.zero;
+        final lastPath =
+            _recordedSegments.isNotEmpty ? _recordedSegments.last : null;
+        _setRecorderState(RecorderState.stopped);
+        if (callReset) reset();
+        return lastPath;
+      }
       final audioInfo = await AudioWaveformsInterface.instance.stop();
       _isRecording = false;
       if (audioInfo[Constants.resultDuration] != null) {
@@ -274,9 +340,11 @@ class RecorderController extends ChangeNotifier {
         _recordedFileDurationController.add(recordedDuration);
       }
       _elapsedDuration = Duration.zero;
+      final path = audioInfo[Constants.resultFilePath] as String?;
+      if (path != null) _recordedSegments.add(path);
       _setRecorderState(RecorderState.stopped);
       if (callReset) reset();
-      return audioInfo[Constants.resultFilePath];
+      return path;
     }
 
     notifyListeners();
@@ -287,6 +355,8 @@ class RecorderController extends ChangeNotifier {
   /// waves and labels from the UI.
   void reset() {
     _waveData.clear();
+    _recordedSegments.clear();
+    _savedOnLastPause = false;
     _shouldClearLabels = true;
     refresh();
   }
