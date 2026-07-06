@@ -55,15 +55,18 @@ class CommonEncoder {
     private val inputQueue = LinkedList<ByteArray>()
     
     /** Current available input buffer index (-1 if none available) */
+    @Volatile
     private var currentInputBufferIndex = -1
 
     /** Flag indicating if the muxer has been started */
     private var isMuxerStarted = false
     
     /** Flag indicating encoding process should complete */
+    @Volatile
     private var isEncodingComplete = false
-    
+
     /** Flag indicating encoder has been stopped */
+    @Volatile
     private var isEncoderStopped = false
     
     /** Track index for the audio track in the muxer */
@@ -73,6 +76,7 @@ class CommonEncoder {
     private var completionCallback: (() -> Unit)? = null
     
     /** Total bytes encoded so far, used for calculating presentation timestamps */
+    @Volatile
     private var totalBytesEncoded = 0L
     
     /** Track the first output timestamp to normalize subsequent timestamps */
@@ -152,18 +156,9 @@ class CommonEncoder {
 
         mediaCodec.setCallback(object : MediaCodec.Callback() {
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
+                if (isEncoderStopped) return
                 if (isEncodingComplete && inputQueue.isEmpty()) {
-                    // Use the last calculated presentation time for EOF, not system time
-                    val eofTimestamp = if (totalBytesEncoded > 0) {
-                        val bytesPerSample = 2L
-                        val channels = 1L
-                        (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
-                    } else {
-                        0L
-                    }
-                    codec.queueInputBuffer(
-                        index, 0, 0, eofTimestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM
-                    )
+                    queueEosBuffer(codec, index)
                 } else {
                     currentInputBufferIndex = index
                     feedEncoder()
@@ -244,7 +239,7 @@ class CommonEncoder {
                     isMuxerStarted = true
                 }
             }
-        })
+        }, handler)
 
         mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
         mediaCodec.start()
@@ -276,6 +271,24 @@ class CommonEncoder {
      */
     fun signalToStop() {
         isEncodingComplete = true
+
+        // Post the EOS check to the handler thread so it runs on the same
+        // thread as onInputBufferAvailable, avoiding race conditions where
+        // both threads try to queue EOS with the same buffer index.
+        handler.post {
+            if (isEncoderStopped) return@post
+            if (currentInputBufferIndex >= 0 && inputQueue.isEmpty()) {
+                try {
+                    queueEosBuffer(mediaCodec, currentInputBufferIndex)
+                    currentInputBufferIndex = -1
+                } catch (e: Exception) {
+                    Log.e(Constants.LOG_TAG, "Error queuing EOS in signalToStop: ${e.message}")
+                }
+            }
+            // Otherwise EOS is queued by a later onInputBufferAvailable once
+            // the queue drains; if the codec never returns an input buffer,
+            // the completion callback (and the Dart stop() future) would hang.
+        }
     }
 
     /**
@@ -287,6 +300,22 @@ class CommonEncoder {
         completionCallback = callback
     }
 
+
+    /**
+     * Queues an end-of-stream buffer to signal that encoding is complete.
+     */
+    private fun queueEosBuffer(codec: MediaCodec, bufferIndex: Int) {
+        val eofTimestamp = if (totalBytesEncoded > 0) {
+            val bytesPerSample = 2L
+            val channels = 1L
+            (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
+        } else {
+            0L
+        }
+        codec.queueInputBuffer(
+            bufferIndex, 0, 0, eofTimestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM
+        )
+    }
 
     /**
      * Feeds available audio data to the encoder
@@ -301,25 +330,31 @@ class CommonEncoder {
      */
     private fun feedEncoder() {
         synchronized(inputQueue) {
+            if (isEncoderStopped) return
             if (inputQueue.isEmpty() || currentInputBufferIndex < 0) return
 
             val data = inputQueue.poll() ?: return
-            val inputBuffer = mediaCodec.getInputBuffer(currentInputBufferIndex) ?: return
-            inputBuffer.clear()
-            inputBuffer.put(data)
+            try {
+                val inputBuffer = mediaCodec.getInputBuffer(currentInputBufferIndex) ?: return
+                inputBuffer.clear()
+                inputBuffer.put(data)
 
-            // Calculate presentation time based on actual audio data encoded
-            // Formula: presentationTimeUs = (totalBytes * 1,000,000) / (sampleRate * channels * bytesPerSample)
-            // For 16-bit PCM mono: bytesPerSample = 2, channels = 1
-            val bytesPerSample = 2L  // 16-bit = 2 bytes
-            val channels = 1L  // Mono
-            val presentationTimeUs = (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
-            totalBytesEncoded += data.size
-            
-            mediaCodec.queueInputBuffer(
-                currentInputBufferIndex, 0, data.size, presentationTimeUs, 0
-            )
-            currentInputBufferIndex = -1
+                // Calculate presentation time based on actual audio data encoded
+                // Formula: presentationTimeUs = (totalBytes * 1,000,000) / (sampleRate * channels * bytesPerSample)
+                // For 16-bit PCM mono: bytesPerSample = 2, channels = 1
+                val bytesPerSample = 2L  // 16-bit = 2 bytes
+                val channels = 1L  // Mono
+                val presentationTimeUs = (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
+                totalBytesEncoded += data.size
+
+                mediaCodec.queueInputBuffer(
+                    currentInputBufferIndex, 0, data.size, presentationTimeUs, 0
+                )
+                currentInputBufferIndex = -1
+            } catch (e: IllegalStateException) {
+                // The codec may have been released by stopEncoder() on another thread.
+                Log.e(Constants.LOG_TAG, "Error feeding encoder: ${e.message}")
+            }
         }
     }
 
@@ -403,17 +438,25 @@ class CommonEncoder {
         if (isEncoderStopped) return
         isEncoderStopped = true
 
+        // Purge queued messages so quitSafely() can't run them against a
+        // released codec. MediaCodec's own callback messages live on its
+        // internal handler, hence the isEncoderStopped guards elsewhere.
+        handler.removeCallbacksAndMessages(null)
+
         try {
             mediaCodec.stop()
             mediaCodec.release()
             mediaMuxer?.stop()
             mediaMuxer?.release()
             outputStream.close()
-            handlerThread.quitSafely()
-            handlerThread.join()
-            completionCallback?.invoke()
         } catch (e: Exception) {
             Log.e(Constants.LOG_TAG, "Error stopping encoder: ${e.message}")
+        } finally {
+            completionCallback?.invoke()
+            // Quit the handler thread after invoking the callback.
+            // Don't call join() -- stopEncoder() is called from callbacks
+            // running on this same thread, so joining would deadlock.
+            handlerThread.quitSafely()
         }
 
         // Reset state for next recording
