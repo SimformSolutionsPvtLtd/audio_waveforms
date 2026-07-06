@@ -55,15 +55,18 @@ class CommonEncoder {
     private val inputQueue = LinkedList<ByteArray>()
     
     /** Current available input buffer index (-1 if none available) */
+    @Volatile
     private var currentInputBufferIndex = -1
 
     /** Flag indicating if the muxer has been started */
     private var isMuxerStarted = false
     
     /** Flag indicating encoding process should complete */
+    @Volatile
     private var isEncodingComplete = false
-    
+
     /** Flag indicating encoder has been stopped */
+    @Volatile
     private var isEncoderStopped = false
     
     /** Track index for the audio track in the muxer */
@@ -73,6 +76,7 @@ class CommonEncoder {
     private var completionCallback: (() -> Unit)? = null
     
     /** Total bytes encoded so far, used for calculating presentation timestamps */
+    @Volatile
     private var totalBytesEncoded = 0L
     
     /** Track the first output timestamp to normalize subsequent timestamps */
@@ -152,6 +156,7 @@ class CommonEncoder {
 
         mediaCodec.setCallback(object : MediaCodec.Callback() {
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
+                if (isEncoderStopped) return
                 if (isEncodingComplete && inputQueue.isEmpty()) {
                     queueEosBuffer(codec, index)
                 } else {
@@ -280,6 +285,9 @@ class CommonEncoder {
                     Log.e(Constants.LOG_TAG, "Error queuing EOS in signalToStop: ${e.message}")
                 }
             }
+            // Otherwise EOS is queued by a later onInputBufferAvailable once
+            // the queue drains; if the codec never returns an input buffer,
+            // the completion callback (and the Dart stop() future) would hang.
         }
     }
 
@@ -322,25 +330,31 @@ class CommonEncoder {
      */
     private fun feedEncoder() {
         synchronized(inputQueue) {
+            if (isEncoderStopped) return
             if (inputQueue.isEmpty() || currentInputBufferIndex < 0) return
 
             val data = inputQueue.poll() ?: return
-            val inputBuffer = mediaCodec.getInputBuffer(currentInputBufferIndex) ?: return
-            inputBuffer.clear()
-            inputBuffer.put(data)
+            try {
+                val inputBuffer = mediaCodec.getInputBuffer(currentInputBufferIndex) ?: return
+                inputBuffer.clear()
+                inputBuffer.put(data)
 
-            // Calculate presentation time based on actual audio data encoded
-            // Formula: presentationTimeUs = (totalBytes * 1,000,000) / (sampleRate * channels * bytesPerSample)
-            // For 16-bit PCM mono: bytesPerSample = 2, channels = 1
-            val bytesPerSample = 2L  // 16-bit = 2 bytes
-            val channels = 1L  // Mono
-            val presentationTimeUs = (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
-            totalBytesEncoded += data.size
-            
-            mediaCodec.queueInputBuffer(
-                currentInputBufferIndex, 0, data.size, presentationTimeUs, 0
-            )
-            currentInputBufferIndex = -1
+                // Calculate presentation time based on actual audio data encoded
+                // Formula: presentationTimeUs = (totalBytes * 1,000,000) / (sampleRate * channels * bytesPerSample)
+                // For 16-bit PCM mono: bytesPerSample = 2, channels = 1
+                val bytesPerSample = 2L  // 16-bit = 2 bytes
+                val channels = 1L  // Mono
+                val presentationTimeUs = (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
+                totalBytesEncoded += data.size
+
+                mediaCodec.queueInputBuffer(
+                    currentInputBufferIndex, 0, data.size, presentationTimeUs, 0
+                )
+                currentInputBufferIndex = -1
+            } catch (e: IllegalStateException) {
+                // The codec may have been released by stopEncoder() on another thread.
+                Log.e(Constants.LOG_TAG, "Error feeding encoder: ${e.message}")
+            }
         }
     }
 
@@ -423,6 +437,11 @@ class CommonEncoder {
     private fun stopEncoder() {
         if (isEncoderStopped) return
         isEncoderStopped = true
+
+        // Purge queued messages so quitSafely() can't run them against a
+        // released codec. MediaCodec's own callback messages live on its
+        // internal handler, hence the isEncoderStopped guards elsewhere.
+        handler.removeCallbacksAndMessages(null)
 
         try {
             mediaCodec.stop()
