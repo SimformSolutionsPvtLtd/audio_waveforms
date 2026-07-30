@@ -1,5 +1,6 @@
 import Accelerate
 import AVFoundation
+import Flutter
 
 public class WaveformExtractor {
 
