@@ -1,7 +1,7 @@
 import Flutter
 import UIKit
 
-public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
+public class AudioWaveformsPlugin: NSObject, FlutterPlugin {
     
     let audioRecorder: AudioRecorder
     var audioPlayers = [String: AudioPlayer]()
@@ -20,7 +20,7 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     }
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: Constants.methodChannelName, binaryMessenger: registrar.messenger())
-        let instance = SwiftAudioWaveformsPlugin(registrar: registrar, flutterChannel: channel)
+        let instance = AudioWaveformsPlugin(registrar: registrar, flutterChannel: channel)
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
     
@@ -216,4 +216,3 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
         }
     }
 }
-

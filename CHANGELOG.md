@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Add Swift Package Manager support for iOS
 
 ## 2.0.2
 

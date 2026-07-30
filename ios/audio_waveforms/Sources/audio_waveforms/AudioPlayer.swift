@@ -1,6 +1,6 @@
 import Foundation
-
 import AVKit
+import Flutter
 
 class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     private var seekToStart = true
@@ -9,12 +9,12 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     private var player: AVAudioPlayer?
     private var finishMode:FinishMode = FinishMode.stop
     private var updateFrequency = 200
-    var plugin: SwiftAudioWaveformsPlugin
+    var plugin: AudioWaveformsPlugin
     var playerKey: String
     var flutterChannel: FlutterMethodChannel
     
 
-    init(plugin: SwiftAudioWaveformsPlugin, playerKey: String, channel: FlutterMethodChannel) {
+    init(plugin: AudioWaveformsPlugin, playerKey: String, channel: FlutterMethodChannel) {
         self.plugin = plugin
         self.playerKey = playerKey
         flutterChannel = channel

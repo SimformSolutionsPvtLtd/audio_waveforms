@@ -1,5 +1,6 @@
 import AVFoundation
 import Accelerate
+import Flutter
 
 public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var audioRecorder: AVAudioRecorder?

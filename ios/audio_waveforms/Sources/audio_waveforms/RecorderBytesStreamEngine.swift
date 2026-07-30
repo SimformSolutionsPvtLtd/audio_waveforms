@@ -8,6 +8,7 @@
 import Foundation
 import AVFAudio
 import Accelerate
+import Flutter
 
 class RecorderBytesStreamEngine {
     private var audioEngine = AVAudioEngine()
