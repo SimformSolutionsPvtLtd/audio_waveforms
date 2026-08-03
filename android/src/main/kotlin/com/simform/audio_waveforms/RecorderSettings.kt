@@ -36,7 +36,15 @@ data class RecorderSettings(
      * Bit rate in bits per second
      * Defaults to 128kbps (good quality for most audio)
      */
-    val bitRate: Int = 128000
+    val bitRate: Int = 128000,
+
+    /**
+     * Grace period, in milliseconds, to wait for the encoder to signal that
+     * it's finished stopping naturally before forcing it. Some devices can
+     * fail to deliver that signal, which would otherwise hang stopRecording()
+     * indefinitely. Defaults to 500ms.
+     */
+    val stopTimeoutMs: Long = 500L
 ) {
     companion object {
         /**
@@ -54,7 +62,8 @@ data class RecorderSettings(
                 path = json[Constants.path] as String?,
                 encoder = Encoder.fromString(json[Constants.encoder] as String?),
                 sampleRate = (json[Constants.sampleRate] as Int?) ?: 44100,
-                bitRate = json[Constants.bitRate] as Int
+                bitRate = json[Constants.bitRate] as Int,
+                stopTimeoutMs = (json[Constants.androidStopTimeoutMs] as Int?)?.toLong() ?: 500L
             )
         }
     }

@@ -30,14 +30,6 @@ import java.util.LinkedList
  * and the encoded output file ready for playback.
  */
 class CommonEncoder {
-    companion object {
-        /**
-         * How long to wait for EOS to be queued naturally by
-         * onInputBufferAvailable before forcing the encoder to stop.
-         */
-        private const val EOS_FALLBACK_DELAY_MS = 500L
-    }
-
     /** MediaCodec instance for encoding audio data */
     private lateinit var mediaCodec: MediaCodec
     
@@ -310,7 +302,7 @@ class CommonEncoder {
                         )
                         stopEncoder()
                     }
-                }, EOS_FALLBACK_DELAY_MS)
+                }, recorderSettings.stopTimeoutMs)
             }
         }
     }
