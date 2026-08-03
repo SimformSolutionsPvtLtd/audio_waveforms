@@ -30,6 +30,14 @@ import java.util.LinkedList
  * and the encoded output file ready for playback.
  */
 class CommonEncoder {
+    companion object {
+        /**
+         * How long to wait for EOS to be queued naturally by
+         * onInputBufferAvailable before forcing the encoder to stop.
+         */
+        private const val EOS_FALLBACK_DELAY_MS = 500L
+    }
+
     /** MediaCodec instance for encoding audio data */
     private lateinit var mediaCodec: MediaCodec
     
@@ -284,10 +292,26 @@ class CommonEncoder {
                 } catch (e: Exception) {
                     Log.e(Constants.LOG_TAG, "Error queuing EOS in signalToStop: ${e.message}")
                 }
+            } else {
+                // No input buffer is available right now, or the queue hasn't
+                // drained. EOS would normally get queued by a later
+                // onInputBufferAvailable once that happens -- but recording has
+                // already stopped feeding new audio by the time stop() is
+                // called, so the codec may never request another input buffer,
+                // and that callback may never arrive. Force a stop after a
+                // short grace period so the Dart-side stop() future can never
+                // hang indefinitely; stopEncoder() is idempotent and always
+                // invokes the completion callback.
+                handler.postDelayed({
+                    if (!isEncoderStopped) {
+                        Log.w(
+                            Constants.LOG_TAG,
+                            "EOS was not queued naturally within the grace period; forcing encoder stop"
+                        )
+                        stopEncoder()
+                    }
+                }, EOS_FALLBACK_DELAY_MS)
             }
-            // Otherwise EOS is queued by a later onInputBufferAvailable once
-            // the queue drains; if the codec never returns an input buffer,
-            // the completion callback (and the Dart stop() future) would hang.
         }
     }
 
