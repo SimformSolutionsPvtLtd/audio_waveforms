@@ -39,6 +39,7 @@ object Constants {
     const val encoder = "encoder"
     const val sampleRate = "sampleRate"
     const val bitRate = "bitRate"
+    const val androidStopTimeoutMs = "androidStopTimeoutMs"
     const val fileNameFormat = "dd-MM-yy-hh-mm-ss"
 
     const val preparePlayer = "preparePlayer"

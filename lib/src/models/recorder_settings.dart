@@ -54,5 +54,6 @@ class RecorderSettings {
             androidEncoderSettings.androidEncoder.toNativeFormat(),
         Constants.sampleRate: sampleRate,
         Constants.bitRate: bitRate,
+        Constants.androidStopTimeoutMs: androidEncoderSettings.stopTimeoutMs,
       };
 }
