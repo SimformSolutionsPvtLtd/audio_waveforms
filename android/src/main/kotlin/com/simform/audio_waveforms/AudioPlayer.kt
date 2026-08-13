@@ -4,12 +4,14 @@ import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.PlaybackException
-import com.google.android.exoplayer2.Player
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
 import io.flutter.plugin.common.MethodChannel
 
+@OptIn(UnstableApi::class)
 class AudioPlayer(
         context: Context,
         channel: MethodChannel,
@@ -50,15 +52,15 @@ class AudioPlayer(
                     result.error(Constants.LOG_TAG, error.message, "Unable to load media source.")
                 }
 
-                override fun onPlayerStateChanged(isReady: Boolean, state: Int) {
+                override fun onPlaybackStateChanged(playbackState: Int) {
                     if (!isPlayerPrepared) {
-                        if (state == Player.STATE_READY) {
+                        if (playbackState == Player.STATE_READY) {
                             player?.volume = volume ?: 1F
                             isPlayerPrepared = true
                             result.success(true)
                         }
                     }
-                    if (state == Player.STATE_ENDED) {
+                    if (playbackState == Player.STATE_ENDED) {
                         val args: MutableMap<String, Any?> = HashMap()
                         when (finishMode) {
                             FinishMode.Stop -> {
