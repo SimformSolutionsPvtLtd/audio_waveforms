@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- **BREAKING:** Feature [#492](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/492) - Add Swift Package Manager support for iOS and macOS. Requires Flutter `>=3.41.0` and Dart `^3.11.0` (`FlutterFramework` Swift package).
 
 ## 2.0.2
 
