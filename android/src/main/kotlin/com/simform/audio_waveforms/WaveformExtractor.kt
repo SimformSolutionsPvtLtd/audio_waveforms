@@ -9,6 +9,7 @@ import android.os.Build
 import android.util.Log
 import io.flutter.plugin.common.MethodChannel
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.CountDownLatch
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -299,7 +300,10 @@ class WaveformExtractor(
      */
     private fun handle8bit(size: Int, buf: ByteBuffer) {
         repeat(size / if (channels == 2) 2 else 1) {
-            val result = buf.get().toInt() / Constants.EIGHT_BITS
+            // ENCODING_PCM_8BIT is unsigned, with 128 as silence, while a Kotlin
+            // Byte is signed: it has to be widened and then centered on zero.
+            val sample = (buf.get().toInt() and 0xFF) - 128
+            val result = sample / Constants.EIGHT_BITS
             if (channels == 2) {
                 buf.get()
             }
@@ -318,9 +322,13 @@ class WaveformExtractor(
      */
     private fun handle16bit(size: Int, buf: ByteBuffer) {
         repeat(size / if (channels == 2) 4 else 2) {
-            val first = buf.get().toInt()
-            val second = buf.get().toInt() shl 8
-            val value = (first or second) / Constants.SIXTEEN_BITS
+            // Little endian, low byte first. The low byte has to be masked: a
+            // Kotlin Byte above 0x7F widens to a negative Int, and its sign bits
+            // then swallow the high byte through the `or`. The high byte is left
+            // signed on purpose — that is the sample's own sign.
+            val low = buf.get().toInt() and 0xFF
+            val high = buf.get().toInt() shl 8
+            val value = (low or high) / Constants.SIXTEEN_BITS
             if (channels == 2) {
                 buf.get()
                 buf.get()
@@ -330,26 +338,21 @@ class WaveformExtractor(
     }
 
     /**
-     * Processes 32-bit PCM audio data
+     * Processes 32-bit float PCM audio data
      *
-     * Reads 32-bit samples from the buffer, normalizes them to the range [-1.0, 1.0],
-     * and passes them to handleBufferDivision for RMS calculation.
-     * 
+     * A pcmEncodingBit of 32 is only ever set for AudioFormat.ENCODING_PCM_FLOAT,
+     * so the samples are IEEE-754 floats already in the range [-1.0, 1.0] and are
+     * read as such, then passed to handleBufferDivision for RMS calculation.
+     *
      * @param size Size of the buffer in bytes
      * @param buf ByteBuffer containing the audio data
      */
     private fun handle32bit(size: Int, buf: ByteBuffer) {
+        val floats = buf.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer()
         repeat(size / if (channels == 2) 8 else 4) {
-            val first = buf.get().toLong()
-            val second = buf.get().toLong() shl 8
-            val third = buf.get().toLong() shl 16
-            val forth = buf.get().toLong() shl 24
-            val value = (first or second or third or forth) / Constants.THIRTY_TWO_BITS
+            val value = floats.get()
             if (channels == 2) {
-                buf.get()
-                buf.get()
-                buf.get()
-                buf.get()
+                floats.get()
             }
             handleBufferDivision(value)
         }
