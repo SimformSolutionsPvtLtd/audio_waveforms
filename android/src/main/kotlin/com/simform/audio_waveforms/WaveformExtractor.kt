@@ -10,6 +10,7 @@ import android.util.Log
 import io.flutter.plugin.common.MethodChannel
 import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.pow
 import kotlin.math.sqrt
 import androidx.core.net.toUri
@@ -68,6 +69,8 @@ class WaveformExtractor(
     private var perSamplePoints = 0L
     /** Flag to prevent submitting multiple results */
     private var isReplySubmitted = false
+    /** Guards [stop] so the codec is only stopped and released once */
+    private val isStopped = AtomicBoolean(false)
 
     /**
      * Retrieves the audio format from the given media file
@@ -402,9 +405,32 @@ class WaveformExtractor(
      * 3. Signals completion via the countdown latch
      */
     fun stop() {
-        decoder?.stop()
-        decoder?.release()
-        extractor?.release()
+        // stop() reaches us from two threads: the MediaCodec callback thread
+        // when decoding finishes on its own, and the platform thread when
+        // Flutter calls stopExtraction (PlayerController.dispose does this).
+        // Whichever loses the race would otherwise call stop() on a codec that
+        // is already released, which throws IllegalStateException.
+        if (!isStopped.compareAndSet(false, true)) return
+
+        try {
+            decoder?.stop()
+        } catch (e: IllegalStateException) {
+            Log.w(Constants.LOG_TAG, "Decoder already stopped: ${e.message}")
+        }
+        try {
+            decoder?.release()
+        } catch (e: IllegalStateException) {
+            Log.w(Constants.LOG_TAG, "Decoder already released: ${e.message}")
+        }
+        decoder = null
+
+        try {
+            extractor?.release()
+        } catch (e: IllegalStateException) {
+            Log.w(Constants.LOG_TAG, "Extractor already released: ${e.message}")
+        }
+        extractor = null
+
         finishCount.countDown()
     }
 }
