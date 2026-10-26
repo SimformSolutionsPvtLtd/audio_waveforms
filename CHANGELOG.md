@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Feature [#520](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/520) - Add `audio-waveforms-expert` agent skill in `skills/` for AI coding assistants. Install it in your app with [`dart run skills@ get`](https://dart.dev/tools/pub/package-skills)
 
 ## 2.0.2
 

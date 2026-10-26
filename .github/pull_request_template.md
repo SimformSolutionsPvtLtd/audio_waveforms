@@ -18,6 +18,7 @@ relevant checkboxes with `[x]`. If some checkbox is not applicable, mark it as `
 - [ ] I have updated/added tests for ALL new/updated/fixed functionality.
 - [ ] I have updated/added relevant documentation in `docs` and added dartdoc comments with `///`.
 - [ ] I have updated/added relevant examples in `examples` or `docs`.
+- [ ] I have updated `skills/audio-waveforms-expert/` (and run `dart run tool/check_skill_snippets.dart`) if this PR changes a public API, default, platform requirement or documented limitation.
 
 
 ## Breaking Change?

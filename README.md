@@ -33,6 +33,18 @@ dependencies:
   audio_waveforms: <latest-version>
 ```
 
+## AI agent skills
+
+This package ships an [agent skill](https://dart.dev/tools/pub/package-skills), `audio-waveforms-expert`, for coding agents (Claude Code, Cursor, Copilot, Codex, ...). It covers recorder and player setup, non-obvious behavior, known limitations and common errors for the version you have installed.
+
+Install it from your app's root (needs Dart 3.10 or later):
+
+```bash
+dart run skills@ get
+```
+
+Only packages that are direct dependencies of your app are scanned. Run the command again after upgrading `audio_waveforms` to update the skill.
+
 ## Support
 
 For questions, issues, or feature requests, [create an issue](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues) on GitHub or reach out via the GitHub Discussions tab. We're happy to help and encourage community contributions.
