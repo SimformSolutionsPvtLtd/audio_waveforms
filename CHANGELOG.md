@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Feature [#PR_NUMBER](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/PR_NUMBER) - Add `audio-waveforms-expert` agent skill for AI coding assistants
 
 ## 2.0.2
 
