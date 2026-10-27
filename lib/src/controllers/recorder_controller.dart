@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io' show Platform;
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '/src/base/utils.dart';
 import '../base/constants.dart';
@@ -241,9 +241,27 @@ class RecorderController extends ChangeNotifier {
   }
 
   /// Pauses the current recording. Call [record] to resume recording.
+  ///
+  /// On Android and iOS, once this completes, the audio recorded so far is
+  /// saved to the file, so it can be played (e.g. with
+  /// [PlayerController.preparePlayer]) while recording is paused.
+  ///
+  /// Saving the file makes this take a moment. After a resume the whole file
+  /// is rewritten, so this takes longer as the recording grows. Each
+  /// pause/resume also leaves about 50 ms of silence where the parts join.
+  ///
+  /// If saving the file fails, recording is still paused and this throws.
   Future<void> pause() async {
     if (_recorderState.isRecording) {
-      _isRecording = (await AudioWaveformsInterface.instance.pause()) ?? true;
+      try {
+        _isRecording = (await AudioWaveformsInterface.instance.pause()) ?? true;
+      } on PlatformException {
+        // The native recorder is already paused when saving the file fails.
+        _isRecording = false;
+        _setRecorderState(RecorderState.paused);
+        notifyListeners();
+        rethrow;
+      }
       if (_isRecording) {
         throw "Failed to pause recording";
       }

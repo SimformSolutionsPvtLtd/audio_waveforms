@@ -100,6 +100,9 @@ class WavEncoder(
     /**
      * Updates the WAV file header with the final audio parameters
      * 
+     * Also called while recording is paused, so the audio written so far can
+     * be played. Writing can continue afterwards.
+     *
      * The WAV format requires a specific header structure with information about:
      * - File format (RIFF/WAVE)
      * - Audio format (PCM)
@@ -111,7 +114,7 @@ class WavEncoder(
      * This method writes all these parameters to the beginning of the file after
      * all audio data has been written and the total size is known.
      */
-    private fun updateWavHeader() {
+    fun updateWavHeader() {
         val totalDataLen = totalAudioLen + 36
         val byteRate = sampleRate * Constants.CHANNEL * Constants.BIT_PER_SAMPLE / 8
         val header = ByteArray(44)

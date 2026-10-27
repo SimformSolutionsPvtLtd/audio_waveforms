@@ -267,6 +267,13 @@ await recorderController.pause();
 
 To resume recording, simply call `record()` again.
 
+On Android and iOS, the audio recorded so far is saved to the file while recording is paused, so it can be played back before resuming:
+
+```dart
+await recorderController.pause();
+await playerController.preparePlayer(path: '/path/to/myFile.m4a');
+```
+
 ## Stop Recording
 
 Stop the recording and get the file path:
