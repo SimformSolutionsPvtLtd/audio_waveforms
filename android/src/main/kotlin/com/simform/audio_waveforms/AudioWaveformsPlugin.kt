@@ -327,9 +327,9 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     private fun pauseAllPlayer(result: Result) {
         try {
-            for ((key, _) in audioPlayers) {
-                audioPlayers[key]?.pause()
-            }
+            // Pausing a player which isn't playing (e.g. finished) would
+            // report 0 as current duration and reset its waveform.
+            audioPlayers.values.filter { it?.isPlayRequested == true }.forEach { it?.pause() }
             result.success(true)
         } catch (e: Exception) {
             result.error(Constants.LOG_TAG, "Failed to pause players", e.message)

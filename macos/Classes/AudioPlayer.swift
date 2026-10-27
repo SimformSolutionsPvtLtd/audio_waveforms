@@ -14,6 +14,11 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     var playerKey: String
     var flutterChannel: FlutterMethodChannel
 
+    /// Whether the audio is currently playing.
+    var isPlaying: Bool {
+        player?.isPlaying ?? false
+    }
+
     /// Initializes the audio player.
     /// - Parameters:
     ///   - plugin: Reference to the main plugin instance

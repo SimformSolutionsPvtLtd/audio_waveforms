@@ -12,7 +12,10 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     var plugin: SwiftAudioWaveformsPlugin
     var playerKey: String
     var flutterChannel: FlutterMethodChannel
-    
+
+    var isPlaying: Bool {
+        player?.isPlaying ?? false
+    }
 
     init(plugin: SwiftAudioWaveformsPlugin, playerKey: String, channel: FlutterMethodChannel) {
         self.plugin = plugin
