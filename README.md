@@ -33,6 +33,23 @@ dependencies:
   audio_waveforms: <latest-version>
 ```
 
+### Requirements
+
+| Requirement | Minimum |
+|---|---|
+| Flutter | 3.41.0 |
+| Dart | 3.11.0 |
+| iOS | 13.0 |
+| macOS | 10.15 |
+
+Swift Package Manager is supported on iOS and macOS. CocoaPods continues to work.
+
+### Migrating to 3.0.0
+
+- Upgrade to Flutter 3.41.0 or newer.
+- Raise your iOS deployment target to 13.0 (`platform :ios, '13.0'` in `ios/Podfile`) and macOS to 10.15.
+- If your own native code references `SwiftAudioWaveformsPlugin`, rename it to `AudioWaveformsPlugin`. Apps using the generated plugin registrant need no changes.
+
 ## Support
 
 For questions, issues, or feature requests, [create an issue](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues) on GitHub or reach out via the GitHub Discussions tab. We're happy to help and encourage community contributions.

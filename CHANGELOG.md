@@ -1,6 +1,10 @@
-## 2.1.0 (#unreleased)
+## 3.0.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- **BREAKING:** Feature [#492](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/492) - Add Swift Package Manager support for iOS and macOS
+  - Minimum Flutter is now 3.41.0 and minimum Dart is 3.11.0.
+  - Minimum iOS deployment target is now 13.0 and minimum macOS is 10.15.
+  - Native class `SwiftAudioWaveformsPlugin` renamed to `AudioWaveformsPlugin`; the Objective-C shim was removed.
 
 ## 2.0.2
 
