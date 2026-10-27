@@ -1,3 +1,4 @@
+import FlutterMacOS
 import AVFoundation
 import Accelerate
 

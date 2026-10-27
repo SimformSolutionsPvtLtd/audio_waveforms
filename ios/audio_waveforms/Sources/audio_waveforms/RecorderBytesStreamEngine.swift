@@ -1,3 +1,4 @@
+import Flutter
 //
 //  RecorderBytesStreamHandler.swift
 //  audio_waveforms
