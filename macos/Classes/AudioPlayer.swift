@@ -41,20 +41,11 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     ) {
         if !(path ?? "").isEmpty {
             self.updateFrequency = updateFrequency ?? 200
-            let audioUrl = URL.init(string: path!)
-            if audioUrl == nil {
-                result(
-                    FlutterError(
-                        code: Constants.audioWaveforms,
-                        message:
-                            "Failed to initialise Url from provided audio file",
-                        details: "If path contains `file://` try removing it"))
-                return
-            }
+            let audioUrl = fileURL(from: path!)
             do {
                 stopPlayer()
                 player = nil
-                player = try AVAudioPlayer(contentsOf: audioUrl!)
+                player = try AVAudioPlayer(contentsOf: audioUrl)
                 // macOS doesn't need AVAudioSession configuration
             } catch {
                 result(

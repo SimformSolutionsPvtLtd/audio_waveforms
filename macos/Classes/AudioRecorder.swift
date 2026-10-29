@@ -323,7 +323,7 @@ public class AudioRecorder: NSObject {
                         recordedDuration = try await asset.load(.duration)
                         sendResult(
                             result,
-                            duration: Int(recordedDuration.seconds * 1000))
+                            duration: Self.milliseconds(from: recordedDuration))
                     } catch {
                         sendResult(result, duration: Int(CMTime.zero.seconds))
                     }
@@ -331,11 +331,18 @@ public class AudioRecorder: NSObject {
             } else {
                 recordedDuration = asset.duration
                 sendResult(
-                    result, duration: Int(recordedDuration.seconds * 1000))
+                    result, duration: Self.milliseconds(from: recordedDuration))
             }
         } else {
             sendResult(result, duration: Int(CMTime.zero.seconds))
         }
+    }
+
+    /// `seconds` is NaN/infinite for an invalid or unfinished container and `Int(NaN)` crashes,
+    /// so only convert finite durations.
+    private static func milliseconds(from time: CMTime) -> Int {
+        let seconds = time.seconds
+        return seconds.isFinite ? Int(seconds * 1000) : 0
     }
 
     private func sendResult(_ result: @escaping FlutterResult, duration: Int) {

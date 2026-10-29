@@ -91,3 +91,25 @@ enum FinishMode : Int{
     case pause = 1
     case stop = 2
 }
+
+/// Builds a file URL from a path received from Dart.
+///
+/// Dart only converts `file://` URLs to plain paths, so this normally gets a raw
+/// file path where spaces, `%`, `#` and `?` are literal characters. `file://`
+/// URLs are still accepted for callers that send them directly, and remote
+/// `http(s)://` URLs are parsed as URLs.
+func fileURL(from path: String) -> URL {
+    if path.hasPrefix("http://") || path.hasPrefix("https://"), let remote = URL(string: path) {
+        return remote
+    }
+    guard path.hasPrefix("file://") else {
+        return URL(fileURLWithPath: path)
+    }
+    var stripped = String(path.dropFirst("file://".count))
+    // `file:///path` starts with `/`; `file://host/path` keeps a host segment,
+    // drop it so the host isn't folded into the file path.
+    if !stripped.hasPrefix("/"), let slash = stripped.firstIndex(of: "/") {
+        stripped = String(stripped[slash...])
+    }
+    return URL(fileURLWithPath: stripped.removingPercentEncoding ?? stripped)
+}

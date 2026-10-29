@@ -147,13 +147,15 @@ class PlayerController extends ChangeNotifier {
       'Use noOfSamples for fixed count OR noOfSamplesPerSecond for dynamic calculation based on duration.',
     );
 
-    if (!path.startsWith('http')) {
-      // Keep the full URL for remote files and strip for local files
+    if (path.startsWith('file://')) {
+      // Only `file://` URLs are converted to a plain file path. Every other path
+      // (remote URLs, plain paths) is passed through untouched so spaces, `%`,
+      // `#` and `?` in a plain file name are not encoded or cut off.
       final uri = Uri.tryParse(path);
       if (uri == null) {
         throw ArgumentError('Invalid path format: $path');
       }
-      path = uri.path;
+      path = Uri.decodeComponent(uri.path);
     }
     final isPrepared = await AudioWaveformsInterface.instance.preparePlayer(
       path: path,
