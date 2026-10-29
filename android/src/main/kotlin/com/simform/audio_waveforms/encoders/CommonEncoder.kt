@@ -13,6 +13,7 @@ import com.simform.audio_waveforms.Encoder
 import com.simform.audio_waveforms.RecorderSettings
 import com.simform.audio_waveforms.isEof
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 import java.io.FileOutputStream
 import java.util.LinkedList
 
@@ -55,17 +56,27 @@ class CommonEncoder {
     private val inputQueue = LinkedList<ByteArray>()
     
     /** Current available input buffer index (-1 if none available) */
+    @Volatile
     private var currentInputBufferIndex = -1
 
     /** Flag indicating if the muxer has been started */
     private var isMuxerStarted = false
     
     /** Flag indicating encoding process should complete */
+    @Volatile
     private var isEncodingComplete = false
     
     /** Flag indicating encoder has been stopped */
     private var isEncoderStopped = false
     
+    /**
+     * True when the last recording was stopped before the muxer ever started, so no valid output
+     * exists. The empty file is deleted before the completion callback runs.
+     */
+    @Volatile
+    var stoppedWithoutOutput = false
+        private set
+
     /** Track index for the audio track in the muxer */
     private var trackIndex = -1
     
@@ -86,18 +97,18 @@ class CommonEncoder {
      *
      * @param recorderSettings The configuration for the recorder and encoder
      * @param result The Flutter method channel result to report initialization status
-     * @param onEncodingCompleted Optional callback to invoke when encoding is completed
      */
     fun initCodec(
         recorderSettings: RecorderSettings,
         result: MethodChannel.Result,
-        onEncodingCompleted: (() -> Unit)? = null,
     ) {
         // Reset state at the beginning
         isMuxerStarted = false
         trackIndex = -1
         isEncodingComplete = false
         isEncoderStopped = false
+        stoppedWithoutOutput = false
+        mediaMuxer = null
         inputQueue.clear()
         currentInputBufferIndex = -1
         totalBytesEncoded = 0L
@@ -106,7 +117,7 @@ class CommonEncoder {
 
         this.recorderSettings = recorderSettings
         encoder = recorderSettings.encoder
-        completionCallback = onEncodingCompleted
+        completionCallback = null
         var useMediaMuxer = encoder.useMediaMuxer
         var format: MediaFormat
         try {
@@ -275,7 +286,20 @@ class CommonEncoder {
      * is processed, the encoder will be sent an end-of-stream signal.
      */
     fun signalToStop() {
-        isEncodingComplete = true
+        synchronized(inputQueue) {
+            isEncodingComplete = true
+            // If the codec already handed us an input buffer and nothing is left to feed, no further
+            // onInputBufferAvailable will arrive, so EOS has to be queued here or the encoder never
+            // finishes and the completion callback never fires. Safe against the recording thread
+            // because it has already been joined by the time this is called.
+            if (inputQueue.isEmpty() && currentInputBufferIndex >= 0) {
+                val eofTimestamp = (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * 2L)
+                mediaCodec.queueInputBuffer(
+                    currentInputBufferIndex, 0, 0, eofTimestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM
+                )
+                currentInputBufferIndex = -1
+            }
+        }
     }
 
     /**
@@ -406,13 +430,21 @@ class CommonEncoder {
         try {
             mediaCodec.stop()
             mediaCodec.release()
-            // Only stop the muxer if it was actually started; stopping an unstarted muxer
-            // throws and triggers the native MPEG4Writer "track not started" crash.
+            // MediaMuxer.stop() throws IllegalStateException when the muxer never started. That
+            // exception used to abort this block before the muxer release, stream close, thread
+            // shutdown and completion callback, leaking them and leaving the Dart stop() pending.
+            val muxerNeverStarted = mediaMuxer != null && !isMuxerStarted
             if (isMuxerStarted) {
                 mediaMuxer?.stop()
             }
             mediaMuxer?.release()
             outputStream.close()
+            if (muxerNeverStarted) {
+                // No track was ever written, so the file is empty/invalid. Delete it and let the
+                // caller report an error instead of returning a path that can't be played.
+                stoppedWithoutOutput = true
+                recorderSettings.path?.let { File(it).delete() }
+            }
             handlerThread.quitSafely()
             handlerThread.join()
             completionCallback?.invoke()
