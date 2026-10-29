@@ -33,7 +33,7 @@ class WaveStyle {
     this.waveformRenderMode = WaveformRenderMode.ltr,
     this.maxDuration,
   }) : assert(
-          waveThickness < spacing,
+          maxDuration != null || waveThickness < spacing,
           "waveThickness can't be greater than spacing",
         );
 
@@ -142,7 +142,13 @@ class WaveStyle {
   /// `elapsedRecordingDuration / maxDuration`. e.g. with `maxDuration` of 10s,
   /// stopping the recording at 5s draws the waveform across half of the width;
   /// reaching `maxDuration` fills the full width. Recording past `maxDuration`
-  /// is clamped to the full width.
+  /// keeps the full width: the gap between bars stays constant and bars past
+  /// the width are not drawn.
+  ///
+  /// The gap between bars comes from [maxDuration] and the width, so [spacing]
+  /// is ignored in this mode (and `waveThickness < spacing` is not asserted).
+  /// Duration labels ([showDurationLabel]) are placed by time with the same
+  /// mapping, one per second up to [maxDuration].
   ///
   /// Can only be used with [WaveformRenderMode.ltr] (ignored for
   /// [WaveformRenderMode.rtl], like [extendWaveform]). When set, it takes

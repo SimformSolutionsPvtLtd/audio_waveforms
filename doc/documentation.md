@@ -855,7 +855,8 @@ fixed maximum duration: the waveform fills only
 `elapsedRecordingDuration / maxDuration` of the width and never scrolls. For
 example, with a `maxDuration` of 10 seconds, stopping the recording at 5 seconds
 draws the waveform across half of the width; reaching 10 seconds fills the full
-width (recording past it stays clamped to the full width).
+width. Recording past it keeps the full width: the bars keep a constant gap and the bars that
+would fall beyond the width are not drawn.
 
 This is useful when you want the final waveform length to reflect how long the
 recording is, relative to a cap.
@@ -872,8 +873,11 @@ AudioWaveforms(
 
 > Note: `maxDuration` only applies to `WaveformRenderMode.ltr` (ignored for
 > `rtl`, like `extendWaveform`) and takes precedence over `extendWaveform` when
-> both are set. A non-positive value (`Duration.zero` or less) is ignored and
-> falls back to the default scrolling behavior.
+> both are set. `WaveStyle.spacing` is ignored in this mode because the gap
+> between bars is derived from `maxDuration` and the width. `showDurationLabel`
+> is supported: labels are placed by time, one per second up to `maxDuration`.
+> A non-positive value (`Duration.zero` or less) is ignored and falls back to
+> the default scrolling behavior.
 
 ## Waveform Gradients
 

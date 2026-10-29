@@ -222,8 +222,8 @@ class RecorderWavePainter extends CustomPainter {
     final height = size.height;
     final double dx;
     if (_isBounded) {
-      // Bounded mode: distribute the current samples across the fraction of
-      // the width equal to currentlyRecordedDuration / maxDuration. No scroll.
+      // Bounded mode: bars sit at a constant gap derived from [maxDuration].
+      // No scroll.
       dx = _boundedDx(size, i);
     } else {
       dx = -totalCurrentBackDistance.dx +
@@ -244,8 +244,8 @@ class RecorderWavePainter extends CustomPainter {
     // and [dx > 0] will ensure only fully visible waves are drawn,
     // if any wave is half visible this will cut out that wave too.
     //
-    // In bounded ([maxDuration]) mode the waves are clamped within the width,
-    // so the first wave at dx == 0 and the last at dx == size.width are kept.
+    // In bounded ([maxDuration]) mode the first wave at dx == 0 and a wave at
+    // dx == size.width are kept; waves past the width are not drawn.
     final isVisible = _isBounded
         ? (dx >= 0 && dx <= size.width)
         : (dx > 0 && dx < size.width);
@@ -260,17 +260,18 @@ class RecorderWavePainter extends CustomPainter {
 
   /// Horizontal position of wave [i] when [maxDuration] is set.
   ///
-  /// The current samples are spread across `fraction * size.width`, where
-  /// `fraction = currentlyRecordedDuration / maxDuration` (clamped to 1). So
-  /// the waveform grows left-to-right and reaches the full width exactly at
-  /// [maxDuration].
+  /// Every bar covers the same slice of time (the average time between
+  /// samples), so the gap between bars is constant:
+  /// `size.width * timePerBar / maxDuration`. The waveform therefore grows
+  /// left-to-right, reaches the full width at [maxDuration], and bars past the
+  /// width are simply not drawn instead of compressing the earlier ones.
+  /// [spacing] is not used in this mode.
   double _boundedDx(Size size, int i) {
     final maxMicros = maxDuration!.inMicroseconds;
-    if (maxMicros <= 0 || waveData.length <= 1) return 0;
-    final fraction =
-        (currentlyRecordedDuration.inMicroseconds / maxMicros).clamp(0.0, 1.0);
-    final effectiveSpacing = (fraction * size.width) / (waveData.length - 1);
-    return effectiveSpacing * i;
+    final elapsedMicros = currentlyRecordedDuration.inMicroseconds;
+    if (maxMicros <= 0 || waveData.isEmpty || elapsedMicros <= 0) return 0;
+    final gap = size.width * (elapsedMicros / waveData.length) / maxMicros;
+    return gap * i;
   }
 
   /// Draw wave for RTL direction

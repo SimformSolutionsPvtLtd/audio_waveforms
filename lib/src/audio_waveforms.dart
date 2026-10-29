@@ -69,6 +69,15 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
         _recorderController.onCurrentDuration.listen((duration) {
       currentlyRecordedDuration = duration;
       final currentSeconds = currentlyRecordedDuration.inSeconds;
+      final maxMicros = _waveStyle.maxDuration?.inMicroseconds ?? 0;
+      // In bounded mode ([WaveStyle.maxDuration]) bars are placed by time, so
+      // labels use the same mapping instead of the scrolling coordinates.
+      final isBounded = maxMicros > 0 && !_isRtl;
+      final boundedDx =
+          _size.width * (currentSeconds * Duration.microsecondsPerSecond) /
+              maxMicros;
+      // Labels past the full width are off the canvas, so they're skipped.
+      if (isBounded && boundedDx > _size.width) return;
       if (currentSeconds > 0 && _labels.length < currentSeconds) {
         _labels.add(
           Label(
@@ -81,7 +90,9 @@ class _AudioWaveformsState extends State<AudioWaveforms> {
             // Y-axis: Position below the waveform container
             //         (container height + line height = below the waveform)
             offset: Offset(
-              _waveStyle.spacing * _recorderController.waveData.length,
+              isBounded
+                  ? boundedDx
+                  : _waveStyle.spacing * _recorderController.waveData.length,
               _size.height + _waveStyle.durationLinesHeight,
             ),
           ),
