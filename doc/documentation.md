@@ -736,8 +736,30 @@ suppression where the hardware supports it.
 | `camcorder`          | Tuned for video recording. |
 | `voiceRecognition`   | Tuned for speech recognition. |
 | `voiceCommunication` | Tuned for VoIP; applies device echo cancellation and noise suppression. |
-| `unprocessed`        | Raw, unprocessed signal (e.g. music). Requires API 24+; falls back to `defaultSource` on older devices. |
-| `voicePerformance`   | Tuned for live performance. Requires API 29+; falls back to `defaultSource` on older devices. |
+| `unprocessed`        | Raw, unprocessed signal (e.g. music). Requires API 24+; falls back to `mic` on older devices. |
+| `voicePerformance`   | Tuned for live performance. Requires API 29+; falls back to `mic` on older devices. |
+
+### Unsupported Source / Sample Rate Combinations
+
+Some devices cannot initialise certain combinations, for example `voiceCommunication` at the default
+44100 Hz. Instead of silently recording unusable audio, `record()` throws a `PlatformException`
+when the chosen audio source and sample rate cannot be initialised. Catch it and retry with another
+sample rate (16000 Hz is the most widely supported for the voice sources) or another source:
+
+```dart
+try {
+  await recorderController.record(
+    recorderSettings: const RecorderSettings(
+      sampleRate: 16000,
+      androidEncoderSettings: AndroidEncoderSettings(
+        audioSource: AndroidAudioSource.voiceCommunication,
+      ),
+    ),
+  );
+} on PlatformException {
+  // Fall back to another sample rate or audio source.
+}
+```
 
 ### Audio Effects
 

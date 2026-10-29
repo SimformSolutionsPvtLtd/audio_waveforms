@@ -56,10 +56,8 @@ class RecorderSettings {
         Constants.bitRate: bitRate,
         Constants.audioSource:
             androidEncoderSettings.audioSource.toNativeValue(),
-        Constants.useNoiseSuppressor:
-            androidEncoderSettings.useNoiseSuppressor,
+        Constants.useNoiseSuppressor: androidEncoderSettings.useNoiseSuppressor,
         Constants.useEchoCanceler: androidEncoderSettings.useEchoCanceler,
-        Constants.useAutoGainControl:
-            androidEncoderSettings.useAutoGainControl,
+        Constants.useAutoGainControl: androidEncoderSettings.useAutoGainControl,
       };
 }

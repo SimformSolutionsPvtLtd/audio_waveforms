@@ -71,11 +71,11 @@ enum AndroidAudioSource {
   voiceCommunication,
 
   /// Unprocessed source, with no effects applied by the device. Requires
-  /// API 24+; falls back to [defaultSource] on older devices.
+  /// API 24+; falls back to [mic] on older devices.
   unprocessed,
 
   /// Tuned for live performance recording. Requires API 29+; falls back to
-  /// [defaultSource] on older devices.
+  /// [mic] on older devices.
   voicePerformance;
 
   /// Native `MediaRecorder.AudioSource` integer constant.

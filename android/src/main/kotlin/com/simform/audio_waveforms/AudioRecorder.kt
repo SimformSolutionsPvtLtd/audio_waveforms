@@ -8,6 +8,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
+import android.media.MediaRecorder
 import android.media.audiofx.AcousticEchoCanceler
 import android.media.audiofx.AudioEffect
 import android.media.audiofx.AutomaticGainControl
@@ -145,16 +146,18 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     /**
      * Resolves the requested audio source against the running API level.
      *
-     * UNPROCESSED (9) requires API 24 and VOICE_PERFORMANCE (10) requires API
-     * 29. On older devices these constants are unknown, so we fall back to
-     * DEFAULT (0) instead of passing an int the platform cannot honour.
+     * UNPROCESSED requires API 24 and VOICE_PERFORMANCE requires API 29. On older
+     * devices these constants are unknown, so we fall back to MIC (the package
+     * default, and the closest to the raw signal these sources ask for) instead of
+     * passing an int the platform cannot honour. The constants are inlined at
+     * compile time, so referencing them is safe on older APIs.
      */
     private fun resolveAudioSource(audioSource: Int): Int {
         return when {
-            audioSource == UNPROCESSED_SOURCE && Build.VERSION.SDK_INT < Build.VERSION_CODES.N ->
-                DEFAULT_SOURCE
-            audioSource == VOICE_PERFORMANCE_SOURCE && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ->
-                DEFAULT_SOURCE
+            audioSource == MediaRecorder.AudioSource.UNPROCESSED && Build.VERSION.SDK_INT < Build.VERSION_CODES.N ->
+                MediaRecorder.AudioSource.MIC
+            audioSource == MediaRecorder.AudioSource.VOICE_PERFORMANCE && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ->
+                MediaRecorder.AudioSource.MIC
             else -> audioSource
         }
     }
@@ -165,34 +168,53 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
      * Each effect is opt-in (off by default) and device-dependent, so we guard
      * with the caller's flag and isAvailable(), and swallow failures
      * individually — a missing or unsupported effect must not abort recording.
+     * Idempotent: effects from a previous init are released first.
      */
     private fun attachAudioEffects(sessionId: Int, recorderSettings: RecorderSettings) {
+        releaseAudioEffects()
         if (recorderSettings.useNoiseSuppressor) {
-            try {
-                if (NoiseSuppressor.isAvailable()) {
-                    noiseSuppressor = NoiseSuppressor.create(sessionId)?.also { enableEffect(it, "NoiseSuppressor") }
-                }
-            } catch (e: Exception) {
-                Log.e(LOG_TAG, "Error enabling NoiseSuppressor: ${e.message}")
-            }
+            attachEffect(
+                "NoiseSuppressor",
+                isAvailable = { NoiseSuppressor.isAvailable() },
+                create = { NoiseSuppressor.create(sessionId) },
+                store = { noiseSuppressor = it },
+            )
         }
         if (recorderSettings.useEchoCanceler) {
-            try {
-                if (AcousticEchoCanceler.isAvailable()) {
-                    echoCanceler = AcousticEchoCanceler.create(sessionId)?.also { enableEffect(it, "AcousticEchoCanceler") }
-                }
-            } catch (e: Exception) {
-                Log.e(LOG_TAG, "Error enabling AcousticEchoCanceler: ${e.message}")
-            }
+            attachEffect(
+                "AcousticEchoCanceler",
+                isAvailable = { AcousticEchoCanceler.isAvailable() },
+                create = { AcousticEchoCanceler.create(sessionId) },
+                store = { echoCanceler = it },
+            )
         }
         if (recorderSettings.useAutoGainControl) {
-            try {
-                if (AutomaticGainControl.isAvailable()) {
-                    gainControl = AutomaticGainControl.create(sessionId)?.also { enableEffect(it, "AutomaticGainControl") }
-                }
-            } catch (e: Exception) {
-                Log.e(LOG_TAG, "Error enabling AutomaticGainControl: ${e.message}")
-            }
+            attachEffect(
+                "AutomaticGainControl",
+                isAvailable = { AutomaticGainControl.isAvailable() },
+                create = { AutomaticGainControl.create(sessionId) },
+                store = { gainControl = it },
+            )
+        }
+    }
+
+    /**
+     * Creates, stores and enables one effect. The effect is stored before it is enabled so that
+     * [releaseAudioEffects] still releases it if enabling throws.
+     */
+    private fun <T : AudioEffect> attachEffect(
+        name: String,
+        isAvailable: () -> Boolean,
+        create: () -> T?,
+        store: (T) -> Unit,
+    ) {
+        try {
+            if (!isAvailable()) return
+            val effect = create() ?: return
+            store(effect)
+            enableEffect(effect, name)
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Error enabling $name: ${e.message}")
         }
     }
 
@@ -367,11 +389,5 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             mediaMetadataRetriever.release()
         }
         return -1
-    }
-
-    companion object {
-        private const val DEFAULT_SOURCE = 0
-        private const val UNPROCESSED_SOURCE = 9
-        private const val VOICE_PERFORMANCE_SOURCE = 10
     }
 }
