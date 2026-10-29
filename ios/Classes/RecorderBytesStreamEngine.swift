@@ -19,7 +19,9 @@ class RecorderBytesStreamEngine {
         flutterChannel = channel
     }
 
-    func attach(result: @escaping FlutterResult, sampleRate: Int) {
+    /// Starts the audio engine with a fresh input tap. Throws if the engine fails to start; the
+    /// caller owns replying to Flutter so the result is sent exactly once.
+    func attach(sampleRate: Int) throws {
         let inputNode = audioEngine.inputNode
 
         // Reset any previous engine/tap state before installing a new tap.
@@ -31,6 +33,7 @@ class RecorderBytesStreamEngine {
         }
         inputNode.removeTap(onBus: 0)
         totalFrames = 0
+        paused = false
 
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: nil) { (buffer, time) in
             if self.paused {
@@ -51,10 +54,10 @@ class RecorderBytesStreamEngine {
         do {
             try audioEngine.start()
         } catch {
-           // Remove the tap so a failed start doesn't leak it onto the bus,
-           // which would crash the next `attach` with `nullptr == Tap()`.
-           inputNode.removeTap(onBus: 0)
-           result(FlutterError(code: Constants.audioWaveforms, message: "Error starting Audio Engine", details: error.localizedDescription))
+            // Remove the tap so a failed start doesn't leak it onto the bus,
+            // which would crash the next `attach` with `nullptr == Tap()`.
+            inputNode.removeTap(onBus: 0)
+            throw error
         }
     }
 
@@ -64,6 +67,7 @@ class RecorderBytesStreamEngine {
 
     func detach() {
         totalFrames = 0
+        paused = false
         audioEngine.inputNode.removeTap(onBus: 0)
         audioEngine.stop()
     }

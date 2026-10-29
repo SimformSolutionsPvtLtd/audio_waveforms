@@ -1,7 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
-- Fixed [#487](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/487) - iOS crash `nullptr == Tap()` when starting bytes streaming with a stale/leaked input tap
+- Fixed [#487](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/487) ([#496](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/496)) - iOS crash `nullptr == Tap()` when starting bytes streaming with a stale/leaked input tap, reset the paused flag between recordings and report a failed engine start exactly once while stopping the file recorder
 
 ## 2.0.2
 
