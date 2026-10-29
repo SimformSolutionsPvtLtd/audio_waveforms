@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Fixed [#519](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/519) - seekTo lands on the nearest second instead of the exact millisecond on iOS and macOS
 
 ## 2.0.2
 
