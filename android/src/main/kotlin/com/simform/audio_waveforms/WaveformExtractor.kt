@@ -9,6 +9,7 @@ import android.os.Build
 import android.util.Log
 import io.flutter.plugin.common.MethodChannel
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.CountDownLatch
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -299,7 +300,10 @@ class WaveformExtractor(
      */
     private fun handle8bit(size: Int, buf: ByteBuffer) {
         repeat(size / if (channels == 2) 2 else 1) {
-            val result = buf.get().toInt() / Constants.EIGHT_BITS
+            // ENCODING_PCM_8BIT is unsigned, with 128 as silence, while a Kotlin
+            // Byte is signed: it has to be widened and then centered on zero.
+            val sample = (buf.get().toInt() and 0xFF) - 128
+            val result = sample / Constants.EIGHT_BITS
             if (channels == 2) {
                 buf.get()
             }
@@ -317,39 +321,32 @@ class WaveformExtractor(
      * @param buf ByteBuffer containing the audio data
      */
     private fun handle16bit(size: Int, buf: ByteBuffer) {
+        val shorts = buf.order(ByteOrder.nativeOrder()).asShortBuffer()
         repeat(size / if (channels == 2) 4 else 2) {
-            val first = buf.get().toInt()
-            val second = buf.get().toInt() shl 8
-            val value = (first or second) / Constants.SIXTEEN_BITS
+            val value = shorts.get() / Constants.SIXTEEN_BITS
             if (channels == 2) {
-                buf.get()
-                buf.get()
+                shorts.get()
             }
             handleBufferDivision(value)
         }
     }
 
     /**
-     * Processes 32-bit PCM audio data
+     * Processes 32-bit float PCM audio data
      *
-     * Reads 32-bit samples from the buffer, normalizes them to the range [-1.0, 1.0],
-     * and passes them to handleBufferDivision for RMS calculation.
-     * 
+     * A pcmEncodingBit of 32 is only ever set for AudioFormat.ENCODING_PCM_FLOAT,
+     * so the samples are IEEE-754 floats already in the range [-1.0, 1.0] and are
+     * read as such, then passed to handleBufferDivision for RMS calculation.
+     *
      * @param size Size of the buffer in bytes
      * @param buf ByteBuffer containing the audio data
      */
     private fun handle32bit(size: Int, buf: ByteBuffer) {
+        val floats = buf.order(ByteOrder.nativeOrder()).asFloatBuffer()
         repeat(size / if (channels == 2) 8 else 4) {
-            val first = buf.get().toLong()
-            val second = buf.get().toLong() shl 8
-            val third = buf.get().toLong() shl 16
-            val forth = buf.get().toLong() shl 24
-            val value = (first or second or third or forth) / Constants.THIRTY_TWO_BITS
+            val value = floats.get()
             if (channels == 2) {
-                buf.get()
-                buf.get()
-                buf.get()
-                buf.get()
+                floats.get()
             }
             handleBufferDivision(value)
         }
