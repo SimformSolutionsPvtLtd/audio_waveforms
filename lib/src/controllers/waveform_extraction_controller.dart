@@ -99,10 +99,16 @@ class WaveformExtractionController {
       actualNoOfSamples = noOfSamples ?? 100;
     }
 
-    return await AudioWaveformsInterface.instance.extractWaveformData(
-      key: _extractorKey,
-      path: path,
-      noOfSamples: actualNoOfSamples,
+    // iOS/macOS pick the parser from the file extension, so correct a wrong
+    // one (issue #113) for the duration of the extraction.
+    return await withNormalizedAudioPath(
+      path,
+      (extractionPath) =>
+          AudioWaveformsInterface.instance.extractWaveformData(
+        key: _extractorKey,
+        path: extractionPath,
+        noOfSamples: actualNoOfSamples,
+      ),
     );
   }
 

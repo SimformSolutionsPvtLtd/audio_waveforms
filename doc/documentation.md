@@ -494,8 +494,9 @@ first, then play it locally.
 
 iOS/macOS pick the audio parser from the file extension, so a file whose extension doesn't match
 its real container (e.g. an Android AAC-in-MP4 recording named `.mp3`/`.aac`) fails to load.
-`preparePlayer` detects this from the file's magic bytes and handles it automatically — no action
-needed.
+`preparePlayer` and `WaveformExtractionController.extractWaveformData` detect this from the file's
+magic bytes and handle it automatically — no action needed. A temporary correctly-named symlink is
+used while the file is loaded and is deleted afterwards.
 
 ## Start Playing
 

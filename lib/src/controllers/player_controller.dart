@@ -154,17 +154,21 @@ class PlayerController extends ChangeNotifier {
         throw ArgumentError('Invalid path format: $path');
       }
       path = uri.path;
-      // A wrong extension (e.g. Android AAC-in-MP4 named `.mp3`, issue #113)
-      // makes AVFoundation pick the wrong parser on iOS/macOS. Redirect to a
-      // correctly-named symlink when the sniffed container disagrees.
-      path = await normalizedAudioPath(path);
     }
-    final isPrepared = await AudioWaveformsInterface.instance.preparePlayer(
-      path: path,
-      key: playerKey,
-      frequency: updateFrequency.value,
-      volume: volume,
-      overrideAudioSession: overrideAudioSession,
+    // A wrong extension (e.g. Android AAC-in-MP4 named `.mp3`, issue #113)
+    // makes AVFoundation pick the wrong parser on iOS/macOS. Redirect to a
+    // correctly-named temporary symlink while preparing when the sniffed
+    // container disagrees. The original [path] is kept for waveform extraction,
+    // which does its own correction.
+    final isPrepared = await withNormalizedAudioPath(
+      path,
+      (playerPath) => AudioWaveformsInterface.instance.preparePlayer(
+        path: playerPath,
+        key: playerKey,
+        frequency: updateFrequency.value,
+        volume: volume,
+        overrideAudioSession: overrideAudioSession,
+      ),
     );
     if (isPrepared) {
       _maxDuration = await getDuration();

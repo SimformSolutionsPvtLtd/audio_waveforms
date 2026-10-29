@@ -1,7 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
-- Fixed [#113](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/113) - Play audio files with mislabeled extensions on iOS/macOS
+- Fixed [#113](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/113) ([#500](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/500)) - Play and extract waveforms from audio files with mislabeled extensions on iOS/macOS, including ID3-tagged ADTS AAC
 
 ## 2.0.2
 
