@@ -25,6 +25,14 @@ class WaveformExtractionController {
 
   final String _extractorKey;
 
+  /// Client of the in-progress remote download (iOS/macOS), so
+  /// [stopWaveformExtraction] can abort it.
+  HttpClient? _downloadClient;
+
+  /// Set by [stopWaveformExtraction] and reset when a new extraction starts.
+  /// Checked after a download so a stop during it isn't silently ignored.
+  bool _isStopRequested = false;
+
   final List<double> _waveformData = [];
 
   /// This returns waveform data which can be used by [AudioFileWaveforms]
@@ -103,17 +111,31 @@ class WaveformExtractionController {
     // local files. Remote URLs are downloaded to a temporary file first and
     // cleaned up afterwards. Android's MediaExtractor handles network URIs
     // directly, so the path is passed through unchanged there.
+    _isStopRequested = false;
     var effectivePath = path;
     File? tempFile;
     final uri = Uri.tryParse(path);
     final isRemote =
         uri != null && (uri.isScheme('http') || uri.isScheme('https'));
     if (isIosOrMacOS && isRemote) {
-      effectivePath = await downloadAudioToTempFile(path);
-      tempFile = File(effectivePath);
+      final client = HttpClient();
+      _downloadClient = client;
+      try {
+        effectivePath = await downloadAudioToTempFile(path, client: client);
+        tempFile = File(effectivePath);
+      } catch (_) {
+        // The download was aborted by stopWaveformExtraction().
+        if (_isStopRequested) throw StateError(_stoppedMessage);
+        rethrow;
+      } finally {
+        _downloadClient = null;
+      }
     }
 
     try {
+      // Nothing is extracting natively while downloading, so a stop during the
+      // download only reaches us through this flag.
+      if (_isStopRequested) throw StateError(_stoppedMessage);
       return await AudioWaveformsInterface.instance.extractWaveformData(
         key: _extractorKey,
         path: effectivePath,
@@ -132,7 +154,11 @@ class WaveformExtractionController {
 
   /// Stops current waveform extraction, if any.
   Future<void> stopWaveformExtraction() async {
+    _isStopRequested = true;
+    _downloadClient?.close(force: true);
     return await AudioWaveformsInterface.instance
         .stopWaveformExtraction(_extractorKey);
   }
 }
+
+const String _stoppedMessage = 'Waveform extraction was stopped.';

@@ -487,7 +487,7 @@ await playerController.preparePlayer(
 
 ### Loading from Network
 
-Remote audio files can be loaded directly by passing an `http`/`https` URL as the `path`:
+**Android**: remote audio files can be played directly by passing an `http`/`https` URL as the `path`:
 
 ```dart
 await playerController.preparePlayer(
@@ -496,9 +496,20 @@ await playerController.preparePlayer(
 );
 ```
 
-Playback streams the URL on all platforms. Waveform extraction also works from a
-remote URL: on iOS/macOS the file is downloaded to a temporary file before
-decoding, while Android decodes the network stream directly.
+**iOS/macOS**: streaming a remote URL for playback isn't supported (`AVAudioPlayer` can't open
+`http(s)` URLs), so `preparePlayer` fails for a URL. Download the file first and play it locally.
+You can still extract a waveform straight from a URL with `WaveformExtractionController`:
+
+```dart
+final waveformData = await WaveformExtractionController().extractWaveformData(
+  path: 'https://example.com/audio.mp3',
+  noOfSamples: 100,
+);
+```
+
+On iOS/macOS the file is downloaded to a temporary file before decoding and deleted afterwards. The
+download fails if the server doesn't respond for 30 seconds, and calling `stopWaveformExtraction()`
+aborts it. Android decodes the network stream directly.
 
 ## Start Playing
 
