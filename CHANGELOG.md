@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Fixed [#515](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/515) - `codec is released already` exception on Android when disposing a PlayerController or extracting a waveform again after a previous extraction finished
 
 ## 2.0.2
 
