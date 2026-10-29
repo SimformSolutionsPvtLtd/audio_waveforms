@@ -1013,6 +1013,10 @@ Jump to a specific position in milliseconds:
 await playerController.seekTo(30000); // Seek to 30 seconds
 ```
 
+**Android**: files without seek information (e.g. raw ADTS `.aac`) are seeked by estimating the byte
+offset from the bitrate. This makes them seekable, but seeks in variable-bitrate files without a seek
+table (e.g. VBR MP3 without a Xing header) are approximate.
+
 ## Finish Mode
 
 Control player behavior when audio finishes:
