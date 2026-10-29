@@ -63,7 +63,9 @@ class AudioPlayer(
             stop()
             player?.clearMediaItems()
             // Enable CBR seeking so headerless streams (raw ADTS .aac) are seekable (#429).
-            // Formats with their own seek info (Xing MP3, MP4/M4A, WAV) are unaffected.
+            // ExoPlayer only uses it for formats without seek info, so Xing MP3, MP4/M4A and
+            // WAV are unaffected. The byte offset is estimated from the bitrate, so seeks in
+            // VBR streams without a seek table (e.g. VBR MP3 without a Xing header) are approximate.
             val extractorsFactory = DefaultExtractorsFactory()
                     .setConstantBitrateSeekingEnabled(true)
             player = ExoPlayer.Builder(
