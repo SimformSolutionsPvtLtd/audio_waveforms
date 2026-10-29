@@ -6,14 +6,17 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     var path: String?
     var useLegacyNormalization: Bool = false
     var audioUrl: URL?
-    /// Held until `audioRecorderDidFinishRecording` fires so we only read the
-    /// file and return its path once the recorder has finalised it on disk.
-    /// Re-entrant stops queue here and all resolve with the same result, so a
-    /// second `stop()` never gets an empty map / null path.
-    private var stopResults: [FlutterResult] = []
-    /// Bumped on every async stop; the watchdog bails if superseded, so a stale
-    /// timer can't consume a later recording's `stopResults`.
-    private var stopGeneration: Int = 0
+    private struct PendingStop {
+        var results: [FlutterResult]
+        /// Path exactly as the caller passed it, so the returned path keeps the existing contract.
+        let path: String?
+    }
+    /// Stops waiting for `audioRecorderDidFinishRecording`, keyed by the stopping recorder, so we
+    /// only read the file and return its path once the recorder has finalized it on disk. Keying
+    /// by recorder keeps a stop of a new recording from joining a previous recording's results.
+    private var pendingStops: [ObjectIdentifier: PendingStop] = [:]
+    /// Recorder of the most recent stop; a repeated `stop()` with no new recording joins it.
+    private var lastStoppedRecorder: ObjectIdentifier?
     var flutterChannel: FlutterMethodChannel
     var bytesStreamEngine: RecorderBytesStreamEngine
     init(channel: FlutterMethodChannel){
@@ -82,36 +85,33 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     }
     
     public func stopRecording(_ result: @escaping FlutterResult) {
-        // A stop is already in flight: queue this result so it resolves with the
-        // same finalised path/duration instead of getting an empty map / null path.
-        if !stopResults.isEmpty {
-            stopResults.append(result)
-            return
-        }
         bytesStreamEngine.detach()
-        // `stop()` finalises the file async; reading it early yields a truncated
-        // container. Defer to the delegate; finalise now only if recorder is gone.
+        // `stop()` finalizes the file async; reading it early yields a truncated
+        // container. Defer to the delegate; finalize now only if there is no recorder.
         guard let recorder = audioRecorder else {
+            // Repeated stop with no new recording: join the stop still in flight so it
+            // resolves with the same finalized path/duration instead of an empty map.
+            if let key = lastStoppedRecorder, pendingStops[key] != nil {
+                pendingStops[key]?.results.append(result)
+                return
+            }
             finalizeRecording([result], url: audioUrl, path: path)
             return
         }
-        stopResults.append(result)
-        stopGeneration += 1
-        let generation = stopGeneration
+        let key = ObjectIdentifier(recorder)
+        pendingStops[key] = PendingStop(results: [result], path: path)
+        lastStoppedRecorder = key
         // Detach so a subsequent `startRecording` can't mutate the URL/path this
-        // stop finalises; the watchdog closure keeps the recorder alive meanwhile.
+        // stop finalizes; the watchdog closure keeps the recorder alive meanwhile.
         audioRecorder = nil
         recorder.stop()
-        // The delegate isn't guaranteed to fire, so force-finalise after a timeout
-        // or Dart's `stop()` hangs forever. `generation` guard + empty `stopResults`
-        // make a stale timer / the loser of delegate-vs-watchdog a no-op.
+        // The delegate isn't guaranteed to fire, so force-finalize after a timeout
+        // or Dart's `stop()` hangs forever. Whoever removes the entry first wins, so
+        // the loser of delegate-vs-watchdog is a no-op.
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             guard let self = self,
-                  generation == self.stopGeneration,
-                  !self.stopResults.isEmpty else { return }
-            let pending = self.stopResults
-            self.stopResults = []
-            self.finalizeRecording(pending, url: recorder.url, path: recorder.url.path)
+                  let pending = self.pendingStops.removeValue(forKey: key) else { return }
+            self.finalizeRecording(pending.results, url: recorder.url, path: pending.path)
         }
     }
 
@@ -149,19 +149,18 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     }
 
     public func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
-        // Hop to main: `stopResults`/`stopGeneration` are only mutated there and
-        // `FlutterResult` must run on the platform thread.
+        // Hop to main: `pendingStops` is only mutated there and `FlutterResult`
+        // must run on the platform thread.
         DispatchQueue.main.async { [weak self] in
-            guard let self = self, !self.stopResults.isEmpty else { return }
-            let results = self.stopResults
-            self.stopResults = []
+            guard let self = self,
+                  let pending = self.pendingStops.removeValue(forKey: ObjectIdentifier(recorder)) else { return }
             // `flag == false`: recorder couldn't write a valid file. finalize still
             // returns the path (zero duration) since Dart doesn't catch errors here.
             if !flag {
                 debugPrint("audioRecorderDidFinishRecording reported failure for \(recorder.url)")
             }
             // Use the finishing recorder's own URL so a re-recording can't redirect us.
-            self.finalizeRecording(results, url: recorder.url, path: recorder.url.path)
+            self.finalizeRecording(pending.results, url: recorder.url, path: pending.path)
         }
     }
 

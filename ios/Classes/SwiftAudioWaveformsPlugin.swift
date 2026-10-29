@@ -193,13 +193,9 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     func createOrUpdateExtractor(playerKey: String, result: @escaping FlutterResult,path: String?, noOfSamples: Int?) {
         if(!(path ?? "").isEmpty) {
             do {
-                let audioUrl = URL.init(string: path!)
-                if(audioUrl == nil){
-                    result(FlutterError(code: Constants.audioWaveforms, message: "Failed to initialise Url from provided audio file", details: "If path contains `file://` try removing it"))
-                    return
-                }
+                let audioUrl = fileURL(from: path!)
                 extractors[playerKey]?.cancel()
-                let newExtractor = try WaveformExtractor(url: audioUrl!, flutterResult: result, channel: flutterChannel)
+                let newExtractor = try WaveformExtractor(url: audioUrl, flutterResult: result, channel: flutterChannel)
                 extractors[playerKey] = newExtractor
                 Task {
                     await newExtractor

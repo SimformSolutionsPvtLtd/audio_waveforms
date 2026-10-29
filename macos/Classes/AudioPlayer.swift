@@ -41,20 +41,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     ) {
         if !(path ?? "").isEmpty {
             self.updateFrequency = updateFrequency ?? 200
-            // `URL(string:)` mis-parses raw paths and truncates `file://` URLs at
-            // `#`/`?`, so strip the scheme and percent-decode for `fileURLWithPath:`.
-            let audioUrl: URL
-            if path!.hasPrefix("file://") {
-                var stripped = String(path!.dropFirst("file://".count))
-                // `file:///path` starts with `/`; `file://host/path` keeps a host
-                // segment — drop it so the host isn't folded into the file path.
-                if !stripped.hasPrefix("/"), let slash = stripped.firstIndex(of: "/") {
-                    stripped = String(stripped[slash...])
-                }
-                audioUrl = URL(fileURLWithPath: stripped.removingPercentEncoding ?? stripped)
-            } else {
-                audioUrl = URL(fileURLWithPath: path!)
-            }
+            let audioUrl = fileURL(from: path!)
             do {
                 stopPlayer()
                 player = nil
