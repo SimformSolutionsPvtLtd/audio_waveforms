@@ -8,15 +8,15 @@ class AndroidEncoderSettings {
   /// [androidOutputFormat] - Specifies the output format for Android recordings (default: MPEG4).
   /// [stopTimeoutMs] - On some devices, the encoder can fail to naturally
   /// signal that it's finished stopping, which would otherwise hang
-  /// stopRecording() forever. If stopping doesn't complete naturally within
-  /// this many milliseconds, it's forced instead. Default is 500ms; raise
-  /// this if you see stopRecording() forcing a stop on your target devices
-  /// sooner than expected (which can slightly truncate the very end of a
-  /// recording).
+  /// [RecorderController.stop] forever. If stopping doesn't complete naturally
+  /// within this many milliseconds, it's forced instead. Default is 500ms;
+  /// raise this if you see [RecorderController.stop] forcing a stop on your
+  /// target devices sooner than expected (which can slightly truncate the very
+  /// end of a recording).
   const AndroidEncoderSettings({
     this.androidEncoder = AndroidEncoder.aacLc,
     this.stopTimeoutMs = 500,
-  });
+  }) : assert(stopTimeoutMs > 0, 'stopTimeoutMs must be positive');
 
   /// Encoder type for Android recordings.
   /// Default is aacLc.

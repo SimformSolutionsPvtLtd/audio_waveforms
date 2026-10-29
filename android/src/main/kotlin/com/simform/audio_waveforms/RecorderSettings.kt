@@ -63,7 +63,7 @@ data class RecorderSettings(
                 encoder = Encoder.fromString(json[Constants.encoder] as String?),
                 sampleRate = (json[Constants.sampleRate] as Int?) ?: 44100,
                 bitRate = json[Constants.bitRate] as Int,
-                stopTimeoutMs = (json[Constants.androidStopTimeoutMs] as Int?)?.toLong() ?: 500L
+                stopTimeoutMs = (json[Constants.androidStopTimeoutMs] as Number?)?.toLong() ?: 500L
             )
         }
     }

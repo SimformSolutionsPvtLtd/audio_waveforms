@@ -184,8 +184,8 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                 // signalled, so no audio is fed to the codec after EOS.
                 recordingThread?.join()
                 commonEncoder.setOnEncodingCompleted {
-                    sendRecordingResult(result)
                     release()
+                    sendRecordingResult(result)
                 }
                 commonEncoder.signalToStop()
             }
