@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Fixed [#482](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/482) ([#497](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/497)) - Fix AudioRecord read errors (-38) after stop on Android, avoid a hang/leak when stopping before the encoder produced output (the empty file is deleted and `stop()` returns an error), and always queue end-of-stream on stop so `stop()` can't hang
 
 ## 2.0.2
 

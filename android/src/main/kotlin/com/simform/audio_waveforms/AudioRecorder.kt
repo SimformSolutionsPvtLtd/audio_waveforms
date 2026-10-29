@@ -24,11 +24,19 @@ import java.io.File
 import kotlin.math.sqrt
 
 class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
+    private companion object {
+        /** Upper bound for waiting on the recording thread so a stuck worker can't freeze the UI. */
+        const val RECORDING_THREAD_JOIN_TIMEOUT_MS = 2000L
+    }
+
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     private var audioRecord: AudioRecord? = null
     private var channelConfig: Int = AudioFormat.CHANNEL_IN_MONO
     private var audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT
     private var bufferSize: Int? = null
+    // Written by the platform thread (stop/pause/resume) and read by the recording thread, so it
+    // must be volatile for the stop request to be visible to the read loop, including while paused.
+    @Volatile
     private var recorderState: RecorderState = RecorderState.Disposed
     private var filePath: String? = null
     private var recordingThread: Thread? = null
@@ -135,15 +143,25 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             )
             wavEncoder?.start(result)
         } else {
-            commonEncoder.initCodec(recorderSettings = recorderSettings!!, result = result) {
-                recordingThread?.join()
-            }
+            commonEncoder.initCodec(recorderSettings = recorderSettings!!, result = result)
         }
         val buffer = ByteArray(bufferSize!!)
         recordingThread = Thread {
             while (recorderState == RecorderState.Recording || recorderState == RecorderState.Paused) {
                 if (recorderState == RecorderState.Recording) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+
+                    if (read < 0) {
+                        // Negative return is an AudioRecord error (e.g. ERROR_INVALID_OPERATION,
+                        // ERROR_DEAD_OBJECT). Reading again would keep failing, so end the loop.
+                        // Hitting this during stop() is expected and harmless. Mid-recording
+                        // (e.g. ERROR_DEAD_OBJECT) the session ends silently: the Dart side is not
+                        // notified and the encoder keeps waiting for stop(), which still finalizes
+                        // whatever was captured so far.
+                        Log.e(LOG_TAG, "AudioRecord.read() error: $read")
+                        recorderState = RecorderState.Stopped
+                        break
+                    }
 
                     if (read > 0) {
                         val audioData = buffer.copyOf(read)
@@ -169,16 +187,30 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
 
     fun stop(result: Result) {
         try {
-            audioRecord?.stop()
-            totalSamples = 0L
+            // Stop the read loop first, then unblock and join the recording thread so it
+            // can never call audioRecord.read() after the AudioRecord is released below.
             recorderState = RecorderState.Stopped
+            audioRecord?.stop()
+            recordingThread?.join(RECORDING_THREAD_JOIN_TIMEOUT_MS)
+            if (recordingThread?.isAlive == true) {
+                Log.w(LOG_TAG, "Recording thread did not exit within ${RECORDING_THREAD_JOIN_TIMEOUT_MS}ms")
+            }
+            recordingThread = null
+            totalSamples = 0L
             if (encoder?.encodeForWav == true) {
                 wavEncoder?.stop(result)
-                recordingThread?.join()
                 sendRecordingResult(result)
             } else {
                 commonEncoder.setOnEncodingCompleted {
-                    sendRecordingResult(result)
+                    if (commonEncoder.stoppedWithoutOutput) {
+                        result.error(
+                            LOG_TAG,
+                            "No audio was encoded",
+                            "The recording was stopped before the encoder produced any output. The empty file was deleted."
+                        )
+                    } else {
+                        sendRecordingResult(result)
+                    }
                 }
                 commonEncoder.signalToStop()
             }
