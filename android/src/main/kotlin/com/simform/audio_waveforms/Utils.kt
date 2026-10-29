@@ -88,8 +88,6 @@ object Constants {
     /// Indicates 32767 bits in a single channel for 16-bit PCM
     const val SIXTEEN_BITS = 32767f
 
-    /// Indicates 2147483648f bits in a single channel for 32-bit PCM
-    const val THIRTY_TWO_BITS = 2.14748365E9f
     const val ENCODER_THREAD = "EncoderThread"
     const val AAC_FILE_EXTENSION = "aac"
     const val DEFAULT_SAMPLE_RATE = 44100

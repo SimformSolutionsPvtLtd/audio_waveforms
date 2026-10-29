@@ -321,17 +321,11 @@ class WaveformExtractor(
      * @param buf ByteBuffer containing the audio data
      */
     private fun handle16bit(size: Int, buf: ByteBuffer) {
+        val shorts = buf.order(ByteOrder.nativeOrder()).asShortBuffer()
         repeat(size / if (channels == 2) 4 else 2) {
-            // Little endian, low byte first. The low byte has to be masked: a
-            // Kotlin Byte above 0x7F widens to a negative Int, and its sign bits
-            // then swallow the high byte through the `or`. The high byte is left
-            // signed on purpose — that is the sample's own sign.
-            val low = buf.get().toInt() and 0xFF
-            val high = buf.get().toInt() shl 8
-            val value = (low or high) / Constants.SIXTEEN_BITS
+            val value = shorts.get() / Constants.SIXTEEN_BITS
             if (channels == 2) {
-                buf.get()
-                buf.get()
+                shorts.get()
             }
             handleBufferDivision(value)
         }
@@ -348,7 +342,7 @@ class WaveformExtractor(
      * @param buf ByteBuffer containing the audio data
      */
     private fun handle32bit(size: Int, buf: ByteBuffer) {
-        val floats = buf.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer()
+        val floats = buf.order(ByteOrder.nativeOrder()).asFloatBuffer()
         repeat(size / if (channels == 2) 8 else 4) {
             val value = floats.get()
             if (channels == 2) {

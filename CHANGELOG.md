@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Fixed [#512](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/512) ([#513](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/513)) - Extracted waveforms on Android now match the audio: 8-bit, 16-bit and float PCM samples were decoded incorrectly. Android waveforms will look ~1.4x taller; if you raised `scaleFactor` to compensate, you may need to lower it - thanks [@victorrss](https://github.com/victorrss)
 
 ## 2.0.2
 
