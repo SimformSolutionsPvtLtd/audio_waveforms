@@ -204,3 +204,94 @@ enum WaveformRenderMode {
 
 /// Checks if the current platform is iOS or macOS.
 bool get isIosOrMacOS => Platform.isIOS || Platform.isMacOS;
+
+/// Sniffs an audio file's container from its leading magic bytes and returns
+/// the file extension AVFoundation needs to pick the right parser, or `null`
+/// when the container isn't recognised.
+Future<String?> sniffAudioExtension(String path) async {
+  RandomAccessFile? raf;
+  try {
+    raf = await File(path).open();
+    final b = await raf.read(12);
+    if (b.length < 4) return null;
+    String ascii(int start, int end) =>
+        end <= b.length ? String.fromCharCodes(b.sublist(start, end)) : '';
+    // MP4 / M4A container: bytes 4..8 == "ftyp" (covers AAC-in-MP4).
+    if (ascii(4, 8) == 'ftyp') return 'm4a';
+    if (ascii(0, 4) == 'RIFF' && ascii(8, 12) == 'WAVE') return 'wav';
+    if (ascii(0, 4) == 'fLaC') return 'flac';
+    if (ascii(0, 4) == 'OggS') return 'ogg';
+    if (ascii(0, 3) == 'ID3') {
+      // An ID3v2 tag can prefix MP3 *and* ADTS AAC; look past it.
+      if (b.length < 10) return 'mp3';
+      final size = (b[6] << 21) | (b[7] << 14) | (b[8] << 7) | b[9];
+      final hasFooter = (b[5] & 0x10) != 0;
+      await raf.setPosition(10 + size + (hasFooter ? 10 : 0));
+      final next = await raf.read(2);
+      if (next.length == 2 && next[0] == 0xFF && (next[1] & 0xF6) == 0xF0) {
+        return 'aac';
+      }
+      return 'mp3';
+    }
+    // Raw frame sync: 0xFFFx = ADTS AAC, 0xFFEx = MP3.
+    if (b[0] == 0xFF) {
+      if ((b[1] & 0xF6) == 0xF0) return 'aac';
+      if ((b[1] & 0xE0) == 0xE0) return 'mp3';
+    }
+    return null;
+  } catch (_) {
+    return null;
+  } finally {
+    await raf?.close();
+  }
+}
+
+/// On iOS/macOS, AVFoundation routes strictly by file extension. Android can
+/// record AAC-in-MP4 yet name the file `.mp3`/`.aac` (issue #113), which then
+/// fails to load or silently mis-parses (e.g. an 8ms bogus duration). When the
+/// extension disagrees with the container sniffed from magic bytes, this returns
+/// a temp symlink carrying the correct extension so the right parser is chosen;
+/// otherwise it returns [path] unchanged. No-op on other platforms.
+///
+/// The returned symlink is not deleted here; prefer [withNormalizedAudioPath],
+/// which removes it once the work using it is done.
+Future<String> normalizedAudioPath(String path) async {
+  if (!isIosOrMacOS) return path;
+  final ext = await sniffAudioExtension(path);
+  if (ext == null) return path;
+  final dot = path.lastIndexOf('.');
+  final currentExt = dot == -1 ? '' : path.substring(dot + 1).toLowerCase();
+  if (currentExt == ext) return path;
+  try {
+    // Unique per call so concurrent users of the same file never share (and
+    // delete) each other's link.
+    final link = Link(
+      '${Directory.systemTemp.path}/awf_sniff_${path.hashCode}_'
+      '${DateTime.now().microsecondsSinceEpoch}.$ext',
+    );
+    await link.create(path);
+    return link.path;
+  } catch (_) {
+    return path;
+  }
+}
+
+/// Runs [action] with the extension-corrected path from [normalizedAudioPath]
+/// and deletes the temporary symlink afterwards, so none are left behind in
+/// the temp directory. Remote URLs are passed through untouched.
+Future<T> withNormalizedAudioPath<T>(
+  String path,
+  Future<T> Function(String path) action,
+) async {
+  if (path.startsWith('http')) return action(path);
+  final normalized = await normalizedAudioPath(path);
+  try {
+    return await action(normalized);
+  } finally {
+    if (normalized != path) {
+      try {
+        await Link(normalized).delete();
+      } catch (_) {}
+    }
+  }
+}
