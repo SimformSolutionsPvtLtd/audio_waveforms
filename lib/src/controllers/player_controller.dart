@@ -91,6 +91,11 @@ class PlayerController extends ChangeNotifier {
       PlatformStreams.instance.onDurationChanged.filter(playerKey);
 
   /// A stream to get events when audio is finished playing.
+  ///
+  /// On Android, when a network stream is lost and automatic retries are
+  /// exhausted, this also emits and the player moves to [PlayerState.stopped],
+  /// the same as a normal finish. Playback errors are not surfaced separately
+  /// yet, so avoid treating this event alone as proof the track played fully.
   Stream<void> get onCompletion =>
       PlatformStreams.instance.onCompletion.filter(playerKey);
 
@@ -195,6 +200,10 @@ class PlayerController extends ChangeNotifier {
             ..clear()
             ..addAll(value);
           notifyListeners();
+        },
+      ).catchError(
+        (Object error) {
+          debugPrint('Waveform extraction failed: $error');
         },
       );
     }

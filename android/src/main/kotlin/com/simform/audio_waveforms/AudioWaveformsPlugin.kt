@@ -275,7 +275,9 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             extractorCallBack = object : ExtractorCallBack {
                 override fun onProgress(value: Float) {
                     if (value == 1.0F) {
-                        result.success(extractors[playerKey]?.sampleData)
+                        // Route through the extractor's guarded, main-thread reply so success and
+                        // any error path can never both reply to the same Result.
+                        extractors[playerKey]?.submitWaveformData()
                     }
                 }
 
