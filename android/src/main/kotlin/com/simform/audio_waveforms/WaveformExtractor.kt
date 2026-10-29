@@ -43,8 +43,10 @@ class WaveformExtractor(
     private val context: Context,
 ) {
     /** MediaCodec for decoding audio data */
+    @Volatile
     private var decoder: MediaCodec? = null
     /** MediaExtractor for reading audio tracks from the file */
+    @Volatile
     private var extractor: MediaExtractor? = null
     /** Duration of the audio file in milliseconds */
     private var durationMillis = 0L
@@ -415,19 +417,19 @@ class WaveformExtractor(
         try {
             decoder?.stop()
         } catch (e: IllegalStateException) {
-            Log.w(Constants.LOG_TAG, "Decoder already stopped: ${e.message}")
+            Log.w(Constants.LOG_TAG, "Failed to stop decoder: ${e.message}")
         }
         try {
             decoder?.release()
         } catch (e: IllegalStateException) {
-            Log.w(Constants.LOG_TAG, "Decoder already released: ${e.message}")
+            Log.w(Constants.LOG_TAG, "Failed to release decoder: ${e.message}")
         }
         decoder = null
 
         try {
             extractor?.release()
         } catch (e: IllegalStateException) {
-            Log.w(Constants.LOG_TAG, "Extractor already released: ${e.message}")
+            Log.w(Constants.LOG_TAG, "Failed to release extractor: ${e.message}")
         }
         extractor = null
 
