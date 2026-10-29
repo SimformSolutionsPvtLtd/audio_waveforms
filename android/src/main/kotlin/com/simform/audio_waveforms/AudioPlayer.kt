@@ -29,14 +29,20 @@ class AudioPlayer(
     private var updateFrequency: Long = 200
 
     // Auto-resume across transient network drops.
-    // Re-prepare attempts used since the last successful prepare; reset on STATE_READY.
+    // Re-prepare attempts used for the current outage. Reset per preparePlayer() call, and again once
+    // playback has run uninterrupted for [networkRetryResetDelayMs] after a recovery, so the budget
+    // bounds each outage rather than the whole track while a flapping connection still exhausts it.
     private var networkRetryCount = 0
     // Max re-prepare attempts before giving up and tearing down.
     private val maxNetworkRetries = 5
     // Delay between re-prepare attempts.
     private val networkRetryDelayMs = 3000L
+    // Uninterrupted playback needed after a recovery before the retry budget is refilled.
+    private val networkRetryResetDelayMs = 10000L
     // Pending delayed re-prepare; cancelled in stop().
     private var retryRunnable: Runnable? = null
+    // Pending retry-budget reset; cancelled on any interruption and in stop().
+    private var retryResetRunnable: Runnable? = null
 
     fun preparePlayer(
             result: MethodChannel.Result,
@@ -71,6 +77,7 @@ class AudioPlayer(
                         // playback position, so it resumes once connectivity returns. Bounded retries +
                         // delay let permanent loss fall through to the teardown branch below.
                         networkRetryCount++
+                        cancelRetryReset()
                         retryRunnable?.let { handler.removeCallbacks(it) }
                         // ExoPlayer retains playWhenReady across a re-prepare, so the user's current
                         // play/pause intent is honored even if they paused during the retry window.
@@ -92,10 +99,16 @@ class AudioPlayer(
                 }
 
                 override fun onPlayerStateChanged(isReady: Boolean, state: Int) {
-                    // Note: networkRetryCount is intentionally NOT reset here. Resetting on every
-                    // STATE_READY lets a flapping connection (ready->drop->ready->drop) refill the
-                    // budget endlessly, so maxNetworkRetries never bounds total retries. It is reset
-                    // once per preparePlayer() call, making the cap a real per-prepare ceiling.
+                    // networkRetryCount is not reset on every STATE_READY: a flapping connection
+                    // (ready->drop->ready->drop) would refill the budget endlessly. Instead it is reset
+                    // only after a recovery has played uninterrupted for networkRetryResetDelayMs.
+                    if (networkRetryCount > 0 && isPlayerPrepared) {
+                        if (state == Player.STATE_READY && isReady) {
+                            scheduleRetryReset()
+                        } else {
+                            cancelRetryReset()
+                        }
+                    }
                     if (!isPlayerPrepared) {
                         if (state == Player.STATE_READY) {
                             player?.volume = volume ?: 1F
@@ -182,12 +195,27 @@ class AudioPlayer(
     fun stop() {
         retryRunnable?.let { handler.removeCallbacks(it) }
         retryRunnable = null
+        cancelRetryReset()
         stopListening()
         if (playerListener != null) {
             player?.removeListener(playerListener!!)
         }
         isPlayerPrepared = false
         player?.stop()
+    }
+
+    private fun scheduleRetryReset() {
+        cancelRetryReset()
+        retryResetRunnable = Runnable {
+            networkRetryCount = 0
+            retryResetRunnable = null
+        }
+        handler.postDelayed(retryResetRunnable!!, networkRetryResetDelayMs)
+    }
+
+    private fun cancelRetryReset() {
+        retryResetRunnable?.let { handler.removeCallbacks(it) }
+        retryResetRunnable = null
     }
 
     /**
