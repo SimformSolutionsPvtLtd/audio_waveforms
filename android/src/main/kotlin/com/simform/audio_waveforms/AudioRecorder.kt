@@ -9,6 +9,10 @@ import android.media.AudioRecord
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
 import android.media.MediaRecorder
+import android.media.audiofx.AcousticEchoCanceler
+import android.media.audiofx.AudioEffect
+import android.media.audiofx.AutomaticGainControl
+import android.media.audiofx.NoiseSuppressor
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -26,6 +30,9 @@ import kotlin.math.sqrt
 class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
     private var audioRecord: AudioRecord? = null
+    private var noiseSuppressor: NoiseSuppressor? = null
+    private var echoCanceler: AcousticEchoCanceler? = null
+    private var gainControl: AutomaticGainControl? = null
     private var channelConfig: Int = AudioFormat.CHANNEL_IN_MONO
     private var audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT
     private var bufferSize: Int? = null
@@ -94,10 +101,12 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                 "Invalid buffer size: $bufferSize",
                 null
             )
+            return
         }
+        val resolvedSource = resolveAudioSource(recorderSettings.audioSource)
         try {
             audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
+                resolvedSource,
                 recorderSettings.sampleRate,
                 channelConfig,
                 audioFormat,
@@ -111,10 +120,130 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             )
             return
         }
+        // A successfully constructed AudioRecord can still be unusable when the
+        // requested (source, sampleRate, channel) combo is unsupported — e.g.
+        // VOICE_COMMUNICATION at 44100Hz on some devices. Reading from an
+        // uninitialised recorder yields garbage/wrong-rate PCM (loud noise),
+        // so fail loudly instead of recording unusable audio.
+        if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
+            audioRecord?.release()
+            audioRecord = null
+            result.error(
+                LOG_TAG,
+                "AudioRecord failed to initialise for source=$resolvedSource, " +
+                    "sampleRate=${recorderSettings.sampleRate}. The audio source may not support this configuration.",
+                null
+            )
+            return
+        }
+        attachAudioEffects(audioRecord!!.audioSessionId, recorderSettings)
         this.recorderSettings = recorderSettings
         encoder = recorderSettings.encoder
         recorderState = RecorderState.Initialised
         result.success(true)
+    }
+
+    /**
+     * Resolves the requested audio source against the running API level.
+     *
+     * UNPROCESSED requires API 24 and VOICE_PERFORMANCE requires API 29. On older
+     * devices these constants are unknown, so we fall back to MIC (the package
+     * default, and the closest to the raw signal these sources ask for) instead of
+     * passing an int the platform cannot honour. The constants are inlined at
+     * compile time, so referencing them is safe on older APIs.
+     */
+    private fun resolveAudioSource(audioSource: Int): Int {
+        return when {
+            audioSource == MediaRecorder.AudioSource.UNPROCESSED && Build.VERSION.SDK_INT < Build.VERSION_CODES.N ->
+                MediaRecorder.AudioSource.MIC
+            audioSource == MediaRecorder.AudioSource.VOICE_PERFORMANCE && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ->
+                MediaRecorder.AudioSource.MIC
+            else -> audioSource
+        }
+    }
+
+    /**
+     * Attaches the audio effects the caller opted into to the recording session.
+     *
+     * Each effect is opt-in (off by default) and device-dependent, so we guard
+     * with the caller's flag and isAvailable(), and swallow failures
+     * individually — a missing or unsupported effect must not abort recording.
+     * Idempotent: effects from a previous init are released first.
+     */
+    private fun attachAudioEffects(sessionId: Int, recorderSettings: RecorderSettings) {
+        releaseAudioEffects()
+        if (recorderSettings.useNoiseSuppressor) {
+            attachEffect(
+                "NoiseSuppressor",
+                isAvailable = { NoiseSuppressor.isAvailable() },
+                create = { NoiseSuppressor.create(sessionId) },
+                store = { noiseSuppressor = it },
+            )
+        }
+        if (recorderSettings.useEchoCanceler) {
+            attachEffect(
+                "AcousticEchoCanceler",
+                isAvailable = { AcousticEchoCanceler.isAvailable() },
+                create = { AcousticEchoCanceler.create(sessionId) },
+                store = { echoCanceler = it },
+            )
+        }
+        if (recorderSettings.useAutoGainControl) {
+            attachEffect(
+                "AutomaticGainControl",
+                isAvailable = { AutomaticGainControl.isAvailable() },
+                create = { AutomaticGainControl.create(sessionId) },
+                store = { gainControl = it },
+            )
+        }
+    }
+
+    /**
+     * Creates, stores and enables one effect. The effect is stored before it is enabled so that
+     * [releaseAudioEffects] still releases it if enabling throws.
+     */
+    private fun <T : AudioEffect> attachEffect(
+        name: String,
+        isAvailable: () -> Boolean,
+        create: () -> T?,
+        store: (T) -> Unit,
+    ) {
+        try {
+            if (!isAvailable()) return
+            val effect = create() ?: return
+            store(effect)
+            enableEffect(effect, name)
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Error enabling $name: ${e.message}")
+        }
+    }
+
+    /**
+     * Enables an audio effect and logs when the platform refuses to enable it.
+     *
+     * [AudioEffect.setEnabled] returns a status code rather than throwing; a
+     * non-SUCCESS result means the effect is attached but inactive, so the
+     * recording keeps the unwanted noise/echo. Surface that instead of silently
+     * pretending the effect is on.
+     */
+    private fun enableEffect(effect: AudioEffect, name: String) {
+        val status = effect.setEnabled(true)
+        if (status != AudioEffect.SUCCESS) {
+            Log.e(LOG_TAG, "Failed to enable $name (status=$status); recording continues without it")
+        }
+    }
+
+    private fun releaseAudioEffects() {
+        try {
+            noiseSuppressor?.release()
+            echoCanceler?.release()
+            gainControl?.release()
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Error releasing audio effects: ${e.message}")
+        }
+        noiseSuppressor = null
+        echoCanceler = null
+        gainControl = null
     }
 
     fun start(result: Result) {
@@ -237,6 +366,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     }
 
     fun release() {
+        releaseAudioEffects()
         try {
             audioRecord?.release()
         } catch (e: Exception) {

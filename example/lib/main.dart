@@ -219,7 +219,18 @@ class _HomeState extends State<Home> {
         final path = "${appDirectory.path}/recording.m4a";
         await recorderController.record(
           path: path, // Path is optional
-          recorderSettings: const RecorderSettings(),
+          recorderSettings: const RecorderSettings(
+            // voiceCommunication can fail to initialise at 44100 Hz on some
+            // devices, 16000 Hz is the most widely supported rate.
+            sampleRate: 16000,
+            androidEncoderSettings: AndroidEncoderSettings(
+              // voiceCommunication + echo canceller + noise suppressor routes
+              // capture through the device voice pipeline to cut echo/noise.
+              audioSource: AndroidAudioSource.voiceCommunication,
+              useEchoCanceler: true,
+              useNoiseSuppressor: true,
+            ),
+          ),
         );
       }
     } catch (e) {
