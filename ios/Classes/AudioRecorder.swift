@@ -63,11 +63,16 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
             audioRecorder?.delegate = self
             audioRecorder?.isMeteringEnabled = true
             audioRecorder?.record()
-            bytesStreamEngine
-                .attach(
-                    result: result,
-                    sampleRate:  recordingSettings.sampleRate ?? Constants.defaultSampleRate
+            do {
+                try bytesStreamEngine.attach(
+                    sampleRate: recordingSettings.sampleRate ?? Constants.defaultSampleRate
                 )
+            } catch {
+                // The file recorder is already running; stop it so Dart's failure matches native state.
+                audioRecorder?.stop()
+                result(FlutterError(code: Constants.audioWaveforms, message: "Error starting Audio Engine", details: error.localizedDescription))
+                return
+            }
             result(true)
         } catch {
             result(FlutterError(code: Constants.audioWaveforms, message: "Failed to start recording", details: error.localizedDescription))
