@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'player_identifier.dart';
@@ -204,3 +205,72 @@ enum WaveformRenderMode {
 
 /// Checks if the current platform is iOS or macOS.
 bool get isIosOrMacOS => Platform.isIOS || Platform.isMacOS;
+
+const Duration _downloadTimeout = Duration(seconds: 30);
+
+/// Downloads a remote audio [url] to a temporary file and returns its path.
+///
+/// Waveform extraction on iOS/macOS uses `AVAudioFile`, which can only read
+/// local files, so a remote URL must be downloaded before it can be decoded.
+/// The original file extension is preserved so the native decoder can infer
+/// the audio format. The caller is responsible for deleting the returned file
+/// once extraction is finished.
+///
+/// A stalled server cannot keep this pending forever: connecting, receiving
+/// the response headers and each chunk of the body time out after
+/// [_downloadTimeout]. Pass a [client] to be able to abort the download with
+/// `client.close(force: true)`.
+Future<String> downloadAudioToTempFile(String url, {HttpClient? client}) async {
+  final uri = Uri.parse(url);
+  final httpClient = client ?? HttpClient();
+  httpClient.connectionTimeout = _downloadTimeout;
+  try {
+    final request = await httpClient.getUrl(uri).timeout(_downloadTimeout);
+    final response = await request.close().timeout(_downloadTimeout);
+    if (response.statusCode != HttpStatus.ok) {
+      throw HttpException(
+        'Failed to download audio for waveform extraction '
+        '(status ${response.statusCode}).',
+        uri: uri,
+      );
+    }
+    final name = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+    final extension = name.contains('.') ? '.${name.split('.').last}' : '';
+    final tempPath = '${Directory.systemTemp.path}/audio_waveforms_'
+        '${DateTime.now().microsecondsSinceEpoch}$extension';
+    final file = File(tempPath);
+    try {
+      // Per-chunk idle timeout: a download that stops sending data fails
+      // instead of hanging, while a slow but steady one is allowed to finish.
+      await response
+          .timeout(
+            _downloadTimeout,
+            onTimeout: (sink) {
+              sink
+                ..addError(
+                  TimeoutException(
+                    'Timed out while downloading audio for waveform extraction.',
+                    _downloadTimeout,
+                  ),
+                )
+                ..close();
+            },
+          )
+          .pipe(file.openWrite());
+    } catch (_) {
+      // Remove the partially written file so a failed download doesn't leave
+      // an orphan in the temp directory, then rethrow.
+      if (file.existsSync()) {
+        try {
+          await file.delete();
+        } catch (_) {
+          // Best-effort cleanup; ignore failures.
+        }
+      }
+      rethrow;
+    }
+    return file.path;
+  } finally {
+    httpClient.close();
+  }
+}
