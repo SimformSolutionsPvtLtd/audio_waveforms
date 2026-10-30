@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Fixed [#506](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/506) - Unable to play a paused recording on Android and iOS, and Android `stop()` never completing after pausing and resuming a recording
 
 ## 2.0.2
 

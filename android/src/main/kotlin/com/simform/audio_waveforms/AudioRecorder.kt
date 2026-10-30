@@ -39,6 +39,12 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var wavEncoder: WavEncoder? = null
     private var successCallback: RequestPermissionsSuccessCallback? = null
     private var totalSamples = 0L
+
+    /**
+     * Set while pause is still finishing the file. Callbacks added here run on
+     * the main thread once it's done, so stop() doesn't return a partial file.
+     */
+    private var pendingPauseCallbacks: MutableList<() -> Unit>? = null
     private val channelCount: Int
         get() = when (channelConfig) {
             AudioFormat.CHANNEL_IN_MONO -> 1
@@ -126,8 +132,6 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             )
             return
         }
-        audioRecord?.startRecording()
-        recorderState = RecorderState.Recording
         if (encoder?.encodeForWav == true) {
             wavEncoder = WavEncoder(
                 wavFile = File(recorderSettings!!.path!!),
@@ -135,50 +139,71 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             )
             wavEncoder?.start(result)
         } else {
-            commonEncoder.initCodec(recorderSettings = recorderSettings!!, result = result) {
-                recordingThread?.join()
-            }
+            // initCodec already replied with the error if it failed.
+            val isInitialised =
+                commonEncoder.initCodec(recorderSettings = recorderSettings!!, result = result) {
+                    recordingThread?.join()
+                }
+            if (!isInitialised) return
         }
+        audioRecord?.startRecording()
+        recorderState = RecorderState.Recording
+        startRecordingThread()
+        result.success(true)
+    }
+
+    private fun startRecordingThread() {
         val buffer = ByteArray(bufferSize!!)
         recordingThread = Thread {
-            while (recorderState == RecorderState.Recording || recorderState == RecorderState.Paused) {
-                if (recorderState == RecorderState.Recording) {
-                    val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+            while (recorderState == RecorderState.Recording) {
+                val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
 
-                    if (read > 0) {
-                        val audioData = buffer.copyOf(read)
-                        if (encoder?.encodeForWav == true) {
-                            wavEncoder?.writePcmData(audioData)
-                        } else {
-                            commonEncoder.queueInputBuffer(audioData)
-                        }
-                        val rms = calculateRms(audioData, read)
-                        totalSamples += read / channelCount
-                        val durationSec =
-                            totalSamples.toDouble() / (recorderSettings?.sampleRate
-                                ?: Constants.DEFAULT_SAMPLE_RATE)
-                        val milliSeconds = (durationSec * 1000).toLong()
-                        sendBytesToFlutter(audioData, rms, milliSeconds)
+                if (read > 0) {
+                    val audioData = buffer.copyOf(read)
+                    if (encoder?.encodeForWav == true) {
+                        wavEncoder?.writePcmData(audioData)
+                    } else {
+                        commonEncoder.queueInputBuffer(audioData)
                     }
+                    val rms = calculateRms(audioData, read)
+                    totalSamples += read / channelCount
+                    val durationSec =
+                        totalSamples.toDouble() / (recorderSettings?.sampleRate
+                            ?: Constants.DEFAULT_SAMPLE_RATE)
+                    val milliSeconds = (durationSec * 1000).toLong()
+                    sendBytesToFlutter(audioData, rms, milliSeconds)
                 }
             }
         }
         recordingThread?.start()
-        result.success(true)
     }
 
     fun stop(result: Result) {
         try {
-            audioRecord?.stop()
-            totalSamples = 0L
+            val wasPaused = recorderState == RecorderState.Paused
             recorderState = RecorderState.Stopped
+            audioRecord?.stop()
+            recordingThread?.join()
+            totalSamples = 0L
             if (encoder?.encodeForWav == true) {
                 wavEncoder?.stop(result)
-                recordingThread?.join()
                 sendRecordingResult(result)
-            } else {
-                commonEncoder.setOnEncodingCompleted {
+            } else if (wasPaused) {
+                // The encoder already finished the file when recording was paused,
+                // but it may still be appending the resumed audio.
+                val pending = pendingPauseCallbacks
+                if (pending != null) {
+                    pending.add { sendRecordingResult(result) }
+                } else {
                     sendRecordingResult(result)
+                }
+            } else {
+                commonEncoder.setOnEncodingCompleted { error ->
+                    if (error != null) {
+                        result.error(LOG_TAG, error.message, "Failed to save resumed recording")
+                    } else {
+                        sendRecordingResult(result)
+                    }
                 }
                 commonEncoder.signalToStop()
             }
@@ -227,12 +252,49 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     }
 
     fun pause(result: Result) {
-        recorderState = RecorderState.Paused
-        result.success(false)
+        try {
+            recorderState = RecorderState.Paused
+            audioRecord?.stop()
+            recordingThread?.join()
+            // Finish the file so the audio recorded so far can be played while paused.
+            if (encoder?.encodeForWav == true) {
+                wavEncoder?.updateWavHeader()
+                result.success(false)
+            } else {
+                val pending = mutableListOf<() -> Unit>()
+                pendingPauseCallbacks = pending
+                commonEncoder.setOnEncodingCompleted { error ->
+                    Handler(Looper.getMainLooper()).post {
+                        if (error != null) {
+                            result.error(LOG_TAG, error.message, "Failed to save resumed recording")
+                        } else {
+                            result.success(false)
+                        }
+                        pendingPauseCallbacks = null
+                        pending.forEach { it() }
+                    }
+                }
+                commonEncoder.signalToStop()
+            }
+        } catch (e: Exception) {
+            pendingPauseCallbacks?.let { pending ->
+                pendingPauseCallbacks = null
+                pending.forEach { it() }
+            }
+            result.error(LOG_TAG, e.message, "An error occurred while pausing the recorder")
+        }
     }
 
     fun resume(result: Result) {
+        // The encoder was finished on pause, so start a new one which appends to the file.
+        if (encoder?.encodeForWav != true &&
+            !commonEncoder.initCodec(recorderSettings!!, result, isResuming = true)
+        ) {
+            return
+        }
+        audioRecord?.startRecording()
         recorderState = RecorderState.Recording
+        startRecordingThread()
         result.success(true)
     }
 

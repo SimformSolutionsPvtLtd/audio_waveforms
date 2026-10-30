@@ -3,17 +3,22 @@ package com.simform.audio_waveforms.encoders
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaCodec
+import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
 import android.util.Log
 import com.simform.audio_waveforms.Constants
 import com.simform.audio_waveforms.Encoder
 import com.simform.audio_waveforms.RecorderSettings
 import com.simform.audio_waveforms.isEof
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
+import java.nio.ByteBuffer
 import java.util.LinkedList
 
 /**
@@ -69,8 +74,8 @@ class CommonEncoder {
     /** Track index for the audio track in the muxer */
     private var trackIndex = -1
     
-    /** Callback to invoke when encoding is complete */
-    private var completionCallback: (() -> Unit)? = null
+    /** Callback to invoke when encoding is complete, with the error if saving the file failed */
+    private var completionCallback: ((Exception?) -> Unit)? = null
     
     /** Total bytes encoded so far, used for calculating presentation timestamps */
     private var totalBytesEncoded = 0L
@@ -82,17 +87,26 @@ class CommonEncoder {
     private var lastOutputTimestamp = 0L
 
     /**
+     * File encoded into after a resume. A muxed file can't be reopened for
+     * appending, so this is appended to the recording once encoding completes.
+     */
+    private var segmentPath: String? = null
+
+    /**
      * Initializes the MediaCodec encoder with the specified settings
      *
      * @param recorderSettings The configuration for the recorder and encoder
      * @param result The Flutter method channel result to report initialization status
+     * @param isResuming Whether to append to the existing recording instead of replacing it
      * @param onEncodingCompleted Optional callback to invoke when encoding is completed
+     * @return Whether the encoder was initialized
      */
     fun initCodec(
         recorderSettings: RecorderSettings,
         result: MethodChannel.Result,
-        onEncodingCompleted: (() -> Unit)? = null,
-    ) {
+        isResuming: Boolean = false,
+        onEncodingCompleted: ((Exception?) -> Unit)? = null,
+    ): Boolean {
         // Reset state at the beginning
         isMuxerStarted = false
         trackIndex = -1
@@ -109,8 +123,15 @@ class CommonEncoder {
         completionCallback = onEncodingCompleted
         var useMediaMuxer = encoder.useMediaMuxer
         var format: MediaFormat
+        segmentPath = if (isResuming && useMediaMuxer) "${recorderSettings.path}.resumed" else null
+        if (!isResuming) {
+            // Left behind if the app was killed while appending a resumed recording.
+            File("${recorderSettings.path}.resumed").delete()
+            File("${recorderSettings.path}.merged").delete()
+        }
+        val outputPath = segmentPath ?: recorderSettings.path!!
         try {
-            outputStream = FileOutputStream(recorderSettings.path!!)
+            outputStream = FileOutputStream(outputPath, isResuming && !useMediaMuxer)
             mediaCodec = MediaCodec.createEncoderByType(encoder.mimeType)
 
             format = MediaFormat.createAudioFormat(encoder.mimeType, recorderSettings.sampleRate, 1)
@@ -134,36 +155,29 @@ class CommonEncoder {
             handlerThread.start()
             handler = Handler(handlerThread.looper)
 
-            if (encoder == Encoder.AMR_NB) {
-                outputStream.write("#!AMR\n".toByteArray())
-            } else if (encoder == Encoder.AMR_WB) {
-                outputStream.write("#!AMR-WB\n".toByteArray())
+            // A resumed file already starts with its header.
+            if (!isResuming) {
+                if (encoder == Encoder.AMR_NB) {
+                    outputStream.write("#!AMR\n".toByteArray())
+                } else if (encoder == Encoder.AMR_WB) {
+                    outputStream.write("#!AMR-WB\n".toByteArray())
+                }
             }
 
             if (useMediaMuxer) {
-                mediaMuxer = MediaMuxer(recorderSettings.path!!, encoder.toMuxerOutputFormat)
+                mediaMuxer = MediaMuxer(outputPath, encoder.toMuxerOutputFormat)
             }
         } catch (e: Exception) {
             result.error(
                 Constants.LOG_TAG, "Error initializing encoder: ${e.message}", null
             )
-            return
+            return false
         }
 
         mediaCodec.setCallback(object : MediaCodec.Callback() {
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
                 if (isEncodingComplete && inputQueue.isEmpty()) {
-                    // Use the last calculated presentation time for EOF, not system time
-                    val eofTimestamp = if (totalBytesEncoded > 0) {
-                        val bytesPerSample = 2L
-                        val channels = 1L
-                        (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
-                    } else {
-                        0L
-                    }
-                    codec.queueInputBuffer(
-                        index, 0, 0, eofTimestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM
-                    )
+                    queueEndOfStream(index)
                 } else {
                     currentInputBufferIndex = index
                     feedEncoder()
@@ -248,6 +262,26 @@ class CommonEncoder {
 
         mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
         mediaCodec.start()
+        return true
+    }
+
+    /**
+     * Queues the end-of-stream signal on the given input buffer
+     *
+     * @param index Index of an available input buffer
+     */
+    private fun queueEndOfStream(index: Int) {
+        // Use the last calculated presentation time for EOF, not system time
+        val eofTimestamp = if (totalBytesEncoded > 0) {
+            val bytesPerSample = 2L
+            val channels = 1L
+            (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
+        } else {
+            0L
+        }
+        mediaCodec.queueInputBuffer(
+            index, 0, 0, eofTimestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM
+        )
     }
 
     /**
@@ -275,7 +309,20 @@ class CommonEncoder {
      * is processed, the encoder will be sent an end-of-stream signal.
      */
     fun signalToStop() {
+        // An encoder that already stopped, e.g. after an error, won't call back.
+        if (isEncoderStopped) {
+            completionCallback?.invoke(null)
+            return
+        }
         isEncodingComplete = true
+        // A buffer that is already waiting for data gets no new callback,
+        // so the end-of-stream has to be queued on it here.
+        synchronized(inputQueue) {
+            if (inputQueue.isEmpty() && currentInputBufferIndex >= 0) {
+                queueEndOfStream(currentInputBufferIndex)
+                currentInputBufferIndex = -1
+            }
+        }
     }
 
     /**
@@ -283,7 +330,7 @@ class CommonEncoder {
      * 
      * @param callback The function to call when encoding completes
      */
-    fun setOnEncodingCompleted(callback: () -> Unit) {
+    fun setOnEncodingCompleted(callback: (Exception?) -> Unit) {
         completionCallback = callback
     }
 
@@ -406,14 +453,22 @@ class CommonEncoder {
         try {
             mediaCodec.stop()
             mediaCodec.release()
-            mediaMuxer?.stop()
+            // A muxer that never received a sample was never started.
+            if (isMuxerStarted) mediaMuxer?.stop()
             mediaMuxer?.release()
             outputStream.close()
             handlerThread.quitSafely()
             handlerThread.join()
-            completionCallback?.invoke()
         } catch (e: Exception) {
             Log.e(Constants.LOG_TAG, "Error stopping encoder: ${e.message}")
+        }
+        // Pause and stop wait for this, so it runs even if stopping failed.
+        val segment = segmentPath
+        if (segment != null && isMuxerStarted) {
+            appendSegment(segment, completionCallback)
+        } else {
+            segment?.let { File(it).delete() }
+            completionCallback?.invoke(null)
         }
 
         // Reset state for next recording
@@ -425,5 +480,136 @@ class CommonEncoder {
         totalBytesEncoded = 0L
         firstOutputTimestamp = -1L
         lastOutputTimestamp = 0L
+        segmentPath = null
+    }
+
+    /**
+     * Appends a segment recorded after a resume to the end of the recording
+     *
+     * Encoded samples of both files are copied into a new file without
+     * re-encoding, which then replaces the recording. Runs on a background
+     * thread as the recording can be large. If appending fails, the segment
+     * is kept so the resumed audio isn't lost.
+     *
+     * @param segment Path of the segment to append
+     * @param onCompleted Callback invoked on the main thread once done, with
+     * the error if appending failed
+     */
+    private fun appendSegment(segment: String, onCompleted: ((Exception?) -> Unit)?) {
+        val path = recorderSettings.path!!
+        val muxerFormat = encoder.toMuxerOutputFormat
+        Thread {
+            val recording = File(path)
+            val merged = File("$path.merged")
+            var error: Exception? = null
+            try {
+                if (hasAudioTrack(path)) {
+                    val muxer = MediaMuxer(merged.path, muxerFormat)
+                    try {
+                        copySamples(listOf(path, segment), muxer)
+                        muxer.stop()
+                    } finally {
+                        muxer.release()
+                    }
+                    if (!merged.renameTo(recording)) {
+                        throw IOException("Unable to replace $path with the appended recording")
+                    }
+                    File(segment).delete()
+                } else {
+                    // Pausing before any audio was encoded leaves a recording
+                    // without audio, so the segment replaces it.
+                    if (!File(segment).renameTo(recording)) {
+                        throw IOException("Unable to replace $path with the resumed recording")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(Constants.LOG_TAG, "Error appending resumed recording: ${e.message}")
+                merged.delete()
+                error = IOException("${e.message}. Resumed audio is kept at $segment", e)
+            }
+            Handler(Looper.getMainLooper()).post { onCompleted?.invoke(error) }
+        }.start()
+    }
+
+    /**
+     * Checks whether a file has an audio track that can be read
+     *
+     * @param path Path of the file to check
+     * @return Whether the file has a readable audio track
+     */
+    private fun hasAudioTrack(path: String): Boolean {
+        val extractor = MediaExtractor()
+        return try {
+            extractor.setDataSource(path)
+            audioTrackIndex(extractor) >= 0
+        } catch (e: Exception) {
+            false
+        } finally {
+            extractor.release()
+        }
+    }
+
+    /**
+     * Writes the encoded samples of each file one after another into [muxer]
+     *
+     * @param sources Paths of the files to copy, in playback order
+     * @param muxer The muxer to write into, started on the first sample track
+     */
+    private fun copySamples(sources: List<String>, muxer: MediaMuxer) {
+        var track = -1
+        var offsetUs = 0L
+        for (source in sources) {
+            val extractor = MediaExtractor()
+            try {
+                extractor.setDataSource(source)
+                val trackIndex = audioTrackIndex(extractor)
+                extractor.selectTrack(trackIndex)
+                val format = extractor.getTrackFormat(trackIndex)
+                if (track == -1) {
+                    track = muxer.addTrack(format)
+                    muxer.start()
+                }
+                val buffer = ByteBuffer.allocate(
+                    if (format.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
+                        format.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)
+                    } else {
+                        DEFAULT_SAMPLE_BUFFER_SIZE
+                    }
+                )
+                val info = MediaCodec.BufferInfo()
+                var lastUs = offsetUs
+                var frameUs = 0L
+                while (true) {
+                    val size = extractor.readSampleData(buffer, 0)
+                    if (size < 0) break
+                    val timeUs = extractor.sampleTime + offsetUs
+                    frameUs = timeUs - lastUs
+                    lastUs = timeUs
+                    info.set(0, size, timeUs, MediaCodec.BUFFER_FLAG_KEY_FRAME)
+                    muxer.writeSampleData(track, buffer, info)
+                    extractor.advance()
+                }
+                // Start the next file one frame after the last sample.
+                offsetUs = lastUs + frameUs.coerceAtLeast(1)
+            } finally {
+                extractor.release()
+            }
+        }
+    }
+
+    /**
+     * Finds the audio track of a file opened by [extractor]
+     *
+     * @return Index of the first track with an audio MIME type, or -1 if there is none
+     */
+    private fun audioTrackIndex(extractor: MediaExtractor): Int {
+        return (0 until extractor.trackCount).firstOrNull {
+            extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true
+        } ?: -1
+    }
+
+    private companion object {
+        /** Sample buffer size used when the track doesn't report its max sample size */
+        const val DEFAULT_SAMPLE_BUFFER_SIZE = 64 * 1024
     }
 }
