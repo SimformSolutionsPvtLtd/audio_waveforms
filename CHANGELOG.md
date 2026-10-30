@@ -1,7 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
-- Chore [#509](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/509) - Migrate Android playback from ExoPlayer 2.17.1 to Media3 1.11.0
+- **BREAKING:** Chore [#509](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/509) - Migrate Android playback from ExoPlayer 2.17.1 to Media3 1.11.0. Apps must now use `compileSdk 36` and `minSdkVersion 23`.
 
 ## 2.0.2
 
