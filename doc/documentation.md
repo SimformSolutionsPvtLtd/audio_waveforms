@@ -144,6 +144,14 @@ Change the minimum Android SDK version to 23 (or higher) in your `android/app/bu
 minSdkVersion 23
 ```
 
+#### Update compile SDK version
+
+Android playback uses Media3, which requires compile SDK 36 (or higher):
+
+```gradle
+compileSdk 36
+```
+
 #### Add permissions
 
 Add RECORD_AUDIO permission in `AndroidManifest.xml`:

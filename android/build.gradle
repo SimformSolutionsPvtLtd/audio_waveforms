@@ -29,7 +29,7 @@ android {
         namespace "com.simform.audio_waveforms"
     }
 
-    compileSdk 34
+    compileSdk 36
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -45,11 +45,11 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 23
     }
 }
 
 dependencies {
     implementation("androidx.multidex:multidex:2.0.1")
-    implementation "com.google.android.exoplayer:exoplayer:2.17.1"
+    implementation "androidx.media3:media3-exoplayer:1.11.0"
 }
