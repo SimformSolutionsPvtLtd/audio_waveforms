@@ -68,6 +68,11 @@ struct Constants {
     static let linearPCMIsFloat = "linearPCMIsFloat";
     static let pauseAllPlayers = "pauseAllPlayers"
     static let stopExtraction = "stopExtraction"
+    static let onAudioChunk = "onAudioChunk"
+    static let bytes = "bytes"
+    static let normalisedRms = "normalisedRms"
+    static let recordedDuration = "recordedDuration"
+    static let defaultSampleRate = 44100
 }
 
 

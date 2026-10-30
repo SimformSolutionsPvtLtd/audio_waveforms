@@ -3,19 +3,6 @@ import 'package:flutter/material.dart';
 import '../../audio_waveforms.dart';
 
 class PlayerWavePainter extends CustomPainter {
-  final List<double> waveformData;
-  final double animValue;
-  final Offset totalBackDistance;
-  final Offset dragOffset;
-  final double audioProgress;
-  final VoidCallback pushBack;
-  final bool callPushback;
-  final double emptySpace;
-  final double scrollScale;
-  final WaveformType waveformType;
-
-  final PlayerWaveStyle playerWaveStyle;
-
   PlayerWavePainter({
     required this.waveformData,
     required this.animValue,
@@ -42,6 +29,19 @@ class PlayerWavePainter extends CustomPainter {
         middleLinePaint = Paint()
           ..color = playerWaveStyle.seekLineColor
           ..strokeWidth = playerWaveStyle.seekLineThickness;
+
+  final List<double> waveformData;
+  final double animValue;
+  final Offset totalBackDistance;
+  final Offset dragOffset;
+  final double audioProgress;
+  final VoidCallback pushBack;
+  final bool callPushback;
+  final double emptySpace;
+  final double scrollScale;
+  final WaveformType waveformType;
+
+  final PlayerWaveStyle playerWaveStyle;
 
   Paint fixedWavePaint;
   Paint liveWavePaint;

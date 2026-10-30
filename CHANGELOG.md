@@ -1,9 +1,40 @@
-## 2.0.0 (Unreleased)
+## 2.1.0 (#unreleased)
+
+- Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Feature [#424](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/424) - Add `WaveformExtractionType` to choose between no, asynchronous and synchronous waveform extraction in `preparePlayer`, disable grow animation when `animationDuration` is `Duration.zero` and update `AudioFileWaveforms` when its properties change
+  - **BREAKING**: `shouldExtractWaveform` parameter of `preparePlayer` is replaced with `waveformExtractionType`. Use `WaveformExtractionType.extractAsync` in place of `shouldExtractWaveform: true` and `WaveformExtractionType.noExtraction` in place of `shouldExtractWaveform: false`
+
+## 2.0.2
+
+- Chore [#460](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/460) - Update compileSdk and targetSdk to run example app
+- Chore [#461](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/461) - Update analysis options and related files
+- Fixed [#464](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/464) - Fixed labels not displaying properly during recording
+- Feature [#398](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/398) - Add noOfSamplesPerSecond parameter to preparePlayer for easier waveform configuration
+- Fixed [#441](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/441) - Incorrect waveform UI when setting `Duration.zero` for AudioFileWaveforms
+- Fixed [#439](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/439) - Waveform extraction is not cancel when PlayController is disposed
+- Fixed [#236](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/236) - Recorded duration is not same as controller duration
+- Feature [#250](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/250) - Add support for right to left waveform rendering
+- Fixed [#463](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/463) - iOS crash while streaming audio bytes due to hardware format mismatch 
+
+## 2.0.1
+
+- Fixed [#452](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/452) - OnAmplitude continues to add data points when recording is paused on iOS
+- Fixed [#453](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/453) - Recording with wav format never returns result
+- Fixed [#433](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/433) - `extractWaveformData` doesn't return result on iOS
+- Fixed [#455](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/455) - On android resuming audio recording returns false instead of true - thanks [@yuanhoujun](https://github.com/yuanhoujun)
+
+## 2.0.0
 
 - Fixed [#350](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/350) - Left most visible wave is clipped in half when recording.
-- **BREAKING:** Fixed [#412](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/412) - Calling preparePlayer again does not cancel old waveform extraction.
+- Fixed [#397](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/397) - iOS crashes at `extractWaveform` instead provide error log
+- Fixed [#390](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/390) - Setting continuousWaveform to false not working
 - Feature [#415](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/415) - Add stop extraction method and asynchronous extraction of waveform in ios
+- Feature [#204](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/204) - Move play head position with waveform gesture `onTapDown`.
+- Chore [#375](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/375) - Don't send error if already sent
+- Chore [#376](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/376) - Preemptively account for invalid input buffer
+- **BREAKING:** Fixed [#412](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/412) - Calling preparePlayer again does not cancel old waveform extraction.
 - **BREAKING:** Feature [#416](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/416) - Add waveform extraction controller.
+- **BREAKING:** Rename `tapUpUpdateDetails` to `onTapUp`.
 - **BREAKING:**
   - Remove duplicate parameters from RecorderController.
   - Add `RecorderSettings` model for all the recording settings.
@@ -11,12 +42,12 @@
 ## 1.3.0
 
 - Fixed [#386](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/386) - On permission denied isRecording flag changed
-- Fixed [#384](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/384) - Provide a callback of drag,tap,start and end details on user gesture
-- Fixed [#309](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/309) - Added support for Liner PCM codec in iOS
+- Feat [#384](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/384) - Provide a callback of drag,tap,start and end details on user gesture
+- Feat [#309](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/309) - Added support for Liner PCM codec in iOS
 - Fixed [#291](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/291) - Codec issue while recording audio on android
 - Fixed [#391](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/391) - Wrong codec selection on the platform side on Android
 - Fixed [#389](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/389) - Wrong codec selection on the platform side on iOS
-- Fixed [#325](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/325) - Added feature to pause all player controller at once.
+- Feat [#325](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/325) - Added feature to pause all player controller at once.
 - Fixed [#373](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/373) - Getting error on dispose
 - Fixed [#395](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/395) - Live wave gradient not getting applied
 

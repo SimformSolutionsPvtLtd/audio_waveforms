@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +12,13 @@ part '../base/audio_waveforms_interface.dart';
 part 'waveform_extraction_controller.dart';
 
 class PlayerController extends ChangeNotifier {
+  PlayerController() {
+    if (!PlatformStreams.instance.isInitialised) {
+      PlatformStreams.instance.init();
+    }
+    PlatformStreams.instance.playerControllerFactory.addAll({playerKey: this});
+  }
+
   PlayerState _playerState = PlayerState.stopped;
 
   /// Provides current state of the player
@@ -88,13 +94,6 @@ class PlayerController extends ChangeNotifier {
   Stream<void> get onCompletion =>
       PlatformStreams.instance.onCompletion.filter(playerKey);
 
-  PlayerController() {
-    if (!PlatformStreams.instance.isInitialised) {
-      PlatformStreams.instance.init();
-    }
-    PlatformStreams.instance.playerControllerFactory.addAll({playerKey: this});
-  }
-
   void _setPlayerState(PlayerState state) {
     _playerState = state;
     PlatformStreams.instance
@@ -111,8 +110,15 @@ class PlayerController extends ChangeNotifier {
   /// treated same as 1.0 (max volume).
   ///
   /// Waveforms also will be extracted when with function which can be
-  /// accessed using [waveformData]. Passing false to [shouldExtractWaveform]
-  /// will prevent extracting of waveforms.
+  /// accessed using [waveformData]. [waveformExtractionType] decides how
+  /// waveforms are extracted:
+  /// - [WaveformExtractionType.noExtraction]: waveforms won't be extracted.
+  /// - [WaveformExtractionType.extractAsync]: waveforms are extracted in the
+  ///   background and this function returns without waiting for it.
+  /// - [WaveformExtractionType.extractSync]: this function waits until
+  ///   waveforms are extracted before returning.
+  ///
+  /// Defaults to [WaveformExtractionType.extractAsync].
   ///
   /// Waveforms also can be extracted using [extractWaveformData] function
   /// which can be stored locally or over the server. This data can be passed
@@ -123,15 +129,40 @@ class PlayerController extends ChangeNotifier {
   /// [noOfSamples] indicates no of extracted data points. This will determine
   /// number of bars in the waveform.
   ///
-  /// Defaults to 100.
+  /// Defaults to 100 if both [noOfSamples] and [noOfSamplesPerSecond] are null.
+  ///
+  /// [noOfSamplesPerSecond] can be used as an alternative to [noOfSamples] to specify
+  /// the number of samples per second of audio. The actual [noOfSamples] will
+  /// be calculated as: noOfSamplesPerSecond * durationInSeconds.
+  /// This is useful when the full duration is not known in advance.
+  ///
+  /// **Important**: Provide only ONE of [noOfSamples] OR [noOfSamplesPerSecond], not both.
+  /// - To use fixed sample count: provide only [noOfSamples]
+  /// - To use samples per second: provide only [noOfSamplesPerSecond]
+  /// - If both are null, defaults to [noOfSamples] = 100
   Future<void> preparePlayer({
     required String path,
     double? volume,
     WaveformExtractionType waveformExtractionType =
-        WaveformExtractionType.noExtraction,
-    int noOfSamples = 100,
+        WaveformExtractionType.extractAsync,
+    int? noOfSamples,
+    int? noOfSamplesPerSecond,
   }) async {
-    path = Uri.parse(path).path;
+    // Validate that user doesn't provide both parameters
+    assert(
+      !(noOfSamples != null && noOfSamplesPerSecond != null),
+      'Cannot provide both noOfSamples and noOfSamplesPerSecond. '
+      'Use noOfSamples for fixed count OR noOfSamplesPerSecond for dynamic calculation based on duration.',
+    );
+
+    if (!path.startsWith('http')) {
+      // Keep the full URL for remote files and strip for local files
+      final uri = Uri.tryParse(path);
+      if (uri == null) {
+        throw ArgumentError('Invalid path format: $path');
+      }
+      path = uri.path;
+    }
     final isPrepared = await AudioWaveformsInterface.instance.preparePlayer(
       path: path,
       key: playerKey,
@@ -145,16 +176,51 @@ class PlayerController extends ChangeNotifier {
     }
 
     if (waveformExtractionType != WaveformExtractionType.noExtraction) {
-      var extraction = waveformExtraction.extractWaveformData(
+      // Determine which sampling strategy to use
+      final int actualNoOfSamples;
+      if (noOfSamplesPerSecond != null) {
+        // Use dynamic calculation based on duration
+        if (_maxDuration > 0) {
+          actualNoOfSamples =
+              (noOfSamplesPerSecond * (_maxDuration / 1000)).round();
+        } else {
+          actualNoOfSamples =
+              noOfSamplesPerSecond; // Fallback if duration unavailable
+        }
+      } else {
+        // Use fixed sample count (default to 100 if not provided)
+        actualNoOfSamples = noOfSamples ?? 100;
+      }
+
+      // Once extraction completes, store the result in the controller's
+      // internal list (the public [WaveformExtractionController.waveformData]
+      // getter returns a copy, so it can't be mutated) and notify listeners
+      // so that [AudioFileWaveforms] repaints with the extracted waveform.
+      final extraction = waveformExtraction
+          .extractWaveformData(
         path: path,
-        noOfSamples: noOfSamples,
-      )..then((values) {
-          waveformExtraction.waveformData
+        noOfSamples: actualNoOfSamples,
+      )
+          .then(
+        (values) {
+          waveformExtraction._waveformData
             ..clear()
             ..addAll(values);
-        });
+          notifyListeners();
+        },
+      );
+
       if (waveformExtractionType == WaveformExtractionType.extractSync) {
+        // Wait for extraction to finish so that waveform data is available
+        // as soon as this function returns. Errors are propagated to the
+        // caller.
         await extraction;
+      } else {
+        // Don't wait for extraction to finish. Since nobody awaits this
+        // future, handle errors here to avoid an unhandled async error.
+        extraction.catchError((Object error) {
+          debugPrint('Waveform extraction failed: $error');
+        });
       }
     }
     notifyListeners();
@@ -275,6 +341,7 @@ class PlayerController extends ChangeNotifier {
   void dispose() async {
     if (playerState != PlayerState.stopped) await stopPlayer();
     await release();
+    await waveformExtraction.stopWaveformExtraction();
     PlatformStreams.instance.playerControllerFactory.remove(playerKey);
     if (PlatformStreams.instance.playerControllerFactory.isEmpty) {
       PlatformStreams.instance.dispose();

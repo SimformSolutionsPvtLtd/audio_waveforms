@@ -7,6 +7,38 @@ import 'base/wave_clipper.dart';
 import 'painters/player_wave_painter.dart';
 
 class AudioFileWaveforms extends StatefulWidget {
+  /// Generate waveforms from audio file. You play those audio file using
+  /// [PlayerController].
+  ///
+  /// When you play the audio file, waves change their color according to
+  /// how much audio has been played and how much is left.
+  ///
+  /// With seeking gesture enabled, playing audio can be seeked to
+  /// any position using gestures.
+  const AudioFileWaveforms({
+    super.key,
+    required this.size,
+    required this.playerController,
+    this.waveformData = const [],
+    this.continuousWaveform = true,
+    this.playerWaveStyle = const PlayerWaveStyle(),
+    this.padding,
+    this.margin,
+    this.decoration,
+    this.backgroundColor,
+    this.animationDuration = const Duration(milliseconds: 500),
+    this.animationCurve = Curves.easeIn,
+    this.clipBehavior = Clip.none,
+    this.waveformType = WaveformType.long,
+    this.enableSeekGesture = true,
+    this.onDragStart,
+    this.onDragEnd,
+    this.dragUpdateDetails,
+    this.onTapUp,
+    this.seekOnTapUp = true,
+    this.onTapDown,
+  });
+
   /// A size to define height and width of waveform.
   final Size size;
 
@@ -64,46 +96,28 @@ class AudioFileWaveforms extends StatefulWidget {
   final bool enableSeekGesture;
 
   /// Provides a callback when drag starts.
-  final Function(DragStartDetails)? onDragStart;
+  final ValueSetter<DragStartDetails>? onDragStart;
 
   /// Provides a callback when drag ends.
-  final Function(DragEndDetails)? onDragEnd;
+  final ValueSetter<DragEndDetails>? onDragEnd;
 
   /// Provides a callback on drag updates.
-  final Function(DragUpdateDetails)? dragUpdateDetails;
+  final ValueSetter<DragUpdateDetails>? dragUpdateDetails;
 
-  /// Provides a callback when tapping on the waveform.
-  final Function(TapUpDetails)? tapUpUpdateDetails;
+  /// Provides a callback when pointer has stopped contacting the screen.
+  /// This handler will still provide callback when [seekOnTapUp] is set to `false`.
+  final ValueSetter<TapUpDetails>? onTapUp;
 
-  /// Generate waveforms from audio file. You play those audio file using
-  /// [PlayerController].
+  /// When set to true, seek gesture will be performed when pointer is lifted
+  /// from the screen otherwise seek gesture will be performed when pointer has
+  /// stopped contacting the screen.
   ///
-  /// When you play the audio file, waves change their color according to
-  /// how much audio has been played and how much is left.
-  ///
-  /// With seeking gesture enabled, playing audio can be seeked to
-  /// any position using gestures.
-  const AudioFileWaveforms({
-    super.key,
-    required this.size,
-    required this.playerController,
-    this.waveformData = const [],
-    this.continuousWaveform = true,
-    this.playerWaveStyle = const PlayerWaveStyle(),
-    this.padding,
-    this.margin,
-    this.decoration,
-    this.backgroundColor,
-    this.animationDuration = const Duration(milliseconds: 500),
-    this.animationCurve = Curves.easeIn,
-    this.clipBehavior = Clip.none,
-    this.waveformType = WaveformType.long,
-    this.enableSeekGesture = true,
-    this.onDragStart,
-    this.onDragEnd,
-    this.dragUpdateDetails,
-    this.tapUpUpdateDetails,
-  });
+  /// The continuous seek gesture aren't affected by this flag.
+  final bool seekOnTapUp;
+
+  /// Provides a callback when pointer has started contacting the screen.
+  /// This handler will still provide callback when [seekOnTapUp] is set to `true`.
+  final GestureTapDownCallback? onTapDown;
 
   @override
   State<AudioFileWaveforms> createState() => _AudioFileWaveformsState();
@@ -111,8 +125,10 @@ class AudioFileWaveforms extends StatefulWidget {
 
 class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     with SingleTickerProviderStateMixin {
-  late AnimationController _growingWaveController;
-  late Animation<double> _growAnimation;
+  /// Null when [AudioFileWaveforms.animationDuration] is [Duration.zero],
+  /// as no grow animation is needed in that case.
+  AnimationController? _growingWaveController;
+  Animation<double>? _growAnimation;
 
   double _growAnimationProgress = 0.0;
   final ValueNotifier<int> _seekProgress = ValueNotifier(0);
@@ -149,18 +165,19 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     if (widget.animationDuration == Duration.zero) {
       _growAnimationProgress = 1.0;
     } else {
-      _growingWaveController = AnimationController(
+      final growingWaveController = AnimationController(
         vsync: this,
         duration: widget.animationDuration,
       );
+      _growingWaveController = growingWaveController;
       _growAnimation = CurvedAnimation(
-        parent: _growingWaveController,
+        parent: growingWaveController,
         curve: widget.animationCurve,
       );
 
-      _growingWaveController
-        ..forward()
-        ..addListener(_updateGrowAnimationProgress);
+      growingWaveController
+        ..addListener(_updateGrowAnimationProgress)
+        ..forward();
     }
 
     _initializeAudioProgress();
@@ -197,11 +214,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
     onCurrentExtractedWaveformData?.cancel();
     onCompletionSubscription.cancel();
     playerController.removeListener(_addWaveformDataFromController);
-
-    if (widget.animationDuration != Duration.zero) {
-      _growingWaveController.dispose();
-    }
-
+    _growingWaveController?.dispose();
     super.dispose();
   }
 
@@ -209,21 +222,21 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   void didUpdateWidget(AudioFileWaveforms oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Vérifier si les waveformData ont changé
+    // Update waveforms when new waveform data is provided.
     if (widget.waveformData != oldWidget.waveformData) {
       if (widget.waveformData.isNotEmpty) {
         _addWaveformData(widget.waveformData);
       }
     }
 
-    // Vérifier si d'autres propriétés importantes ont changé
+    // Rebuild when properties affecting how waveforms are drawn change.
     if (widget.playerWaveStyle != oldWidget.playerWaveStyle ||
         widget.size != oldWidget.size ||
         widget.waveformType != oldWidget.waveformType) {
       if (mounted) setState(() {});
     }
 
-    // Mettre à jour les variables si nécessaire
+    // Update cached variables when their widget properties change.
     if (widget.margin != oldWidget.margin ||
         widget.padding != oldWidget.padding ||
         widget.decoration != oldWidget.decoration ||
@@ -238,6 +251,26 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
       animationDuration = widget.animationDuration;
       animationCurve = widget.animationCurve;
       clipBehavior = widget.clipBehavior;
+    }
+
+    if (widget.animationDuration != oldWidget.animationDuration) {
+      _updateGrowAnimation();
+    }
+  }
+
+  /// Keeps grow animation in sync with [AudioFileWaveforms.animationDuration].
+  ///
+  /// [SingleTickerProviderStateMixin] allows creating only one ticker, so a
+  /// new controller isn't created when duration changes from [Duration.zero]
+  /// to non-zero. Waveforms are already fully drawn in that case.
+  void _updateGrowAnimation() {
+    if (widget.animationDuration == Duration.zero) {
+      _growingWaveController?.dispose();
+      _growingWaveController = null;
+      _growAnimation = null;
+      _growAnimationProgress = 1.0;
+    } else {
+      _growingWaveController?.duration = widget.animationDuration;
     }
   }
 
@@ -266,10 +299,11 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
       child: GestureDetector(
         onHorizontalDragUpdate:
             widget.enableSeekGesture ? _handleDragGestures : null,
-        onTapUp: widget.enableSeekGesture ? _handleScrubberSeekStart : null,
+        onTapUp: widget.enableSeekGesture ? _handleOnTapUp : null,
         onHorizontalDragStart:
             widget.enableSeekGesture ? _handleHorizontalDragStart : null,
         onHorizontalDragEnd: widget.enableSeekGesture ? _handleOnDragEnd : null,
+        onTapDown: widget.enableSeekGesture ? _handleOnTapDown : null,
         child: ClipPath(
           // TODO: Update extraClipperHeight when duration labels are added
           clipper: WaveClipper(extraClipperHeight: 0),
@@ -308,7 +342,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   void _updateGrowAnimationProgress() {
     if (mounted) {
       setState(() {
-        _growAnimationProgress = _growAnimation.value;
+        _growAnimationProgress = _growAnimation?.value ?? 1.0;
       });
     }
   }
@@ -357,13 +391,23 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   }
 
   /// This method handles tap seek gesture
-  void _handleScrubberSeekStart(TapUpDetails details) {
+  void _handleOnTapUp(TapUpDetails details) {
+    widget.onTapUp?.call(details);
+    if (!widget.seekOnTapUp) return;
     _proportion = details.localPosition.dx / widget.size.width;
     var seekPosition = playerController.maxDuration * _proportion;
 
     playerController.seekTo(seekPosition.toInt());
+  }
 
-    widget.tapUpUpdateDetails?.call(details);
+  /// This method handles tap seek gesture
+  void _handleOnTapDown(TapDownDetails details) {
+    widget.onTapDown?.call(details);
+    if (widget.seekOnTapUp) return;
+    _proportion = details.localPosition.dx / widget.size.width;
+    var seekPosition = playerController.maxDuration * _proportion;
+
+    playerController.seekTo(seekPosition.toInt());
   }
 
   ///This method handles horizontal scrolling of the wave
@@ -438,10 +482,11 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
   void _pushBackWave() {
     if (!_isScrolled && widget.waveformType.isLong) {
       _totalBackDistance = Offset(
-          (playerWaveStyle.spacing * _audioProgress * _waveformData.length) +
-              playerWaveStyle.spacing +
-              _dragOffset.dx,
-          0.0);
+        (playerWaveStyle.spacing * _audioProgress * _waveformData.length) +
+            playerWaveStyle.spacing +
+            _dragOffset.dx,
+        0.0,
+      );
     }
     if (playerController.shouldClearLabels) {
       _initialDragPosition = 0.0;
@@ -461,7 +506,7 @@ class _AudioFileWaveformsState extends State<AudioFileWaveforms>
         playerController.maxDuration > 0) {
       final currentPosition =
           await playerController.getDuration(DurationType.current);
-      if (currentPosition > 0) {
+      if (mounted && currentPosition > 0) {
         _seekProgress.value = currentPosition;
         _updatePlayerPercent();
       }

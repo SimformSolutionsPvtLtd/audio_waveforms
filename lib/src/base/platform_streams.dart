@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import '../../audio_waveforms.dart';
 import 'player_identifier.dart';
@@ -33,6 +34,9 @@ class PlatformStreams {
         StreamController<PlayerIdentifier<double>>.broadcast();
     _completionController =
         StreamController<PlayerIdentifier<void>>.broadcast();
+    _recordingAmplitudeController = StreamController<double>.broadcast();
+    _recordedBytesController = StreamController<Uint8List>.broadcast();
+    _recordedDurationController = StreamController<Duration>.broadcast();
     await AudioWaveformsInterface.instance.setMethodCallHandler();
   }
 
@@ -51,12 +55,21 @@ class PlatformStreams {
   Stream<PlayerIdentifier<void>> get onCompletion =>
       _completionController.stream;
 
+  Stream<double> get onAmplitude => _recordingAmplitudeController.stream;
+
+  Stream<Uint8List> get onRecordedBytes => _recordedBytesController.stream;
+
+  Stream<Duration> get onCurrentDuration => _recordedDurationController.stream;
+
   late StreamController<PlayerIdentifier<int>> _currentDurationController;
   late StreamController<PlayerIdentifier<PlayerState>> _playerStateController;
   late StreamController<PlayerIdentifier<List<double>>>
       _extractedWaveformDataController;
   late StreamController<PlayerIdentifier<double>> _extractionProgressController;
   late StreamController<PlayerIdentifier<void>> _completionController;
+  late StreamController<double> _recordingAmplitudeController;
+  late StreamController<Uint8List> _recordedBytesController;
+  late StreamController<Duration> _recordedDurationController;
 
   void addCurrentDurationEvent(PlayerIdentifier<int> playerIdentifier) {
     if (!_currentDurationController.isClosed) {
@@ -71,7 +84,8 @@ class PlatformStreams {
   }
 
   void addExtractedWaveformDataEvent(
-      PlayerIdentifier<List<double>> playerIdentifier) {
+    PlayerIdentifier<List<double>> playerIdentifier,
+  ) {
     if (!_extractedWaveformDataController.isClosed) {
       _extractedWaveformDataController.add(playerIdentifier);
     }
@@ -89,12 +103,29 @@ class PlatformStreams {
     }
   }
 
+  void addAmplitudeEvent(double event) {
+    if (_recordingAmplitudeController.isClosed) return;
+    _recordingAmplitudeController.add(event);
+  }
+
+  void addRecordedBytes(Uint8List event) {
+    if (_recordedBytesController.isClosed) return;
+    _recordedBytesController.add(event);
+  }
+
+  void addRecordedDurationEvent(int milliSeconds) {
+    if (_recordedDurationController.isClosed) return;
+    _recordedDurationController.add(Duration(milliseconds: milliSeconds));
+  }
+
   void dispose() {
     _currentDurationController.close();
     _playerStateController.close();
     _extractedWaveformDataController.close();
-    _currentDurationController.close();
     _completionController.close();
+    _recordingAmplitudeController.close();
+    _recordedBytesController.close();
+    _recordedDurationController.close();
     AudioWaveformsInterface.instance.removeMethodCallHandler();
     isInitialised = false;
   }

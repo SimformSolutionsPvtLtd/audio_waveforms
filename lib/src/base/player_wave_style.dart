@@ -1,6 +1,28 @@
 import 'package:flutter/material.dart';
 
 class PlayerWaveStyle {
+  const PlayerWaveStyle({
+    this.fixedWaveColor = Colors.white54,
+    this.liveWaveColor = Colors.white,
+    this.showTop = true,
+    this.showBottom = true,
+    this.showSeekLine = true,
+    this.waveCap = StrokeCap.round,
+    this.seekLineColor = Colors.white,
+    this.seekLineThickness = 2.0,
+    this.waveThickness = 3.0,
+    this.backgroundColor = Colors.black,
+    this.fixedWaveGradient,
+    this.scaleFactor = 100.0,
+    this.liveWaveGradient,
+    this.spacing = 5,
+    this.scrollScale = 1.0,
+  })  : assert(spacing >= 0),
+        assert(
+          waveThickness < spacing,
+          "waveThickness can't be greater than spacing",
+        );
+
   ///Color of the [wave] which is behind the live wave.
   final Color fixedWaveColor;
 
@@ -51,26 +73,6 @@ class PlayerWaveStyle {
 
   /// Shows seek line in the middle when enabled.
   final bool showSeekLine;
-
-  const PlayerWaveStyle({
-    this.fixedWaveColor = Colors.white54,
-    this.liveWaveColor = Colors.white,
-    this.showTop = true,
-    this.showBottom = true,
-    this.showSeekLine = true,
-    this.waveCap = StrokeCap.round,
-    this.seekLineColor = Colors.white,
-    this.seekLineThickness = 2.0,
-    this.waveThickness = 3.0,
-    this.backgroundColor = Colors.black,
-    this.fixedWaveGradient,
-    this.scaleFactor = 100.0,
-    this.liveWaveGradient,
-    this.spacing = 5,
-    this.scrollScale = 1.0,
-  })  : assert(spacing >= 0),
-        assert(waveThickness < spacing,
-            "waveThickness can't be greater than spacing");
 
   /// Determines number of samples which will fit in provided width.
   /// Returned number of samples are also dependent on [spacing] set for

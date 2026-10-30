@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'player_identifier.dart';
 
 //ignore_for_file: constant_identifier_names
@@ -23,48 +25,25 @@ enum RecorderState { initialized, recording, paused, stopped }
 /// Check [MediaRecorder.AudioEncoder](https://developer.android.com/reference/android/media/MediaRecorder.AudioEncoder)
 /// for more info.
 enum AndroidEncoder {
-  /// Default
-  aac,
-  aac_eld,
-  he_aac,
-  amr_nb,
-  amr_wb,
+  wav,
+  aacLc,
+  aacHe,
+  aacEld,
+  amrNb,
+  amrWb,
+  opus;
 
-  /// This encoder requires android Q.
-  /// For android < Q, aac will be used
-  opus,
-
-  /// requires android Lollipop.
-  /// For android < Lollipop, aac will be used
-  vorbis
-}
-
-/// Android output format.
-///
-/// Android and IOS are have been separated to better support
-/// platform wise encoder and output formats.
-///
-/// Check [MediaRecorder.OutputFormat](https://developer.android.com/reference/android/media/MediaRecorder.OutputFormat)
-/// for more info.
-enum AndroidOutputFormat {
-  /// Default
-  mpeg4,
-  three_gpp,
-
-  /// This Output format requires android Q.
-  /// For android < Q, mpeg4 will be used
-  ogg,
-  amr_wb,
-  amr_nb,
-
-  /// This Output format requires android Q.
-  /// For android < Q, mpeg4 will be used
-  webm,
-
-  /// This Output format requires android O.
-  /// For android < O, mpeg4 will be used
-  mpeg_2_ts,
-  aac_adts,
+  String toNativeFormat() {
+    return switch (this) {
+      AndroidEncoder.wav => 'WAV',
+      AndroidEncoder.aacLc => 'AAC_LC',
+      AndroidEncoder.aacHe => 'AAC_HE',
+      AndroidEncoder.aacEld => 'AAC_ELD',
+      AndroidEncoder.amrNb => 'AMR_NB',
+      AndroidEncoder.amrWb => 'AMR_WB',
+      AndroidEncoder.opus => 'OPUS',
+    };
+  }
 }
 
 /// IOS encoders.
@@ -199,4 +178,41 @@ enum UpdateFrequency {
   const UpdateFrequency(this.value);
 
   final int value;
+}
+
+/// An enum to decide waveform rendering mode.
+enum WaveformRenderMode {
+  /// Normal mode where waveform starts from left to right.
+  ///
+  /// The waveform will render from left to right. Once rendered waveforms
+  /// reaches the end of the available width, it will start pushing the
+  /// previous waves to left to make space for new waves.
+  ltr,
+
+  /// RTL mode where waveform starts from right to left.
+  ///
+  /// The waveform will render from right to left. Older waves will be pushed
+  /// to the left to make space for new waves.
+  rtl;
+
+  /// Check WaveformRenderMode is equals to ltr or not.
+  bool get isLtr => this == WaveformRenderMode.ltr;
+
+  /// Check WaveformRenderMode is equals to rtl or not.
+  bool get isRtl => this == WaveformRenderMode.rtl;
+}
+
+/// Checks if the current platform is iOS or macOS.
+bool get isIosOrMacOS => Platform.isIOS || Platform.isMacOS;
+
+/// An enum to decide how waveforms are extracted when preparing the player.
+enum WaveformExtractionType {
+  /// No waveform extraction will be performed.
+  noExtraction,
+
+  /// Extract waveform data asynchronously without waiting for the result.
+  extractAsync,
+
+  /// Extract waveform data and wait until it's completed before continuing.
+  extractSync,
 }
