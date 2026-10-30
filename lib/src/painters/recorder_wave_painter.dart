@@ -48,7 +48,7 @@ class RecorderWavePainter extends CustomPainter {
     required this.currentlyRecordedDuration,
     required this.labels,
     required this.isRtl,
-    this.clipRRect,
+    this.borderRadius,
   })  : _wavePaint = Paint()
           ..color = waveColor
           ..strokeWidth = waveThickness
@@ -98,7 +98,7 @@ class RecorderWavePainter extends CustomPainter {
   final Duration currentlyRecordedDuration;
   final List<Label> labels;
   final bool isRtl;
-  final RRect? clipRRect;
+  final BorderRadius? borderRadius;
 
   static const int durationBuffer = 5;
 
@@ -109,12 +109,16 @@ class RecorderWavePainter extends CustomPainter {
       revertClearLabelCall();
     }
 
-    if (clipRRect != null) {
-      canvas.clipRRect(clipRRect!);
-    }
-
     // Wave gradient
     if (gradient != null) _waveGradient();
+
+    // Clips only the waves, so labels and the middle line stay visible.
+    final radius = borderRadius;
+    if (radius != null) {
+      canvas
+        ..save()
+        ..clipRRect(radius.toRRect(Offset.zero & size));
+    }
 
     if (isRtl) {
       // For RTL: call pushBack when refresh is triggered (e.g., after scrolling)
@@ -138,6 +142,8 @@ class RecorderWavePainter extends CustomPainter {
         _drawLtrWave(canvas, size, i);
       }
     }
+
+    if (radius != null) canvas.restore();
 
     // duration labels
     if (showDurationLabel) {
