@@ -1,6 +1,8 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Feature [#424](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/424) - Add `WaveformExtractionType` to choose between no, asynchronous and synchronous waveform extraction in `preparePlayer`, disable grow animation when `animationDuration` is `Duration.zero` and update `AudioFileWaveforms` when its properties change
+  - **BREAKING**: `shouldExtractWaveform` parameter of `preparePlayer` is replaced with `waveformExtractionType`. Use `WaveformExtractionType.extractAsync` in place of `shouldExtractWaveform: true` and `WaveformExtractionType.noExtraction` in place of `shouldExtractWaveform: false`
 
 ## 2.0.2
 

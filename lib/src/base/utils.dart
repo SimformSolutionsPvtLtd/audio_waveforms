@@ -204,3 +204,15 @@ enum WaveformRenderMode {
 
 /// Checks if the current platform is iOS or macOS.
 bool get isIosOrMacOS => Platform.isIOS || Platform.isMacOS;
+
+/// An enum to decide how waveforms are extracted when preparing the player.
+enum WaveformExtractionType {
+  /// No waveform extraction will be performed.
+  noExtraction,
+
+  /// Extract waveform data asynchronously without waiting for the result.
+  extractAsync,
+
+  /// Extract waveform data and wait until it's completed before continuing.
+  extractSync,
+}

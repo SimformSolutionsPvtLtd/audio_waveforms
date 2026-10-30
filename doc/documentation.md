@@ -78,7 +78,7 @@ final playerController = PlayerController();
 // Prepare the player
 await playerController.preparePlayer(
   path: 'path/to/audio.mp3',
-  shouldExtractWaveform: true,
+  waveformExtractionType: WaveformExtractionType.extractAsync,
 );
 
 // Start playing
@@ -426,11 +426,15 @@ Before playing, prepare the player with an audio file:
 ```dart
 await playerController.preparePlayer(
   path: '/path/to/audio.mp3',
-  shouldExtractWaveform: true,
+  waveformExtractionType: WaveformExtractionType.extractAsync,
 );
 ```
 
-Setting `shouldExtractWaveform` to `true` will automatically extract waveform data from the audio file.
+Setting `waveformExtractionType` controls how waveform data is extracted from the audio file:
+
+- `WaveformExtractionType.extractAsync` (default): extracts waveform data in the background; `preparePlayer` returns without waiting for it.
+- `WaveformExtractionType.extractSync`: `preparePlayer` waits until waveform data is extracted.
+- `WaveformExtractionType.noExtraction`: waveform data isn't extracted.
 
 ### Configuring Waveform Sample Count
 
@@ -440,7 +444,7 @@ You can control waveform granularity using either:
 ```dart
 await playerController.preparePlayer(
   path: '/path/to/audio.mp3',
-  shouldExtractWaveform: true,
+  waveformExtractionType: WaveformExtractionType.extractAsync,
   noOfSamples: 200, // Exactly 200 waveform bars
 );
 ```
@@ -449,7 +453,7 @@ await playerController.preparePlayer(
 ```dart
 await playerController.preparePlayer(
   path: '/path/to/audio.mp3',
-  shouldExtractWaveform: true,
+  waveformExtractionType: WaveformExtractionType.extractAsync,
   noOfSamplesPerSecond: 10, // 10 samples per second of audio
 );
 ```
@@ -470,7 +474,7 @@ await file.writeAsBytes(audioFile.buffer.asUint8List());
 
 await playerController.preparePlayer(
   path: file.path,
-  shouldExtractWaveform: true,
+  waveformExtractionType: WaveformExtractionType.extractAsync,
 );
 ```
 
@@ -481,7 +485,7 @@ When loading from device storage, directly provide the file path:
 ```dart
 await playerController.preparePlayer(
   path: '/storage/emulated/0/audio.mp3',
-  shouldExtractWaveform: true,
+  waveformExtractionType: WaveformExtractionType.extractAsync,
 );
 ```
 
@@ -581,7 +585,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void _preparePlayer() async {
     await playerController.preparePlayer(
       path: widget.audioPath,
-      shouldExtractWaveform: true,
+      waveformExtractionType: WaveformExtractionType.extractAsync,
     );
   }
 
@@ -964,7 +968,7 @@ final samples = style.getSamplesForWidth(MediaQuery.of(context).size.width);
 
 await playerController.preparePlayer(
   path: audioPath,
-  shouldExtractWaveform: true,
+  waveformExtractionType: WaveformExtractionType.extractAsync,
   noOfSamples: samples,
 );
 ```
@@ -1624,7 +1628,7 @@ This section provides a quick reference for the main classes and their propertie
 
 | Method                                                                                                           | Description                              |
 |------------------------------------------------------------------------------------------------------------------|------------------------------------------|
-| `preparePlayer({required String path, bool shouldExtractWaveform, int? noOfSamples, int? noOfSamplesPerSecond})` | Prepare audio file for playback          |
+| `preparePlayer({required String path, WaveformExtractionType waveformExtractionType, int? noOfSamples, int? noOfSamplesPerSecond})` | Prepare audio file for playback          |
 | `startPlayer({FinishMode finishMode})`                                                                           | Start playing audio                      |
 | `pausePlayer()`                                                                                                  | Pause playback                           |
 | `stopPlayer()`                                                                                                   | Stop playback                            |

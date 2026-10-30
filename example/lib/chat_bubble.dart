@@ -85,7 +85,9 @@ class _WaveBubbleState extends State<WaveBubble> {
   void _preparePlayer() async {
     controller.preparePlayer(
       path: widget.path,
-      shouldExtractWaveform: widget.isSender,
+      waveformExtractionType: widget.isSender
+          ? WaveformExtractionType.extractAsync
+          : WaveformExtractionType.noExtraction,
     );
     if (!widget.isSender) {
       controller.waveformExtraction

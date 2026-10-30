@@ -110,8 +110,15 @@ class PlayerController extends ChangeNotifier {
   /// treated same as 1.0 (max volume).
   ///
   /// Waveforms also will be extracted when with function which can be
-  /// accessed using [waveformData]. Passing false to [shouldExtractWaveform]
-  /// will prevent extracting of waveforms.
+  /// accessed using [waveformData]. [waveformExtractionType] decides how
+  /// waveforms are extracted:
+  /// - [WaveformExtractionType.noExtraction]: waveforms won't be extracted.
+  /// - [WaveformExtractionType.extractAsync]: waveforms are extracted in the
+  ///   background and this function returns without waiting for it.
+  /// - [WaveformExtractionType.extractSync]: this function waits until
+  ///   waveforms are extracted before returning.
+  ///
+  /// Defaults to [WaveformExtractionType.extractAsync].
   ///
   /// Waveforms also can be extracted using [extractWaveformData] function
   /// which can be stored locally or over the server. This data can be passed
@@ -136,7 +143,8 @@ class PlayerController extends ChangeNotifier {
   Future<void> preparePlayer({
     required String path,
     double? volume,
-    bool shouldExtractWaveform = true,
+    WaveformExtractionType waveformExtractionType =
+        WaveformExtractionType.extractAsync,
     int? noOfSamples,
     int? noOfSamplesPerSecond,
   }) async {
@@ -167,7 +175,7 @@ class PlayerController extends ChangeNotifier {
       _setPlayerState(PlayerState.initialized);
     }
 
-    if (shouldExtractWaveform) {
+    if (waveformExtractionType != WaveformExtractionType.noExtraction) {
       // Determine which sampling strategy to use
       final int actualNoOfSamples;
       if (noOfSamplesPerSecond != null) {
@@ -184,19 +192,36 @@ class PlayerController extends ChangeNotifier {
         actualNoOfSamples = noOfSamples ?? 100;
       }
 
-      waveformExtraction
+      // Once extraction completes, store the result in the controller's
+      // internal list (the public [WaveformExtractionController.waveformData]
+      // getter returns a copy, so it can't be mutated) and notify listeners
+      // so that [AudioFileWaveforms] repaints with the extracted waveform.
+      final extraction = waveformExtraction
           .extractWaveformData(
         path: path,
         noOfSamples: actualNoOfSamples,
       )
           .then(
-        (value) {
-          waveformExtraction.waveformData
+        (values) {
+          waveformExtraction._waveformData
             ..clear()
-            ..addAll(value);
+            ..addAll(values);
           notifyListeners();
         },
       );
+
+      if (waveformExtractionType == WaveformExtractionType.extractSync) {
+        // Wait for extraction to finish so that waveform data is available
+        // as soon as this function returns. Errors are propagated to the
+        // caller.
+        await extraction;
+      } else {
+        // Don't wait for extraction to finish. Since nobody awaits this
+        // future, handle errors here to avoid an unhandled async error.
+        extraction.catchError((Object error) {
+          debugPrint('Waveform extraction failed: $error');
+        });
+      }
     }
     notifyListeners();
   }
