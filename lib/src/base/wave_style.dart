@@ -31,6 +31,7 @@ class WaveStyle {
     this.gradient,
     this.scaleFactor = 20.0,
     this.waveformRenderMode = WaveformRenderMode.ltr,
+    this.borderRadius,
   }) : assert(
           waveThickness < spacing,
           "waveThickness can't be greater than spacing",
@@ -133,4 +134,19 @@ class WaveStyle {
   /// to left. Older waves will be pushed to the left to make space for new
   /// waves.
   final WaveformRenderMode waveformRenderMode;
+
+  /// Clips the waves to a rounded rectangle covering the waveform box, so
+  /// waves are cut off at the rounded corners instead of the sharp edges.
+  ///
+  /// It is resolved against the size of the waveform box on every paint, so
+  /// it stays correct when the layout or orientation changes. Only the waves
+  /// are clipped; duration labels, duration lines and the middle line are
+  /// drawn unclipped. Defaults to null, which applies no clipping.
+  ///
+  /// **Use as below**
+  ///
+  /// ```dart
+  ///      borderRadius: BorderRadius.circular(18),
+  /// ```
+  final BorderRadius? borderRadius;
 }

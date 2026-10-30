@@ -1708,6 +1708,7 @@ This section provides a quick reference for the main classes and their propertie
 | `durationLinesHeight` | `double`    | -                  | Duration line height  |
 | `gradient`            | `Shader?`   | `null`             | Wave gradient         |
 | `scaleFactor`         | `double`    | `20.0`             | Wave scaling factor   |
+| `borderRadius`        | `BorderRadius?` | `null`         | Clip waves to rounded corners |
 
 ## PlayerWaveStyle (for Player)
 
