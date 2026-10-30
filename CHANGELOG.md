@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Feature [#517](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/517) - Support Android Gradle Plugin 9 with built-in Kotlin
 
 ## 2.0.2
 
