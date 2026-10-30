@@ -58,4 +58,5 @@ class Constants {
   static const String normalisedRms = 'normalisedRms';
   static const String bytes = 'bytes';
   static const String recordedDuration = 'recordedDuration';
+  static const String androidStopTimeoutMs = 'androidStopTimeoutMs';
 }

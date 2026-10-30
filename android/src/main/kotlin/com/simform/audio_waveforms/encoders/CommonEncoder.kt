@@ -53,26 +53,45 @@ class CommonEncoder {
 
     /** Queue for audio data waiting to be encoded */
     private val inputQueue = LinkedList<ByteArray>()
-    
-    /** Current available input buffer index (-1 if none available) */
-    private var currentInputBufferIndex = -1
+
+    /**
+     * Input buffer indices the codec has handed us that haven't been filled yet.
+     * Guarded by inputQueue's lock.
+     *
+     * MediaCodec can make several input buffers available before any audio is
+     * ready (e.g. a burst of them right after start()), so every index must be
+     * kept. An index that is dropped is never queued back, so it never returns
+     * to the codec's input pool; once the pool is empty no further
+     * onInputBufferAvailable arrives, encoding silently stalls, and EOS can
+     * never be queued.
+     */
+    private val availableInputBuffers = LinkedList<Int>()
+
+    /** Flag indicating the end-of-stream buffer has been queued. Guarded by inputQueue's lock. */
+    private var isEosQueued = false
 
     /** Flag indicating if the muxer has been started */
     private var isMuxerStarted = false
     
     /** Flag indicating encoding process should complete */
+    @Volatile
     private var isEncodingComplete = false
-    
+
     /** Flag indicating encoder has been stopped */
+    @Volatile
     private var isEncoderStopped = false
     
     /** Track index for the audio track in the muxer */
     private var trackIndex = -1
     
-    /** Callback to invoke when encoding is complete */
+    /** Callback to invoke when encoding is complete. Guarded by `this`. */
     private var completionCallback: (() -> Unit)? = null
-    
+
+    /** Flag indicating stopEncoder() has already notified completion. Guarded by `this`. */
+    private var hasCompleted = false
+
     /** Total bytes encoded so far, used for calculating presentation timestamps */
+    @Volatile
     private var totalBytesEncoded = 0L
     
     /** Track the first output timestamp to normalize subsequent timestamps */
@@ -98,8 +117,10 @@ class CommonEncoder {
         trackIndex = -1
         isEncodingComplete = false
         isEncoderStopped = false
+        isEosQueued = false
+        hasCompleted = false
         inputQueue.clear()
-        currentInputBufferIndex = -1
+        availableInputBuffers.clear()
         totalBytesEncoded = 0L
         firstOutputTimestamp = -1L
         lastOutputTimestamp = 0L
@@ -152,22 +173,11 @@ class CommonEncoder {
 
         mediaCodec.setCallback(object : MediaCodec.Callback() {
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
-                if (isEncodingComplete && inputQueue.isEmpty()) {
-                    // Use the last calculated presentation time for EOF, not system time
-                    val eofTimestamp = if (totalBytesEncoded > 0) {
-                        val bytesPerSample = 2L
-                        val channels = 1L
-                        (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
-                    } else {
-                        0L
-                    }
-                    codec.queueInputBuffer(
-                        index, 0, 0, eofTimestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM
-                    )
-                } else {
-                    currentInputBufferIndex = index
-                    feedEncoder()
+                synchronized(inputQueue) {
+                    if (isEncoderStopped) return
+                    availableInputBuffers.add(index)
                 }
+                feedEncoder()
             }
 
             override fun onOutputBufferAvailable(
@@ -244,7 +254,7 @@ class CommonEncoder {
                     isMuxerStarted = true
                 }
             }
-        })
+        }, handler)
 
         mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
         mediaCodec.start()
@@ -262,10 +272,7 @@ class CommonEncoder {
         synchronized(inputQueue) {
             inputQueue.add(buffer)
         }
-
-        if (currentInputBufferIndex >= 0) {
-            feedEncoder()
-        }
+        feedEncoder()
     }
 
     /**
@@ -276,50 +283,119 @@ class CommonEncoder {
      */
     fun signalToStop() {
         isEncodingComplete = true
+        if (isEncoderStopped) return
+
+        // Queues EOS right away if the backlog is empty and an input buffer is
+        // free; otherwise the next onInputBufferAvailable drains the backlog
+        // and queues it.
+        feedEncoder()
+
+        // Safety net for devices that never deliver the EOS output buffer (or
+        // stop offering input buffers): force a stop after a grace period so
+        // the Dart-side stop() future can never hang. stopEncoder() is
+        // idempotent, always notifies completion, and cancels this timer when
+        // the natural path finishes first.
+        handler.postDelayed({
+            if (!isEncoderStopped) {
+                Log.w(
+                    Constants.LOG_TAG,
+                    "Encoder did not finish within the grace period; forcing encoder stop"
+                )
+                stopEncoder()
+            }
+        }, recorderSettings.stopTimeoutMs)
     }
 
     /**
      * Sets the callback to be invoked when encoding is completed
-     * 
+     *
+     * If the encoder has already stopped on its own (e.g. after a codec error
+     * mid-recording), the callback is invoked immediately instead of never.
+     *
      * @param callback The function to call when encoding completes
      */
     fun setOnEncodingCompleted(callback: () -> Unit) {
-        completionCallback = callback
+        val alreadyCompleted = synchronized(this) {
+            if (!hasCompleted) completionCallback = callback
+            hasCompleted
+        }
+        if (alreadyCompleted) callback()
+    }
+
+    /**
+     * Invokes the completion callback exactly once.
+     */
+    private fun notifyCompletion() {
+        val callback = synchronized(this) {
+            hasCompleted = true
+            completionCallback.also { completionCallback = null }
+        }
+        callback?.invoke()
     }
 
 
     /**
+     * Queues an end-of-stream buffer to signal that encoding is complete.
+     */
+    private fun queueEosBuffer(codec: MediaCodec, bufferIndex: Int) {
+        val eofTimestamp = if (totalBytesEncoded > 0) {
+            val bytesPerSample = 2L
+            val channels = 1L
+            (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
+        } else {
+            0L
+        }
+        codec.queueInputBuffer(
+            bufferIndex, 0, 0, eofTimestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM
+        )
+    }
+
+    /**
      * Feeds available audio data to the encoder
-     * 
-     * This method is called when both audio data is available in the queue
-     * and an input buffer is available from the encoder. It's synchronized
-     * to ensure thread safety when accessing the input queue.
-     * 
+     *
+     * Pairs queued audio chunks with free input buffers until either runs out.
+     * Once stop has been signalled and every chunk has been handed to the
+     * codec, queues the end-of-stream buffer (exactly once). Called from both
+     * the recording thread and the encoder thread, so it's synchronized on
+     * the input queue.
+     *
      * The presentation timestamp is calculated based on the amount of audio data
      * encoded so far, starting from 0. This ensures monotonic timestamps that
      * represent the actual audio timeline for proper playback and looping.
      */
     private fun feedEncoder() {
         synchronized(inputQueue) {
-            if (inputQueue.isEmpty() || currentInputBufferIndex < 0) return
+            if (isEncoderStopped || isEosQueued) return
 
-            val data = inputQueue.poll() ?: return
-            val inputBuffer = mediaCodec.getInputBuffer(currentInputBufferIndex) ?: return
-            inputBuffer.clear()
-            inputBuffer.put(data)
+            try {
+                while (inputQueue.isNotEmpty() && availableInputBuffers.isNotEmpty()) {
+                    val index = availableInputBuffers.poll()
+                    val inputBuffer = mediaCodec.getInputBuffer(index) ?: continue
+                    val data = inputQueue.poll()
+                    inputBuffer.clear()
+                    inputBuffer.put(data)
 
-            // Calculate presentation time based on actual audio data encoded
-            // Formula: presentationTimeUs = (totalBytes * 1,000,000) / (sampleRate * channels * bytesPerSample)
-            // For 16-bit PCM mono: bytesPerSample = 2, channels = 1
-            val bytesPerSample = 2L  // 16-bit = 2 bytes
-            val channels = 1L  // Mono
-            val presentationTimeUs = (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
-            totalBytesEncoded += data.size
-            
-            mediaCodec.queueInputBuffer(
-                currentInputBufferIndex, 0, data.size, presentationTimeUs, 0
-            )
-            currentInputBufferIndex = -1
+                    // Calculate presentation time based on actual audio data encoded
+                    // Formula: presentationTimeUs = (totalBytes * 1,000,000) / (sampleRate * channels * bytesPerSample)
+                    // For 16-bit PCM mono: bytesPerSample = 2, channels = 1
+                    val bytesPerSample = 2L  // 16-bit = 2 bytes
+                    val channels = 1L  // Mono
+                    val presentationTimeUs = (totalBytesEncoded * 1_000_000L) / (recorderSettings.sampleRate * channels * bytesPerSample)
+                    totalBytesEncoded += data.size
+
+                    mediaCodec.queueInputBuffer(
+                        index, 0, data.size, presentationTimeUs, 0
+                    )
+                }
+
+                if (isEncodingComplete && inputQueue.isEmpty() && availableInputBuffers.isNotEmpty()) {
+                    queueEosBuffer(mediaCodec, availableInputBuffers.poll())
+                    isEosQueued = true
+                }
+            } catch (e: IllegalStateException) {
+                // The codec may have been released by stopEncoder() on another thread.
+                Log.e(Constants.LOG_TAG, "Error feeding encoder: ${e.message}")
+            }
         }
     }
 
@@ -400,8 +476,17 @@ class CommonEncoder {
      * This method is designed to be idempotent (can be called multiple times safely).
      */
     private fun stopEncoder() {
-        if (isEncoderStopped) return
-        isEncoderStopped = true
+        // Set under the lock so no feedEncoder() on the recording thread can
+        // touch the codec once we start releasing it.
+        synchronized(inputQueue) {
+            if (isEncoderStopped) return
+            isEncoderStopped = true
+        }
+
+        // Purge queued messages so quitSafely() can't run them against a
+        // released codec. MediaCodec's own callback messages live on its
+        // internal handler, hence the isEncoderStopped guards elsewhere.
+        handler.removeCallbacksAndMessages(null)
 
         try {
             mediaCodec.stop()
@@ -409,21 +494,17 @@ class CommonEncoder {
             mediaMuxer?.stop()
             mediaMuxer?.release()
             outputStream.close()
-            handlerThread.quitSafely()
-            handlerThread.join()
-            completionCallback?.invoke()
         } catch (e: Exception) {
             Log.e(Constants.LOG_TAG, "Error stopping encoder: ${e.message}")
+        } finally {
+            notifyCompletion()
+            // Quit the handler thread after invoking the callback.
+            // Don't call join() -- stopEncoder() is called from callbacks
+            // running on this same thread, so joining would deadlock.
+            handlerThread.quitSafely()
         }
-
-        // Reset state for next recording
-        isMuxerStarted = false
-        trackIndex = -1
-        isEncodingComplete = false
-        inputQueue.clear()
-        currentInputBufferIndex = -1
-        totalBytesEncoded = 0L
-        firstOutputTimestamp = -1L
-        lastOutputTimestamp = 0L
+        // No state reset here: AudioRecorder creates a fresh CommonEncoder per
+        // recording. Resetting shared fields after notifying completion could
+        // race with the next recording's initCodec() and clobber its state.
     }
 }

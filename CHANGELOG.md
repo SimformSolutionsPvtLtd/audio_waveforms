@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Fixed [#470](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/470) - `stop()` never returns on Android with AAC/AMR encoders
 
 ## 2.0.2
 

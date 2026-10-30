@@ -39,6 +39,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
     private var wavEncoder: WavEncoder? = null
     private var successCallback: RequestPermissionsSuccessCallback? = null
     private var totalSamples = 0L
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val channelCount: Int
         get() = when (channelConfig) {
             AudioFormat.CHANNEL_IN_MONO -> 1
@@ -135,9 +136,10 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
             )
             wavEncoder?.start(result)
         } else {
-            commonEncoder.initCodec(recorderSettings = recorderSettings!!, result = result) {
-                recordingThread?.join()
-            }
+            // Fresh instance per recording so a previous session that is still
+            // tearing down can't clobber this one's state.
+            commonEncoder = CommonEncoder()
+            commonEncoder.initCodec(recorderSettings = recorderSettings!!, result = result)
         }
         val buffer = ByteArray(bufferSize!!)
         recordingThread = Thread {
@@ -176,18 +178,21 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
                 wavEncoder?.stop(result)
                 recordingThread?.join()
                 sendRecordingResult(result)
+                release()
             } else {
+                // Make sure the last chunk has been queued before EOS is
+                // signalled, so no audio is fed to the codec after EOS.
+                recordingThread?.join()
                 commonEncoder.setOnEncodingCompleted {
+                    release()
                     sendRecordingResult(result)
                 }
                 commonEncoder.signalToStop()
             }
-
         } catch (e: Exception) {
             result.error(LOG_TAG, e.message, "An error occurred while stopping the recorder")
-            return
+            release()
         }
-        release()
     }
 
     private fun sendRecordingResult(result: Result) {
@@ -195,7 +200,9 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         val hashMap = HashMap<String, Any?>()
         hashMap[Constants.resultFilePath] = recorderSettings?.path
         hashMap[Constants.resultDuration] = duration
-        result.success(hashMap)
+        mainHandler.post {
+            result.success(hashMap)
+        }
     }
 
     private fun sendBytesToFlutter(chunk: ByteArray, rms: Double, milliSeconds: Long) {
@@ -203,7 +210,7 @@ class AudioRecorder : PluginRegistry.RequestPermissionsResultListener {
         args[Constants.normalisedRms] = rms
         args[Constants.bytes] = chunk
         args[Constants.recordedDuration] = milliSeconds
-        Handler(Looper.getMainLooper()).post {
+        mainHandler.post {
             channel.invokeMethod(Constants.onAudioChunk, args)
         }
     }

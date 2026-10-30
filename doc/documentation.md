@@ -1767,8 +1767,14 @@ Android encoder configuration:
 ```dart
 AndroidEncoderSettings({
   required AndroidEncoder androidEncoder,
+  int stopTimeoutMs = 500,
 })
 ```
+
+- `stopTimeoutMs` - If the encoder doesn't finish stopping naturally within
+  this many milliseconds, `RecorderController.stop` forces it instead of
+  hanging. Must be positive. Raise it if the forced stop truncates the end of
+  recordings on your target devices.
 
 # Migration Guides
 
