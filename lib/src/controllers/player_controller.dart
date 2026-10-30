@@ -344,14 +344,18 @@ class PlayerController extends ChangeNotifier {
     return isAllPlayersStopped;
   }
 
-  /// Pauses all the players. Works similar to stopAllPlayer.
+  /// Pauses all the players which are currently playing. Players that are
+  /// not playing (initialized, paused, stopped or finished) are left as is,
+  /// so their state and waveform progress are not changed.
   Future<bool> pauseAllPlayers() async {
     var isAllPlayersPaused =
         await AudioWaveformsInterface.instance.pauseAllPlayers();
     if (isAllPlayersPaused) {
       PlatformStreams.instance.playerControllerFactory
           .forEach((playKey, controller) {
-        controller._setPlayerState(PlayerState.paused);
+        if (controller.playerState.isPlaying) {
+          controller._setPlayerState(PlayerState.paused);
+        }
       });
     }
     return isAllPlayersPaused;

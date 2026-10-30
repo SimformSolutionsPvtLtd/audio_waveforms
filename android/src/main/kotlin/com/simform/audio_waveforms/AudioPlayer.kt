@@ -26,6 +26,14 @@ class AudioPlayer(
     private var key = playerKey
     private var updateFrequency: Long = 200
 
+    // Not ExoPlayer's isPlaying: a player which is still buffering after
+    // start() counts too, while a stopped or finished one doesn't.
+    val isPlayRequested: Boolean
+        get() = player?.let {
+            it.playWhenReady &&
+                (it.playbackState == Player.STATE_READY || it.playbackState == Player.STATE_BUFFERING)
+        } == true
+
     fun preparePlayer(
             result: MethodChannel.Result,
             path: String?,

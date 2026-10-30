@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Fixed [#490](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/490) - `pauseAllPlayers()` resets the waveform of completed players
 
 ## 2.0.2
 

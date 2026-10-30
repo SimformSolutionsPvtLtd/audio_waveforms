@@ -244,8 +244,10 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
             extractors[key]?.cancel()
             result(true)
         case Constants.pauseAllPlayers:
-            for (playerKey, _) in audioPlayers {
-                audioPlayers[playerKey]?.pausePlayer()
+            // Pausing a player which isn't playing (e.g. finished) would
+            // report 0 as current duration and reset its waveform.
+            for (_, player) in audioPlayers where player.isPlaying {
+                player.pausePlayer()
             }
             result(true)
             break
