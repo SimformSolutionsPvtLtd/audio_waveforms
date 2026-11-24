@@ -1,6 +1,7 @@
 ## 2.1.0 (#unreleased)
 
 - Feature [#468](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/pull/468) - Add macOS support
+- Fixed [#527](https://github.com/SimformSolutionsPvtLtd/audio_waveforms/issues/527) - iOS `onAudioChunks` and live waveform not receiving data when recording again after stopping a paused recording
 
 ## 2.0.2
 

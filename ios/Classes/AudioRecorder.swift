@@ -109,13 +109,13 @@ public class AudioRecorder: NSObject, AVAudioRecorderDelegate{
     
     public func pauseRecording(_ result: @escaping FlutterResult) {
         audioRecorder?.pause()
-        bytesStreamEngine.togglePause()
+        bytesStreamEngine.pause()
         result(false)
     }
     
     public func resumeRecording(_ result: @escaping FlutterResult) {
         audioRecorder?.record()
-        bytesStreamEngine.togglePause();
+        bytesStreamEngine.resume()
         result(true)
     }
     

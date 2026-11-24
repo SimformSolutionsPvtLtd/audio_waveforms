@@ -12,7 +12,13 @@ import Accelerate
 class RecorderBytesStreamEngine {
     private var audioEngine = AVAudioEngine()
     private var flutterChannel: FlutterMethodChannel
-    private var paused: Bool = false
+    // Written on the main thread and read on the audio render thread.
+    private let pausedLock = NSLock()
+    private var _paused: Bool = false
+    private var paused: Bool {
+        get { pausedLock.lock(); defer { pausedLock.unlock() }; return _paused }
+        set { pausedLock.lock(); _paused = newValue; pausedLock.unlock() }
+    }
     private var totalFrames: AVAudioFramePosition = 0
 
     init(channel: FlutterMethodChannel) {
@@ -20,6 +26,8 @@ class RecorderBytesStreamEngine {
     }
 
     func attach(result: @escaping FlutterResult, sampleRate: Int) {
+        // A recording stopped while paused must not leave the next one paused.
+        paused = false
         let inputNode = audioEngine.inputNode
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: nil) { (buffer, time) in
             if self.paused {
@@ -44,11 +52,16 @@ class RecorderBytesStreamEngine {
         }
     }
 
-    func togglePause() {
-        paused = !paused
+    func pause() {
+        paused = true
+    }
+
+    func resume() {
+        paused = false
     }
 
     func detach() {
+        paused = false
         totalFrames = 0
         audioEngine.inputNode.removeTap(onBus: 0)
         audioEngine.stop()
