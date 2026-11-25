@@ -1886,6 +1886,18 @@ await recorderController.record(
 );
 ```
 
+# AI Agent Skills
+
+This package ships an [agent skill](https://dart.dev/tools/pub/package-skills), `audio-waveforms-expert`, for coding agents (Claude Code, Cursor, Copilot, Codex, ...). It covers recorder and player setup, non-obvious behavior, known limitations and common errors for the version you have installed.
+
+Install it from your app's root (needs Dart 3.10 or later):
+
+```bash
+dart run skills@ get
+```
+
+Only packages that are direct dependencies of your app are scanned. Run the command again after upgrading `audio_waveforms` to update the skill.
+
 # Contributors
 
 These are the main contributors who have helped shape the Audio Waveforms package.
